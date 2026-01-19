@@ -1,0 +1,7 @@
+streamlit>=1.30.0
+plotly>=5.18.0
+requests>=2.31.0
+chromadb>=0.4.22
+graphviz>=0.20.1
+python-pptx>=0.6.21
+PyMuPDF>=1.23.0

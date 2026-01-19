@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glassbox"
+version = "2.0.0"
+description = "GlassBox Prompt Optimizer - Transparent prompt engineering optimization"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Proprietary"}
+authors = [
+    {name = "Boeing AI Team"}
+]
+dependencies = [
+    "streamlit>=1.30.0",
+    "plotly>=5.18.0",
+    "requests>=2.31.0",
+    "graphviz>=0.20.1",
+    "google-genai>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.0",
+    "chromadb>=0.4.22",
+]
+pdf = [
+    "reportlab>=4.0.0",
+]
+
+[project.scripts]
+glassbox = "glassbox.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["glassbox*"]
