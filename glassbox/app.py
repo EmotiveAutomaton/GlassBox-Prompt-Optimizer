@@ -231,6 +231,55 @@ def main():
     # === ZONE B: Sidebar (Flush Navigation Only) ===
     render_zone_b()
     
+    # === SETTINGS POPOVER (top-right, triggered by gear icon) ===
+    # Position it in a container that CSS will place in top-right
+    with st.container():
+        st.markdown('<div class="settings-popover-container">', unsafe_allow_html=True)
+        with st.popover("⚙️", use_container_width=False):
+            st.markdown("### Settings")
+            
+            # Light/Dark Mode Toggle (disabled for now)
+            st.markdown("**Theme**")
+            theme = st.radio(
+                "Theme Mode",
+                options=["Light Mode", "Dark Mode"],
+                index=0,
+                key="theme_mode",
+                disabled=True,
+                label_visibility="collapsed"
+            )
+            st.caption("*Dark mode coming soon*")
+            
+            st.divider()
+            
+            # Import/Export
+            st.markdown("**Session Management**")
+            
+            # Export
+            session = get_or_create_session()
+            import json
+            session_json = json.dumps(session.to_dict(), indent=2)
+            st.download_button(
+                "📤 Export Session",
+                data=session_json,
+                file_name="glassbox_session.opro",
+                mime="application/json",
+                use_container_width=True
+            )
+            
+            # Import
+            uploaded = st.file_uploader("📥 Import Session", type=["opro", "json"], key="import_session_file", label_visibility="collapsed")
+            if uploaded:
+                try:
+                    data = json.load(uploaded)
+                    imported = OptimizerSession.from_dict(data)
+                    st.session_state["session"] = imported
+                    st.success("Session imported!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Import failed: {e}")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
     # === Main Content Area ===
     
     # === TOP ROW: INPUT + GLASS BOX Cards ===

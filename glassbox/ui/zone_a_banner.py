@@ -20,7 +20,7 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
     # === CARD 1: INPUT STARTING PROMPT AND DATA ===
     with col_input:
         with st.container(border=True):
-            st.markdown('<div class="card-header">INPUT STARTING PROMPT AND DATA</div>', unsafe_allow_html=True)
+            st.markdown('<div class="card-header">INITIAL PROMPT AND DATA</div>', unsafe_allow_html=True)
             
             # Model Settings popover
             with st.popover("Model Settings", use_container_width=True):

@@ -21,10 +21,13 @@ def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBe
     # Get trajectory from session state for the graph
     trajectory = st.session_state.get("trajectory", [])
     
-    # --- BOTTOM ROW: Wide Left (POTENTIAL PROMPTS) | Right Column (RATINGS + FINAL OUTPUT) ---
+    # --- BOTTOM ROW: Full-Height Cards ---
+    # Wrap in a container for CSS full-height styling
+    st.markdown('<div class="bottom-card-container">', unsafe_allow_html=True)
+    
     col_prompts, col_right = st.columns([2, 1.5])
     
-    # === CARD: POTENTIAL PROMPTS (Wide, Left) ===
+    # === CARD: POTENTIAL PROMPTS (Wide, Left, Full Height) ===
     with col_prompts:
         with st.container(border=True):
             st.markdown('<div class="card-header">POTENTIAL PROMPTS</div>', unsafe_allow_html=True)
@@ -79,6 +82,9 @@ def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBe
             with col_c:
                 st.markdown("**C** (Adversarial)")
                 st.text_area("C", value="Adversarial...", height=60, key="test_input_c", label_visibility="collapsed")
+    
+    # Close full-height container
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def _render_optimization_graph(trajectory: List, candidates: List[CandidateResult]):

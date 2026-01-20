@@ -3,7 +3,7 @@ import streamlit as st
 def inject_custom_css():
     """
     Injects Boeing Light Mode CSS with comprehensive styling.
-    Fixes: flush sidebar, card outlines, no flash on navigation.
+    Fixes: flush sidebar, card outlines, no flash, full-height cards.
     """
     st.markdown("""
         <style>
@@ -21,8 +21,7 @@ def inject_custom_css():
             --text-white: #FFFFFF;
             --sidebar-width: 220px;
             --topbar-height: 60px;
-            --transition-fast: 0.15s ease;
-            --transition-normal: 0.25s ease;
+            --transition-fast: 0.1s ease;
             --card-border: 1px solid #D0D0D0;
             --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
@@ -31,6 +30,7 @@ def inject_custom_css():
             background-color: var(--white) !important;
             color: var(--text-color) !important;
             font-family: 'Helvetica Neue', Arial, sans-serif !important;
+            overflow-x: hidden;
         }
 
         /* ========================================
@@ -66,30 +66,14 @@ def inject_custom_css():
             transform: translateX(-50%);
             height: 32px;
         }
-        
-        /* Gear Icon in Top Bar - Clickable */
-        #top-bar-gear {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 4px;
-            transition: background-color var(--transition-fast);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        #top-bar-gear:hover {
-            background-color: rgba(255,255,255,0.15);
-        }
 
         .block-container {
             padding-top: 80px !important;
+            min-height: calc(100vh - 80px);
         }
 
         /* ========================================
-           3. SIDEBAR - FIXED WIDTH, TRULY FLUSH
+           3. SIDEBAR - FIXED, NO FLASH
            ======================================== */
         section[data-testid="stSidebar"] {
             background-color: var(--slate-gray) !important;
@@ -98,24 +82,31 @@ def inject_custom_css():
             width: var(--sidebar-width) !important;
             min-width: var(--sidebar-width) !important;
             max-width: var(--sidebar-width) !important;
-            padding-top: var(--topbar-height) !important; /* Flush with top bar */
+            padding-top: var(--topbar-height) !important;
             margin-top: 0 !important;
+            /* Prevent flash by ensuring bg is always set */
+            transition: none !important;
         }
         
-        /* AGGRESSIVE: Remove ALL internal padding in sidebar */
+        /* Ensure all sidebar children have gray background to prevent flash */
+        section[data-testid="stSidebar"] * {
+            background-color: inherit;
+        }
+        
         section[data-testid="stSidebar"] > div:first-child,
         section[data-testid="stSidebar"] > div:first-child > div:first-child,
         section[data-testid="stSidebar"] > div:first-child > div:first-child > div {
             padding: 0 !important;
             margin: 0 !important;
+            background-color: var(--slate-gray) !important;
         }
         
-        /* Target the block wrapper specifically */
         section[data-testid="stSidebar"] [data-testid="stVerticalBlock"],
         section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {
             padding: 0 !important;
             margin: 0 !important;
             gap: 0 !important;
+            background-color: var(--slate-gray) !important;
         }
         
         /* HIDE ALL COLLAPSE/RESIZE CONTROLS */
@@ -125,8 +116,6 @@ def inject_custom_css():
         section[data-testid="stSidebar"] [data-testid="stSidebarCollapsedControl"],
         div[data-testid="collapsedControl"] {
             display: none !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
         }
 
         section[data-testid="stSidebar"] p, 
@@ -136,7 +125,7 @@ def inject_custom_css():
         }
 
         /* ========================================
-           4. CARD BOXES WITH HEADERS AND OUTLINES
+           4. CARD BOXES WITH OUTLINES
            ======================================== */
         .card-header {
             background: var(--slate-gray);
@@ -149,19 +138,23 @@ def inject_custom_css():
             margin: 0;
             border-radius: 6px 6px 0 0;
         }
+
+        /* ========================================
+           5. FULL-HEIGHT BOTTOM CARDS
+           ======================================== */
+        /* Make bottom row cards extend to near-bottom of screen */
+        .bottom-card-container {
+            min-height: calc(100vh - 400px);
+            display: flex;
+            flex-direction: column;
+        }
         
-        /* Card outline container - targets Streamlit columns */
-        div[data-testid="stVerticalBlockBorderWrapper"] {
-            border: var(--card-border) !important;
-            border-radius: 6px !important;
-            box-shadow: var(--card-shadow) !important;
-            background: #FFFFFF !important;
-            margin-bottom: 16px !important;
-            overflow: hidden;
+        .bottom-card-container > div {
+            flex: 1;
         }
 
         /* ========================================
-           5. BUTTONS WITH PRESS ANIMATION
+           6. BUTTONS
            ======================================== */
         .stButton > button {
             background-color: var(--slate-gray) !important;
@@ -176,11 +169,6 @@ def inject_custom_css():
         
         .stButton > button:hover {
             background-color: var(--selected-blue) !important;
-            transform: translateY(-1px);
-        }
-        
-        .stButton > button:active {
-            transform: scale(0.98) translateY(0px);
         }
         
         .stButton > button[kind="primary"] {
@@ -188,7 +176,7 @@ def inject_custom_css():
         }
 
         /* ========================================
-           6. TEXT INPUTS
+           7. TEXT INPUTS
            ======================================== */
         .stTextInput > div > div > input, 
         .stTextArea > div > div > textarea, 
@@ -200,20 +188,32 @@ def inject_custom_css():
         }
 
         /* ========================================
-           7. PREVENT FLASH ON NAVIGATION
+           8. SETTINGS POPOVER POSITIONING
            ======================================== */
-        /* Prevent background flash on rerun */
-        .stApp, .main, .block-container {
-            transition: none !important;
+        /* Position settings popover trigger in top-right */
+        .settings-popover-container {
+            position: fixed !important;
+            top: 70px !important;
+            right: 20px !important;
+            left: auto !important;
+            z-index: 999998 !important;
+            width: auto !important;
         }
         
-        /* Keep sidebar stable during reruns */
-        section[data-testid="stSidebar"] {
-            transition: none !important;
+        .settings-popover-container > div {
+            position: static !important;
+        }
+        
+        /* Style the popover trigger button */
+        .settings-popover-container button[data-testid="stPopoverButton"] {
+            background: transparent !important;
+            border: none !important;
+            padding: 5px !important;
+            font-size: 18px !important;
         }
 
         /* ========================================
-           8. HIDE STREAMLIT CHROME
+           9. HIDE STREAMLIT CHROME
            ======================================== */
         header[data-testid="stHeader"] { display: none; }
         footer { display: none; }

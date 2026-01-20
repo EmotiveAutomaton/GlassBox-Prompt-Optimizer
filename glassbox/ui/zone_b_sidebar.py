@@ -1,7 +1,6 @@
 """
 Zone B: Control Sidebar - Flush Navigation Only.
-NO configuration button - config is accessed via gear icon in top bar only.
-Buttons are flush with all 4 edges of the sidebar.
+Buttons are flush with all 4 edges of the sidebar using absolute positioning.
 """
 
 import streamlit as st
@@ -9,46 +8,40 @@ from glassbox.models.session import SessionConfig
 
 
 def render_zone_b():
-    """Render the sidebar with flush navigation blocks only. No config anywhere here."""
+    """Render the sidebar with flush navigation blocks only."""
     
-    # === TRULY FLUSH CSS FOR BUTTONS - AGGRESSIVE TARGETING ===
+    # === ABSOLUTE POSITIONING CSS FOR TRULY FLUSH BUTTONS ===
     st.sidebar.markdown("""
         <style>
             /* =========================================================
-               SIDEBAR ROOT: Position flush with top bar
+               SIDEBAR ROOT: Set up for absolute positioning of content
                ========================================================= */
             section[data-testid="stSidebar"] {
-                padding-top: 60px !important;  /* Match top bar height exactly */
+                padding-top: 60px !important;
                 margin-top: 0 !important;
                 background-color: #394957 !important;
+                overflow: visible !important;
             }
             
-            /* THE KEY: Target the main content div inside sidebar */
+            /* Remove all internal padding */
             section[data-testid="stSidebar"] > div:first-child {
                 padding: 0 !important;
                 margin: 0 !important;
+                position: relative !important;
             }
             
-            /* Streamlit adds a wrapper div with extra padding */
             section[data-testid="stSidebar"] > div:first-child > div:first-child {
                 padding: 0 !important;
                 margin: 0 !important;
             }
             
-            /* The vertical block container */
-            section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+            section[data-testid="stSidebar"] [data-testid="stVerticalBlock"],
+            section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {
                 padding: 0 !important;
                 margin: 0 !important;
                 gap: 0 !important;
             }
             
-            /* Border wrapper has padding we need to remove */
-            section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            /* Element containers inside sidebar */
             section[data-testid="stSidebar"] .stElementContainer,
             section[data-testid="stSidebar"] .element-container {
                 padding: 0 !important;
@@ -56,13 +49,16 @@ def render_zone_b():
             }
             
             /* =========================================================
-               RADIO GROUP: Full width, no gaps, PULL TO TOP
+               RADIO GROUP: Position at very top, full width
                ========================================================= */
             section[data-testid="stSidebar"] .stRadio {
+                position: relative !important;
+                top: 0 !important;
+                left: 0 !important;
                 width: 220px !important;
                 padding: 0 !important;
                 margin: 0 !important;
-                margin-top: -10px !important; /* Pull up to eliminate any remaining gap */
+                margin-top: -16px !important; /* Pull up to eliminate padding gap */
             }
             
             section[data-testid="stSidebar"] .stRadio > div {
@@ -81,7 +77,7 @@ def render_zone_b():
             }
             
             /* =========================================================
-               EACH NAV BUTTON: Full width, flush all edges
+               EACH NAV BUTTON: Full width, no gaps
                ========================================================= */
             section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label {
                 display: flex !important;
@@ -90,23 +86,17 @@ def render_zone_b():
                 min-width: 220px !important;
                 max-width: 220px !important;
                 margin: 0 !important;
-                margin-left: 0 !important;
-                margin-right: 0 !important;
                 padding: 18px 16px !important;
                 border: none !important;
                 border-bottom: 1px solid rgba(255,255,255,0.15) !important;
                 border-radius: 0 !important;
-                background-color: transparent !important;
+                background-color: #394957 !important;
                 color: white !important;
                 font-size: 13px !important;
                 font-weight: 400 !important;
                 cursor: pointer !important;
                 box-sizing: border-box !important;
-                transition: background-color 0.15s ease !important;
-            }
-            
-            section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label:first-child {
-                border-top: none !important;
+                transition: background-color 0.1s ease !important;
             }
             
             section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label:hover {
@@ -117,31 +107,20 @@ def render_zone_b():
                 background-color: #0D7CB1 !important;
             }
             
-            /* Hide radio dots completely */
+            /* Hide radio dots */
             section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label > div:first-child,
             section[data-testid="stSidebar"] .stRadio span[data-baseweb="radio"] {
                 display: none !important;
-                width: 0 !important;
-                height: 0 !important;
-                visibility: hidden !important;
             }
             
-            /* Text in labels - no margins */
             section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label p {
                 margin: 0 !important;
                 padding: 0 !important;
             }
-            
-            /* =========================================================
-               HIDE ANY POPOVERS IN SIDEBAR
-               ========================================================= */
-            section[data-testid="stSidebar"] .stPopover {
-                display: none !important;
-            }
         </style>
     """, unsafe_allow_html=True)
     
-    # Navigation Blocks ONLY - no config
+    # Navigation Blocks ONLY
     view_options = [
         "OPro (Iterative)",
         "APE (Reverse Eng.)",
