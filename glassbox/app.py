@@ -14,14 +14,18 @@ import threading
 from typing import Optional
 
 # Page config must be first Streamlit command
+import base64
+
+# Page config must be first Streamlit command
 st.set_page_config(
     page_title="GlassBox Prompt Optimizer",
-    page_icon="🔮",
+    page_icon="✈️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Now import our modules
+# ... (standard imports follow)
 from glassbox.core import (
     BoeingAPIClient,
     APIConfig,
@@ -48,8 +52,30 @@ from glassbox.ui import (
 from glassbox.ui.styles import inject_custom_css
 from glassbox.rag import BaristaSimulator
 
+# --- LOAD ASSETS ---
+def get_image_base64(path_to_image):
+    try:
+        with open(path_to_image, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except Exception:
+        return ""
+
+# Use the CORRECT white-on-transparent logo from main assets folder
+logo_b64 = get_image_base64("glassbox/assets/BoeingWhiteOnTransparentLogo.png")
+
 # Inject custom CSS
 inject_custom_css()
+
+# --- INJECT GLOBAL TOP BAR ---
+# Layout: Title on Left (not bold) | Logo Centered | Empty Right (for balance)
+st.markdown(f"""
+    <div id="boeing-top-bar">
+        <span class="top-bar-title">GLASSBOX PROMPT OPTIMIZER</span>
+        <img src="data:image/png;base64,{logo_b64}" alt="Boeing Logo" class="top-bar-logo">
+        <span class="top-bar-spacer"></span>
+    </div>
+""", unsafe_allow_html=True)
 
 
 # =============================================================================

@@ -1,189 +1,115 @@
 """
-Zone B: Control Sidebar - Configuration and Environmental Constraints
-
-Contains:
-- Engine Selector
-- Model Selection
-- Hyperparameters (temperature, generations, stop threshold)
-- RAG Configuration (Barista Sim)
-- Session Management (Import/Export)
+Zone B: Control Sidebar - Clean Navigation
+Fixed width, transparent hover, SVG icons
 """
 
 import streamlit as st
-from typing import Optional
+import os
+from glassbox.core import list_engines
+from glassbox.models.session import OptimizerSession, SessionConfig
 import json
 
-from glassbox.models.session import OptimizerSession, SessionConfig
-from glassbox.core import list_engines
-
+# SVG Icons (replacing emojis)
+SVG_GEAR = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
+SVG_UPLOAD = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>'
+SVG_DOWNLOAD = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>'
 
 def render_zone_b():
-    """Render the control sidebar."""
+    """Render the Boeing Light Sidebar with Clean Navigation."""
     
-    st.sidebar.markdown("# ⚙️ Configuration")
-    st.sidebar.markdown("---")
-
-    # Engine Selection
-    st.sidebar.markdown("### 🚀 Engine")
-    engine_names = list_engines()
-    selected_engine = st.sidebar.selectbox(
-        "Optimization Engine",
-        options=engine_names,
+    # Navigation Blocks (No Title/Caption)
+    view_options = [
+        "OPro (Iterative)",
+        "APE (Reverse Eng.)",
+        "Promptbreeder (Evol.)",
+        "S2A (Context Filter)"
+    ]
+    
+    selected_engine = st.sidebar.radio(
+        "Navigation",
+        options=view_options,
         index=0,
         key="selected_engine",
-        help="Select the optimization strategy"
+        label_visibility="collapsed"
     )
-
-    # Engine descriptions
-    engine_descriptions = {
-        "OPro (Iterative)": "Iterative feedback loop optimization",
-        "APE (Reverse Eng)": "Reverse-engineer prompts from examples",
-        "Promptbreeder (Evolutionary)": "Evolve population of prompts",
-        "S2A (Context Filter)": "Optimize context filtering for RAG"
-    }
-    st.sidebar.caption(engine_descriptions.get(selected_engine, ""))
-
-    st.sidebar.markdown("---")
-
-    # Model Selection
-    st.sidebar.markdown("### 🤖 Model")
-    models = ["gpt-4o-mini", "gpt-4o", "gpt-4", "claude-3-5-sonnet"]
-    selected_model = st.sidebar.selectbox(
-        "LLM Model",
-        options=models,
-        index=0,
-        key="selected_model"
-    )
-
-    st.sidebar.markdown("---")
-
-    # Hyperparameters
-    st.sidebar.markdown("### 🎛️ Hyperparameters")
     
-    st.sidebar.slider(
-        "Temperature",
-        min_value=0.0,
-        max_value=1.0,
-        value=0.7,
-        step=0.1,
-        key="temperature",
-        help="Higher = more creative, Lower = more deterministic"
-    )
-
-    st.sidebar.slider(
-        "Generations per Step",
-        min_value=1,
-        max_value=10,
-        value=3,
-        key="generations_per_step",
-        help="Number of variations to generate each step"
-    )
-
-    st.sidebar.number_input(
-        "Stop Score Threshold",
-        min_value=0.0,
-        max_value=100.0,
-        value=95.0,
-        step=5.0,
-        key="stop_threshold",
-        help="Stop optimization when this score is reached"
-    )
-
-    st.sidebar.markdown("---")
-
-    # RAG Configuration (Barista Sim)
-    with st.sidebar.expander("🗃️ RAG Configuration"):
-        st.markdown("**Barista Simulator**")
+    # CSS for Config Button - Matches nav item style (transparent default)
+    st.sidebar.markdown("""
+        <style>
+            /* Config Button - Transparent default, hover for light, blue on popover open */
+            section[data-testid="stSidebar"] .stPopover > button,
+            section[data-testid="stSidebar"] [data-testid="stPopover"] > button {
+                background-color: transparent !important;
+                color: white !important;
+                border-radius: 0 !important;
+                width: calc(100% + 2rem) !important;
+                margin-left: -1rem !important;
+                padding: 16px 20px !important;
+                border: none !important;
+                border-top: 2px solid rgba(0,0,0,0.3) !important;
+                transition: background-color 0.15s ease;
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                width: 220px !important;
+            }
+            
+            section[data-testid="stSidebar"] .stPopover > button:hover {
+                background-color: rgba(255,255,255,0.08) !important;
+            }
+            
+            /* When popover is open */
+            section[data-testid="stSidebar"] .stPopover[data-state="open"] > button {
+                background-color: #0D7CB1 !important;
+            }
+            
+            /* Make popover appear ABOVE button (flip arrow) */
+            section[data-testid="stSidebar"] [data-testid="stPopoverContent"] {
+                bottom: 60px !important;
+                top: auto !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    # Config popover with SVG icons (at bottom)
+    with st.sidebar.popover("Configuration", use_container_width=True):
+        st.markdown("### Global Settings")
+        st.caption("Manage application state and preferences.")
         
-        st.text_input(
-            "Vector Store Path",
-            value="",
-            key="vector_store_path",
-            help="Path to ChromaDB directory"
-        )
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Export Session", use_container_width=True):
+                _export_session_logic()
+        
+        with col2:
+            uploaded = st.file_uploader("Import", type=["opro", "json"], label_visibility="collapsed")
+            if uploaded:
+                _import_session(uploaded)
 
-        st.slider(
-            "Top K (Chunks)",
-            min_value=1,
-            max_value=10,
-            value=5,
-            key="top_k"
-        )
-
-        st.slider(
-            "Noise Injection",
-            min_value=0.0,
-            max_value=1.0,
-            value=0.0,
-            step=0.1,
-            key="noise_level",
-            help="0% = Clean, 100% = High Noise"
-        )
-
-        st.caption("🟩 Green = Legitimate | 🟥 Red = Noise")
-
-    st.sidebar.markdown("---")
-
-    # Session Management
-    st.sidebar.markdown("### 💾 Session")
-    
-    col1, col2 = st.sidebar.columns(2)
-    
-    with col1:
-        if st.button("📤 Export", use_container_width=True, key="export_btn"):
-            _export_session()
-    
-    with col2:
-        if st.button("📥 Import", use_container_width=True, key="import_btn"):
-            st.session_state["show_import_dialog"] = True
-
-    # Import dialog
-    if st.session_state.get("show_import_dialog", False):
-        uploaded = st.sidebar.file_uploader(
-            "Upload .opro file",
-            type=["opro", "json"],
-            key="file_uploader"
-        )
-        if uploaded:
-            _import_session(uploaded)
-            st.session_state["show_import_dialog"] = False
-            st.rerun()
-
-
-def _export_session():
-    """Export current session to .opro file."""
-    session: OptimizerSession = st.session_state.get("session")
+def _export_session_logic():
+    session = st.session_state.get("session")
     if session:
-        json_data = session.to_json()
-        st.sidebar.download_button(
-            "⬇️ Download .opro",
-            data=json_data,
-            file_name="glassbox_session.opro",
-            mime="application/json"
+        st.download_button(
+            "Download .opro",
+            data=session.to_json(),
+            file_name="session.opro",
+            mime="application/json",
+            key="dl_btn_popover"
         )
     else:
-        st.sidebar.warning("No active session to export")
-
+        st.warning("No session active.")
 
 def _import_session(uploaded_file):
-    """Import session from .opro file."""
     try:
         content = uploaded_file.read().decode('utf-8')
         data = json.loads(content)
-        session = OptimizerSession.load_from_dict(data) if hasattr(OptimizerSession, 'load_from_dict') else None
-        if session:
-            st.session_state["session"] = session
-            st.sidebar.success("Session imported!")
-        else:
-            # Manual reconstruction
-            st.session_state["seed_prompt"] = data.get("seed_prompt", "")
-            st.sidebar.success("Session data loaded!")
+        st.session_state["seed_prompt"] = data.get("seed_prompt", "")
+        st.success("Imported!")
     except Exception as e:
-        st.sidebar.error(f"Import failed: {e}")
-
+        st.error(f"Error: {e}")
 
 def get_session_config() -> SessionConfig:
-    """Build SessionConfig from sidebar state."""
+    """Build SessionConfig from state."""
     return SessionConfig(
         model=st.session_state.get("selected_model", "gpt-4o-mini"),
         temperature=st.session_state.get("temperature", 0.7),

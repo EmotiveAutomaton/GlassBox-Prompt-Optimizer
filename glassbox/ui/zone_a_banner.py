@@ -1,164 +1,129 @@
 """
-Zone A: The Glass Box Banner - Top Full-Width Visualization
-
-Contains:
-- Input & Control Area (seed prompt, action button)
-- Schematic Visualization (engine-specific animated diagram)
-- Internal Monologue Panel (shows active agent's system prompt)
+Zone A: Task Input & Glass Box Visualization
+Restructured into Card Boxes:
+- Card 1: "INPUT: STARTING PROMPT AND DATA"
+- Card 2: "GLASS BOX" (Schematic + Internal Log)
 """
 
 import streamlit as st
 from typing import Optional
-
 from glassbox.core.optimizer_base import AbstractOptimizer
 
+# SVG Icons (replacing emojis)
+SVG_GEAR = '''<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>'''
+SVG_PLAY = '''<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'''
+SVG_STOP = '''<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12"/></svg>'''
 
 def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
-    """Render the Glass Box banner zone."""
+    """Render the Glass Box zone with card box layout."""
     
-    # Container for the banner
-    st.markdown("""
-    <style>
-    .glass-box-banner {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        border: 1px solid #20C20E;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-    .monologue-panel {
-        background-color: #0a0a0f;
-        border: 1px solid #31333F;
-        border-radius: 5px;
-        padding: 10px;
-        font-family: monospace;
-        font-size: 12px;
-        color: #20C20E;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-    # Three-column layout for the banner
-    col_input, col_schematic, col_monologue = st.columns([1.2, 1.5, 1])
-
-    with col_input:
-        st.markdown("### 🎯 Task Input")
+    # --- ROW 1: Two Card Boxes Side by Side ---
+    col_input_card, col_glassbox_card = st.columns([1, 2])
+    
+    # === CARD 1: INPUT: STARTING PROMPT AND DATA ===
+    with col_input_card:
+        st.markdown('''
+            <div class="boeing-card">
+                <div class="boeing-card-header">INPUT: STARTING PROMPT AND DATA</div>
+                <div class="boeing-card-content">
+        ''', unsafe_allow_html=True)
         
-        # Seed prompt input
-        seed_prompt = st.text_area(
-            "Seed Prompt / Task Description",
-            value=st.session_state.get("seed_prompt", "Write a clear, concise summary of the given text..."),
+        # Model Config (SVG icon instead of emoji)
+        with st.popover("Model Settings", use_container_width=True):
+            st.markdown("**Model Settings**")
+            models = ["gpt-4o-mini", "gpt-4o", "gpt-4", "claude-3-5-sonnet"]
+            st.selectbox("LLM Model", options=models, index=0, key="selected_model")
+            st.slider("Temperature", 0.0, 1.0, 0.7, 0.1, key="temperature")
+            st.slider("Generations/Step", 1, 10, 3, key="generations_per_step")
+        
+        # Seed Prompt
+        st.text_area(
+            "Seed Prompt",
+            value=st.session_state.get("seed_prompt", "Write a clear, concise summary of the given text that captures the key points..."),
             height=120,
             key="seed_prompt_input",
-            help="Enter your initial prompt or task description"
+            label_visibility="collapsed",
+            placeholder="Enter your initial prompt here..."
         )
-        st.session_state["seed_prompt"] = seed_prompt
-
-        # Action buttons
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            start_btn = st.button(
-                "▶️ Initialize Optimization",
-                type="primary",
-                use_container_width=True,
-                disabled=st.session_state.get("is_running", False)
-            )
-        with col_btn2:
-            stop_btn = st.button(
-                "⏹️ Stop",
-                use_container_width=True,
-                disabled=not st.session_state.get("is_running", False)
-            )
-
-        if start_btn:
-            st.session_state["start_optimization"] = True
-        if stop_btn:
-            st.session_state["stop_optimization"] = True
-
-    with col_schematic:
-        st.markdown("### 🔄 Schematic Visualization")
         
-        # Render engine-specific schematic
-        if optimizer:
-            try:
-                graphviz_source = optimizer.generate_graphviz()
-                st.graphviz_chart(graphviz_source, use_container_width=True)
-            except Exception as e:
-                st.warning(f"Schematic rendering: {e}")
+        # File Input
+        st.file_uploader(
+            "Input Data",
+            type=["txt", "pdf", "md", "csv"],
+            key="input_file_uploader",
+            label_visibility="collapsed"
+        )
+        
+        # RAG Config
+        with st.popover("RAG Settings", use_container_width=True):
+            st.markdown("**RAG Settings**")
+            st.text_input("Vector Store Path", value="", key="vector_store_path")
+            st.slider("Top K", 1, 10, 5, key="top_k")
+            st.slider("Noise Injection", 0.0, 1.0, 0.0, 0.1, key="noise_level")
+        
+        # Action Buttons
+        col_start, col_stop = st.columns(2)
+        with col_start:
+            if st.button("START OPTIMIZATION", type="primary", use_container_width=True):
+                st.session_state["start_optimization"] = True
+        with col_stop:
+            if st.button("STOP", use_container_width=True):
+                st.session_state["stop_optimization"] = True
+        
+        st.markdown('</div></div>', unsafe_allow_html=True)
+    
+    # === CARD 2: GLASS BOX (Schematic + Internal Log) ===
+    with col_glassbox_card:
+        st.markdown('''
+            <div class="boeing-card">
+                <div class="boeing-card-header">GLASS BOX</div>
+                <div class="boeing-card-content">
+        ''', unsafe_allow_html=True)
+        
+        col_schematic, col_log = st.columns([2, 1])
+        
+        with col_schematic:
+            # Schematic visualization (expanded)
+            if optimizer:
+                try:
+                    graphviz_source = optimizer.generate_graphviz()
+                    st.graphviz_chart(graphviz_source, use_container_width=True)
+                except Exception as e:
+                    st.warning(f"Map error: {e}")
+                    _render_placeholder_schematic()
+            else:
                 _render_placeholder_schematic()
-        else:
-            _render_placeholder_schematic()
-
-    with col_monologue:
-        st.markdown("### 💭 Internal Monologue")
         
-        # Display the current agent's internal state
-        monologue = ""
-        if optimizer:
-            monologue = optimizer.session.internal_monologue
+        with col_log:
+            monologue = optimizer.session.internal_monologue if optimizer else "[Idle] System Ready..."
+            st.markdown(f"""
+            <div style="background:#F5F7FA; border:1px solid #E0E0E0; 
+                        border-radius:4px; padding:12px; height:280px; 
+                        overflow-y:auto; font-family:'JetBrains Mono', monospace; 
+                        font-size:11px; color:#333; line-height:1.4;">
+                {monologue}
+            </div>
+            """, unsafe_allow_html=True)
+            
+            status = st.session_state.get("optimizer_status", "idle")
+            st.markdown(f"<div style='margin-top:5px; font-weight:500; color:#333;'>STATUS: <span style='color:#0D7CB1'>{status.upper()}</span></div>", unsafe_allow_html=True)
         
-        if not monologue:
-            monologue = "[Idle] Waiting for optimization to start..."
-
-        st.markdown(f"""
-        <div class="monologue-panel">
-            <pre>{monologue}</pre>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Status indicator
-        status = st.session_state.get("optimizer_status", "idle")
-        status_colors = {
-            "idle": "🔘",
-            "running": "🟢",
-            "paused": "🟡",
-            "completed": "✅",
-            "failed": "🔴",
-            "stopped": "⏹️"
-        }
-        st.markdown(f"**Status:** {status_colors.get(status, '❓')} {status.title()}")
+        st.markdown('</div></div>', unsafe_allow_html=True)
 
 
 def _render_placeholder_schematic():
-    """Render a placeholder when no optimizer is active."""
-    placeholder_dot = """
-    digraph Placeholder {
+    """Render placeholder diagram."""
+    st.graphviz_chart("""
+    digraph G {
         rankdir=LR;
-        bgcolor="#0E1117";
-        node [style=filled, fillcolor="#31333F", fontcolor=white, fontname="Helvetica"];
+        bgcolor="transparent";
+        node [style=filled, fillcolor="#1A409F", fontcolor=white, fontname="Inter", shape=box, style="rounded,filled"];
+        edge [color="#394957", penwidth=2];
         
-        start [label="Start", shape=circle];
-        process [label="Select\\nEngine", shape=box];
-        end [label="Results", shape=circle];
-        
-        start -> process [color="#4A4A4A"];
-        process -> end [color="#4A4A4A"];
+        Start [shape=circle];
+        Optimizer [label="Engine\\nSelection"];
+        Start -> Optimizer;
+        Optimizer -> Results;
+        Results [shape=circle, style=dashed];
     }
-    """
-    st.graphviz_chart(placeholder_dot, use_container_width=True)
-
-
-def render_zone_a_compact():
-    """Render a more compact version of Zone A for smaller screens."""
-    st.markdown("### 🔮 Glass Box Optimizer")
-    
-    seed = st.text_area(
-        "Seed Prompt",
-        value=st.session_state.get("seed_prompt", ""),
-        height=80,
-        key="seed_prompt_compact"
-    )
-    st.session_state["seed_prompt"] = seed
-
-    col1, col2, col3 = st.columns([1, 1, 2])
-    with col1:
-        if st.button("▶️ Start", type="primary"):
-            st.session_state["start_optimization"] = True
-    with col2:
-        if st.button("⏹️ Stop"):
-            st.session_state["stop_optimization"] = True
-    with col3:
-        status = st.session_state.get("optimizer_status", "idle")
-        st.markdown(f"**Status:** {status.title()}")
+    """, use_container_width=True)

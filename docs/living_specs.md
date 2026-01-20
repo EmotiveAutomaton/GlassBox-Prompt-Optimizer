@@ -6,17 +6,42 @@
 
 * **Framework:** Streamlit (Python).
 * **Window Configuration:**
-* `layout="wide"` (Mandatory to support the 5-zone grid).
-* `initial_sidebar_state="expanded"`.
-* **Theme:** Force "Dark Mode" via `.streamlit/config.toml`.
-* Background: `#0E1117` (Deep Gray/Black).
-* Primary Accent: `#20C20E` (Boeing Console Green) or `#31333F` (Card Backgrounds).
-* Font: Monospace for all prompts/code; Sans-serif for UI labels.
+  * `layout="wide"` (Mandatory to support the card-box grid).
+  * `initial_sidebar_state="expanded"`.
+  * Sidebar collapse arrows are HIDDEN at all times (including hover); sidebar is always visible.
+  * Sidebar has FIXED WIDTH (220px); user cannot resize it.
+  
+* **Theme:** Boeing Light Mode (Strict 4-Color Palette).
+  * **Background:** `#FDFDFE` (Near White - Main Canvas).
+  * **Top Bar:** `#1A409F` (Boeing Blue) with gradient shadow.
+    * Title "GLASSBOX PROMPT OPTIMIZER" on the LEFT (not bold, font-weight: 400).
+    * Boeing logo (`BoeingWhiteOnTransparentLogo.png` from `glassbox/assets/`) CENTERED.
+  * **Sidebar:** `#394957` (Slate Gray) - Fixed width, full-height panel.
+    * Navigation items are full-width horizontal blocks (edge-to-edge).
+    * Active/selected item uses `#0D7CB1` (Selected Blue) background.
+    * "Configuration" popover at BOTTOM of screen (flush), transparent by default, light on hover, blue when open.
+    * Popover opens UPWARD (above button), arrow reversed.
+  * **Section Headers:** `#394957` (Slate Gray) for all card headers.
+  * **Accent:** `#0D7CB1` (Selected Blue) for active states.
+  * **Text:** Black/Dark Gray on light backgrounds; White on Sidebar/Headers.
+  
+* **Typography:** Helvetica Neue. Regular weight for body. Medium for card headers.
 
+* **Icons:** SVG only. No emoji icons anywhere in the UI.
 
+* **Animations:**
+  * Fade-in transitions (0.25s) when switching between engines.
+  * Top bar has gradient shadow for depth.
+  * Buttons have press animation (scale 0.98 on click).
+  * Cards have hover lift effect (subtle shadow).
 
+* **Card Box Layout (5 Cards):**
+  1. **INPUT: STARTING PROMPT AND DATA** - Top left. Contains seed prompt, file upload, model/RAG config.
+  2. **GLASS BOX** - Top right. Contains schematic visualization and internal log.
+  3. **POTENTIAL PROMPTS** - Bottom left. Scrollable candidate list.
+  4. **PROMPT RATINGS** - Bottom right top. Score graph visualization.
+  5. **FINAL OUTPUT AND USER EVALUATION** - Bottom right bottom. Selected prompt + override.
 
-* **Responsiveness:** The layout must maintain the "Glass Box" header visibility at all times.
 
 ---
 
