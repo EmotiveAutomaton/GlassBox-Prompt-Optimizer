@@ -29,6 +29,17 @@
 
 * **Icons:** SVG only. No emoji icons anywhere in the UI.
 
+* **Top Bar:**
+  * Title "GLASSBOX PROMPT OPTIMIZER" on the LEFT (not bold).
+  * Boeing logo (`BoeingWhiteOnTransparentLogo.png`) CENTERED.
+  * Tiny gear icon (SVG) on far RIGHT - opens configuration menu.
+
+* **Sidebar:**
+  * Fixed 220px width (not resizable).
+  * Collapse arrows hidden at all times.
+  * Navigation items flush with all 4 edges (no dead space, no padding).
+  * No configuration button (config moved to top bar gear icon).
+
 * **Animations:**
   * Fade-in transitions (0.25s) when switching between engines.
   * Top bar has gradient shadow for depth.
@@ -36,11 +47,11 @@
   * Cards have hover lift effect (subtle shadow).
 
 * **Card Box Layout (5 Cards):**
-  1. **INPUT: STARTING PROMPT AND DATA** - Top left. Contains seed prompt, file upload, model/RAG config.
-  2. **GLASS BOX** - Top right. Contains schematic visualization and internal log.
-  3. **POTENTIAL PROMPTS** - Bottom left. Scrollable candidate list.
-  4. **PROMPT RATINGS** - Bottom right top. Score graph visualization.
-  5. **FINAL OUTPUT AND USER EVALUATION** - Bottom right bottom. Selected prompt + override.
+  1. **INPUT STARTING PROMPT AND DATA** - Top left. Contains: Model Settings popover, seed prompt text area, file upload, RAG Settings popover, Start/Stop buttons.
+  2. **GLASS BOX** - Top right. Contains: schematic visualization, internal log/status.
+  3. **POTENTIAL PROMPTS** - Bottom left (wide). Contains: scrollable candidate list with scores.
+  4. **PROMPT RATINGS** - Bottom right top. Contains: score graph (no extra header inside).
+  5. **FINAL OUTPUT AND USER EVALUATION** - Bottom right bottom. Contains: test bench (Free Play, Input A/B/C).
 
 
 ---

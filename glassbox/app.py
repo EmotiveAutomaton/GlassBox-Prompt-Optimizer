@@ -68,12 +68,18 @@ logo_b64 = get_image_base64("glassbox/assets/BoeingWhiteOnTransparentLogo.png")
 inject_custom_css()
 
 # --- INJECT GLOBAL TOP BAR ---
-# Layout: Title on Left (not bold) | Logo Centered | Empty Right (for balance)
+# Layout: Title Left | Logo Centered | Gear Icon Right
+# Gear icon is a tiny SVG that will trigger config popover
 st.markdown(f"""
     <div id="boeing-top-bar">
         <span class="top-bar-title">GLASSBOX PROMPT OPTIMIZER</span>
         <img src="data:image/png;base64,{logo_b64}" alt="Boeing Logo" class="top-bar-logo">
-        <span class="top-bar-spacer"></span>
+        <button id="top-bar-gear" onclick="document.getElementById('config-popover-trigger').click()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </button>
     </div>
 """, unsafe_allow_html=True)
 
@@ -222,41 +228,18 @@ def main():
         stop_optimization()
         st.rerun()
     
-    # === ZONE B: Sidebar ===
+    # === ZONE B: Sidebar (Flush Navigation Only) ===
     render_zone_b()
     
     # === Main Content Area ===
     
-    # === ZONE A: Glass Box Banner (Full Width) ===
+    # === TOP ROW: INPUT + GLASS BOX Cards ===
     optimizer = st.session_state.get("optimizer")
     render_zone_a(optimizer)
     
-    st.markdown("---")
-    
-    # === Bottom Grid: C, D, E ===
-    col_left, col_right = st.columns([1.5, 1])
-    
-    with col_left:
-        # === ZONE C: Results & Candidates ===
-        session = get_or_create_session()
-        render_zone_c(session.candidates)
-    
-    with col_right:
-        # === ZONE D: Telemetry (Top Right) ===
-        session = get_or_create_session()
-        render_zone_d(session.trajectory)
-        
-        st.markdown("---")
-        
-        # === ZONE E: Test Bench (Bottom Right) ===
-        test_bench = session.test_bench
-        winner = session.winner
-        render_zone_e(test_bench, winner)
-    
-    # === Export Panel (Full Width) ===
-    from glassbox.ui.export_panel import render_export_panel
+    # === BOTTOM ROW: POTENTIAL PROMPTS + PROMPT RATINGS + FINAL OUTPUT Cards ===
     session = get_or_create_session()
-    render_export_panel(session)
+    render_zone_c(session.candidates, session.test_bench)
     
     # === Auto-refresh during optimization ===
     if st.session_state.get("is_running", False):

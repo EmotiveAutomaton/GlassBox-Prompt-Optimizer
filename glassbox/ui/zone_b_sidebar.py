@@ -1,29 +1,63 @@
 """
-Zone B: Control Sidebar - Clean Navigation
-Fixed width, transparent hover, SVG icons
+Zone B: Control Sidebar - Flush Navigation
+No config button - config is in top bar gear icon
 """
 
 import streamlit as st
-import os
-from glassbox.core import list_engines
-from glassbox.models.session import OptimizerSession, SessionConfig
-import json
-
-# SVG Icons (replacing emojis)
-SVG_GEAR = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>'
-SVG_UPLOAD = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>'
-SVG_DOWNLOAD = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>'
+from glassbox.models.session import SessionConfig
 
 def render_zone_b():
-    """Render the Boeing Light Sidebar with Clean Navigation."""
+    """Render the sidebar with flush navigation blocks only."""
     
-    # Navigation Blocks (No Title/Caption)
+    # Navigation Blocks - No title, no config button
     view_options = [
         "OPro (Iterative)",
         "APE (Reverse Eng.)",
         "Promptbreeder (Evol.)",
         "S2A (Context Filter)"
     ]
+    
+    # CSS to make nav items completely flush with sidebar edges and top bar
+    st.sidebar.markdown("""
+        <style>
+            /* Remove all sidebar padding */
+            section[data-testid="stSidebar"] > div:first-child {
+                padding-top: 0 !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+            
+            /* Radio group container - no gaps */
+            .stRadio > div[role="radiogroup"] {
+                gap: 0 !important;
+                margin-top: 60px !important; /* Below top bar */
+            }
+            
+            /* Each nav item - flush all edges */
+            .stRadio > div[role="radiogroup"] > label {
+                margin: 0 !important;
+                padding: 18px 20px !important;
+                width: 100% !important;
+                border-bottom: 1px solid rgba(0,0,0,0.2);
+                border-radius: 0 !important;
+                background-color: transparent;
+                transition: background-color 0.15s ease;
+            }
+            
+            .stRadio > div[role="radiogroup"] > label:hover {
+                background-color: rgba(255,255,255,0.08);
+            }
+            
+            .stRadio > div[role="radiogroup"] > label:has(input:checked) {
+                background-color: #0D7CB1 !important;
+            }
+            
+            /* Hide radio dots */
+            .stRadio > div[role="radiogroup"] > label > div:first-child {
+                display: none !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
     
     selected_engine = st.sidebar.radio(
         "Navigation",
@@ -32,81 +66,7 @@ def render_zone_b():
         key="selected_engine",
         label_visibility="collapsed"
     )
-    
-    # CSS for Config Button - Matches nav item style (transparent default)
-    st.sidebar.markdown("""
-        <style>
-            /* Config Button - Transparent default, hover for light, blue on popover open */
-            section[data-testid="stSidebar"] .stPopover > button,
-            section[data-testid="stSidebar"] [data-testid="stPopover"] > button {
-                background-color: transparent !important;
-                color: white !important;
-                border-radius: 0 !important;
-                width: calc(100% + 2rem) !important;
-                margin-left: -1rem !important;
-                padding: 16px 20px !important;
-                border: none !important;
-                border-top: 2px solid rgba(0,0,0,0.3) !important;
-                transition: background-color 0.15s ease;
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                width: 220px !important;
-            }
-            
-            section[data-testid="stSidebar"] .stPopover > button:hover {
-                background-color: rgba(255,255,255,0.08) !important;
-            }
-            
-            /* When popover is open */
-            section[data-testid="stSidebar"] .stPopover[data-state="open"] > button {
-                background-color: #0D7CB1 !important;
-            }
-            
-            /* Make popover appear ABOVE button (flip arrow) */
-            section[data-testid="stSidebar"] [data-testid="stPopoverContent"] {
-                bottom: 60px !important;
-                top: auto !important;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-    
-    # Config popover with SVG icons (at bottom)
-    with st.sidebar.popover("Configuration", use_container_width=True):
-        st.markdown("### Global Settings")
-        st.caption("Manage application state and preferences.")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("Export Session", use_container_width=True):
-                _export_session_logic()
-        
-        with col2:
-            uploaded = st.file_uploader("Import", type=["opro", "json"], label_visibility="collapsed")
-            if uploaded:
-                _import_session(uploaded)
 
-def _export_session_logic():
-    session = st.session_state.get("session")
-    if session:
-        st.download_button(
-            "Download .opro",
-            data=session.to_json(),
-            file_name="session.opro",
-            mime="application/json",
-            key="dl_btn_popover"
-        )
-    else:
-        st.warning("No session active.")
-
-def _import_session(uploaded_file):
-    try:
-        content = uploaded_file.read().decode('utf-8')
-        data = json.loads(content)
-        st.session_state["seed_prompt"] = data.get("seed_prompt", "")
-        st.success("Imported!")
-    except Exception as e:
-        st.error(f"Error: {e}")
 
 def get_session_config() -> SessionConfig:
     """Build SessionConfig from state."""

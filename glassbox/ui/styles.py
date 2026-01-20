@@ -3,15 +3,9 @@ import streamlit as st
 def inject_custom_css():
     """
     Injects Boeing Light Mode CSS with comprehensive styling.
-    Color Palette (Strict 4-Color):
-    - Background: #FDFDFE (Near White)
-    - Panel Base: #394957 (Slate Gray - Sidebar & Headers)
-    - Top Bar: #1A409F (Boeing Blue)
-    - Accent: #0D7CB1 (Selected Blue - Active State)
     """
     st.markdown("""
         <style>
-        /* Font Import */
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
         
         /* ========================================
@@ -58,7 +52,7 @@ def inject_custom_css():
 
         #boeing-top-bar .top-bar-title {
             font-size: 16px;
-            font-weight: 400; /* NOT BOLD */
+            font-weight: 400;
             letter-spacing: 1px;
             white-space: nowrap;
         }
@@ -70,8 +64,21 @@ def inject_custom_css():
             height: 32px;
         }
         
-        #boeing-top-bar .top-bar-spacer {
-            width: 200px;
+        /* Gear Icon in Top Bar */
+        #top-bar-gear {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #top-bar-gear:hover {
+            background-color: rgba(255,255,255,0.15);
         }
 
         .block-container {
@@ -79,16 +86,20 @@ def inject_custom_css():
         }
 
         /* ========================================
-           3. SIDEBAR - FIXED WIDTH, NO RESIZE
+           3. SIDEBAR - FIXED WIDTH, FLUSH NAV
            ======================================== */
         section[data-testid="stSidebar"] {
             background-color: var(--slate-gray) !important;
             border-right: none;
-            padding-top: var(--topbar-height);
             z-index: 999990;
             width: var(--sidebar-width) !important;
             min-width: var(--sidebar-width) !important;
             max-width: var(--sidebar-width) !important;
+        }
+        
+        /* Remove ALL padding from sidebar container */
+        section[data-testid="stSidebar"] > div:first-child {
+            padding: 0 !important;
         }
         
         /* HIDE ALL COLLAPSE/RESIZE CONTROLS */
@@ -101,14 +112,7 @@ def inject_custom_css():
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        
-        /* Hide resize handle */
-        section[data-testid="stSidebar"]::after,
-        section[data-testid="stSidebar"] > div[style*="cursor: col-resize"] {
-            display: none !important;
-        }
 
-        /* Sidebar Text Color */
         section[data-testid="stSidebar"] p, 
         section[data-testid="stSidebar"] label,
         section[data-testid="stSidebar"] span {
@@ -116,63 +120,7 @@ def inject_custom_css():
         }
 
         /* ========================================
-           4. NAVIGATION BLOCKS - FULL WIDTH
-           ======================================== */
-        .stRadio > div[role="radiogroup"] > label > div:first-child {
-            display: none !important;
-        }
-
-        .stRadio > div[role="radiogroup"] {
-            gap: 0px;
-        }
-
-        .stRadio > div[role="radiogroup"] > label {
-            background-color: transparent;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            border-radius: 0px !important;
-            padding: 16px 20px !important;
-            margin: 0 -1rem !important;
-            width: calc(100% + 2rem) !important;
-            transition: background-color var(--transition-fast);
-            color: white !important;
-            cursor: pointer;
-        }
-
-        .stRadio > div[role="radiogroup"] > label:hover {
-            background-color: rgba(255,255,255,0.08);
-        }
-        
-        .stRadio > div[role="radiogroup"] > label:has(input:checked) {
-            background-color: var(--selected-blue) !important;
-        }
-
-        /* ========================================
-           5. CONFIG BUTTON - FLUSH BOTTOM
-           ======================================== */
-        section[data-testid="stSidebar"] .stPopover > button,
-        section[data-testid="stSidebar"] [data-testid="stPopover"] > button {
-            background-color: transparent !important;
-            color: white !important;
-            border-radius: 0 !important;
-            width: calc(100% + 2rem) !important;
-            margin-left: -1rem !important;
-            padding: 16px 20px !important;
-            border: none !important;
-            border-top: 2px solid rgba(0,0,0,0.3) !important;
-            transition: background-color var(--transition-fast);
-            position: fixed !important;
-            bottom: 0 !important;
-            left: 0 !important;
-            width: var(--sidebar-width) !important;
-        }
-        
-        section[data-testid="stSidebar"] .stPopover > button:hover,
-        section[data-testid="stSidebar"] [data-testid="stPopover"] > button:hover {
-            background-color: rgba(255,255,255,0.08) !important;
-        }
-
-        /* ========================================
-           6. CARD BOXES WITH HEADERS
+           4. CARD BOXES WITH HEADERS
            ======================================== */
         .boeing-card {
             background: #FFFFFF;
@@ -203,25 +151,8 @@ def inject_custom_css():
             padding: 16px;
         }
 
-        /* Legacy panel header support */
-        .boeing-panel-header {
-            background: var(--slate-gray);
-            color: white;
-            padding: 10px 15px;
-            font-weight: 500;
-            font-size: 13px;
-            border-radius: 4px 4px 0 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .boeing-panel-content {
-            padding: 15px;
-            color: var(--text-color);
-        }
-
         /* ========================================
-           7. BUTTONS WITH PRESS ANIMATION
+           5. BUTTONS WITH PRESS ANIMATION
            ======================================== */
         .stButton > button {
             background-color: var(--slate-gray) !important;
@@ -248,7 +179,7 @@ def inject_custom_css():
         }
 
         /* ========================================
-           8. TEXT INPUTS
+           6. TEXT INPUTS
            ======================================== */
         .stTextInput > div > div > input, 
         .stTextArea > div > div > textarea, 
@@ -260,7 +191,7 @@ def inject_custom_css():
         }
 
         /* ========================================
-           9. ANIMATIONS - FADE IN ON ENGINE SWITCH
+           7. ANIMATIONS
            ======================================== */
         .main .block-container {
             animation: fadeIn var(--transition-normal);
@@ -272,16 +203,11 @@ def inject_custom_css():
         }
 
         /* ========================================
-           10. HIDE STREAMLIT CHROME
+           8. HIDE STREAMLIT CHROME
            ======================================== */
         header[data-testid="stHeader"] { display: none; }
         footer { display: none; }
-        
-        /* Hide bottom export/menu bar if visible */
-        .stApp > footer,
-        div[data-testid="stToolbar"] {
-            display: none !important;
-        }
+        div[data-testid="stToolbar"] { display: none !important; }
 
         </style>
     """, unsafe_allow_html=True)
