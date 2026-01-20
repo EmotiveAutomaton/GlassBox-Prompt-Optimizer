@@ -127,6 +127,15 @@ def inject_custom_css():
         /* ========================================
            4. CARD BOXES WITH OUTLINES
            ======================================== */
+        /* Card borders - visible outlines */
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-header) {
+            border: 1px solid #D0D0D0 !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+            overflow: hidden !important;
+            background: white !important;
+        }
+        
         .card-header {
             background: var(--slate-gray);
             color: white;
@@ -136,7 +145,16 @@ def inject_custom_css():
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin: 0;
-            border-radius: 6px 6px 0 0;
+            border-radius: 0; /* No radius since parent wrapper has it */
+        }
+        
+        /* Top row cards should be ~40% of viewport height */
+        .top-row-cards {
+            min-height: 40vh;
+        }
+        
+        .top-row-cards div[data-testid="stVerticalBlockBorderWrapper"] {
+            min-height: 38vh;
         }
 
         /* ========================================
@@ -144,13 +162,17 @@ def inject_custom_css():
            ======================================== */
         /* Make bottom row cards extend to near-bottom of screen */
         .bottom-card-container {
-            min-height: calc(100vh - 400px);
+            min-height: calc(60vh - 80px);
             display: flex;
             flex-direction: column;
         }
         
         .bottom-card-container > div {
             flex: 1;
+        }
+        
+        .bottom-card-container div[data-testid="stVerticalBlockBorderWrapper"] {
+            min-height: calc(60vh - 100px);
         }
 
         /* ========================================

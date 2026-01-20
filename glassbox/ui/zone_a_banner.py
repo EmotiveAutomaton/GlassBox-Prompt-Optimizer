@@ -14,10 +14,12 @@ from glassbox.core.optimizer_base import AbstractOptimizer
 def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
     """Render the top row with INPUT and GLASS BOX cards."""
     
-    # --- ROW 1: Two Card Boxes Side by Side ---
+    # --- ROW 1: Two Card Boxes Side by Side (40% viewport height) ---
+    st.markdown('<div class="top-row-cards">', unsafe_allow_html=True)
+    
     col_input, col_glassbox = st.columns([1, 1.8])
     
-    # === CARD 1: INPUT STARTING PROMPT AND DATA ===
+    # === CARD 1: INITIAL PROMPT AND DATA ===
     with col_input:
         with st.container(border=True):
             st.markdown('<div class="card-header">INITIAL PROMPT AND DATA</div>', unsafe_allow_html=True)
@@ -95,6 +97,9 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
                 
                 status = st.session_state.get("optimizer_status", "idle")
                 st.markdown(f"<div style='margin-top:5px; font-weight:500; color:#333;'>STATUS: <span style='color:#0D7CB1'>{status.upper()}</span></div>", unsafe_allow_html=True)
+    
+    # Close top-row-cards wrapper
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def _render_placeholder_schematic():

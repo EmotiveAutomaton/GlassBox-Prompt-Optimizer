@@ -69,12 +69,12 @@ inject_custom_css()
 
 # --- INJECT GLOBAL TOP BAR ---
 # Layout: Title Left | Logo Centered | Gear Icon Right
-# Gear icon is a tiny SVG that will trigger config popover
+# Gear icon clicks the hidden settings popover trigger
 st.markdown(f"""
     <div id="boeing-top-bar">
         <span class="top-bar-title">GLASSBOX PROMPT OPTIMIZER</span>
         <img src="data:image/png;base64,{logo_b64}" alt="Boeing Logo" class="top-bar-logo">
-        <button id="top-bar-gear" onclick="document.getElementById('config-popover-trigger').click()">
+        <button id="top-bar-gear" onclick="document.querySelector('#settings-trigger-container button').click()">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
@@ -231,55 +231,6 @@ def main():
     # === ZONE B: Sidebar (Flush Navigation Only) ===
     render_zone_b()
     
-    # === SETTINGS POPOVER (top-right, triggered by gear icon) ===
-    # Position it in a container that CSS will place in top-right
-    with st.container():
-        st.markdown('<div class="settings-popover-container">', unsafe_allow_html=True)
-        with st.popover("⚙️", use_container_width=False):
-            st.markdown("### Settings")
-            
-            # Light/Dark Mode Toggle (disabled for now)
-            st.markdown("**Theme**")
-            theme = st.radio(
-                "Theme Mode",
-                options=["Light Mode", "Dark Mode"],
-                index=0,
-                key="theme_mode",
-                disabled=True,
-                label_visibility="collapsed"
-            )
-            st.caption("*Dark mode coming soon*")
-            
-            st.divider()
-            
-            # Import/Export
-            st.markdown("**Session Management**")
-            
-            # Export
-            session = get_or_create_session()
-            import json
-            session_json = json.dumps(session.to_dict(), indent=2)
-            st.download_button(
-                "📤 Export Session",
-                data=session_json,
-                file_name="glassbox_session.opro",
-                mime="application/json",
-                use_container_width=True
-            )
-            
-            # Import
-            uploaded = st.file_uploader("📥 Import Session", type=["opro", "json"], key="import_session_file", label_visibility="collapsed")
-            if uploaded:
-                try:
-                    data = json.load(uploaded)
-                    imported = OptimizerSession.from_dict(data)
-                    st.session_state["session"] = imported
-                    st.success("Session imported!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Import failed: {e}")
-        st.markdown('</div>', unsafe_allow_html=True)
-    
     # === Main Content Area ===
     
     # === TOP ROW: INPUT + GLASS BOX Cards ===
@@ -289,6 +240,78 @@ def main():
     # === BOTTOM ROW: POTENTIAL PROMPTS + PROMPT RATINGS + FINAL OUTPUT Cards ===
     session = get_or_create_session()
     render_zone_c(session.candidates, session.test_bench)
+    
+    # === SETTINGS POPOVER (at end, positioned over gear icon via CSS) ===
+    # Put at end so it's easier to target with CSS
+    st.markdown('''
+        <style>
+        /* Position the LAST element container with a popover trigger */
+        .main .block-container > div:last-child {
+            position: fixed !important;
+            top: 10px !important;
+            right: 10px !important;
+            z-index: 999999 !important;
+            width: 40px !important;
+            height: 40px !important;
+        }
+        .main .block-container > div:last-child button[data-testid="stPopoverButton"] {
+            background: transparent !important;
+            border: none !important;
+            color: transparent !important;
+            width: 40px !important;
+            height: 40px !important;
+            padding: 0 !important;
+            min-height: 40px !important;
+        }
+        .main .block-container > div:last-child p {
+            display: none !important;
+        }
+        </style>
+    ''', unsafe_allow_html=True)
+    
+    with st.popover("⚙️", use_container_width=False):
+        st.markdown("### Settings")
+        
+        # Light/Dark Mode Toggle (disabled for now)
+        st.markdown("**Theme**")
+        theme = st.radio(
+            "Theme Mode",
+            options=["Light Mode", "Dark Mode"],
+            index=0,
+            key="theme_mode",
+            disabled=True,
+            label_visibility="collapsed"
+        )
+        st.caption("*Dark mode coming soon*")
+        
+        st.divider()
+        
+        # Import/Export
+        st.markdown("**Session Management**")
+        
+        # Export
+        session = get_or_create_session()
+        import json
+        session_json = json.dumps(session.to_dict(), indent=2)
+        st.download_button(
+            "📤 Export Session",
+            data=session_json,
+            file_name="glassbox_session.opro",
+            mime="application/json",
+            use_container_width=True
+        )
+        
+        # Import
+        uploaded = st.file_uploader("📥 Import Session", type=["opro", "json"], key="import_session_file", label_visibility="collapsed")
+        if uploaded:
+            try:
+                data = json.load(uploaded)
+                imported = OptimizerSession.from_dict(data)
+                st.session_state["session"] = imported
+                st.success("Session imported!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Import failed: {e}")
     
     # === Auto-refresh during optimization ===
     if st.session_state.get("is_running", False):
