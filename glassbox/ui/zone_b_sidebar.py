@@ -1,6 +1,7 @@
 """
 Zone B: Control Sidebar - Flush Navigation Only.
 NO configuration button - config is accessed via gear icon in top bar only.
+Buttons are flush with all 4 edges of the sidebar.
 """
 
 import streamlit as st
@@ -8,50 +9,71 @@ from glassbox.models.session import SessionConfig
 
 
 def render_zone_b():
-    """Render the sidebar with flush navigation blocks only. No config popover here."""
+    """Render the sidebar with flush navigation blocks only. No config anywhere here."""
     
-    # === EXTREMELY AGGRESSIVE CSS FOR FLUSH BUTTONS ===
+    # === TRULY FLUSH CSS FOR BUTTONS - AGGRESSIVE TARGETING ===
     st.sidebar.markdown("""
         <style>
             /* =========================================================
-               SIDEBAR ROOT: Remove ALL padding at every level
+               SIDEBAR ROOT: Position flush with top bar
                ========================================================= */
-            section[data-testid="stSidebar"],
-            section[data-testid="stSidebar"] > div,
-            section[data-testid="stSidebar"] > div > div,
-            section[data-testid="stSidebar"] > div > div > div,
+            section[data-testid="stSidebar"] {
+                padding-top: 60px !important;  /* Match top bar height exactly */
+                margin-top: 0 !important;
+                background-color: #394957 !important;
+            }
+            
+            /* THE KEY: Target the main content div inside sidebar */
+            section[data-testid="stSidebar"] > div:first-child {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            /* Streamlit adds a wrapper div with extra padding */
+            section[data-testid="stSidebar"] > div:first-child > div:first-child {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            /* The vertical block container */
+            section[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+                padding: 0 !important;
+                margin: 0 !important;
+                gap: 0 !important;
+            }
+            
+            /* Border wrapper has padding we need to remove */
+            section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            /* Element containers inside sidebar */
             section[data-testid="stSidebar"] .stElementContainer,
             section[data-testid="stSidebar"] .element-container {
                 padding: 0 !important;
                 margin: 0 !important;
             }
             
-            /* First div inside sidebar */
-            section[data-testid="stSidebar"] > div:first-child {
-                padding-top: 60px !important; /* Only pad for top bar */
-                padding-left: 0 !important;
-                padding-right: 0 !important;
-                padding-bottom: 0 !important;
-            }
-            
             /* =========================================================
-               RADIO GROUP: No gaps, full width
+               RADIO GROUP: Full width, no gaps, PULL TO TOP
                ========================================================= */
             section[data-testid="stSidebar"] .stRadio {
-                width: 100% !important;
+                width: 220px !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                margin-top: -10px !important; /* Pull up to eliminate any remaining gap */
             }
             
             section[data-testid="stSidebar"] .stRadio > div {
-                width: 100% !important;
+                width: 220px !important;
                 padding: 0 !important;
                 margin: 0 !important;
             }
             
             section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] {
                 gap: 0 !important;
-                width: 100% !important;
+                width: 220px !important;
                 padding: 0 !important;
                 margin: 0 !important;
                 display: flex !important;
@@ -59,15 +81,17 @@ def render_zone_b():
             }
             
             /* =========================================================
-               EACH NAV BUTTON: 100% width, no margins
+               EACH NAV BUTTON: Full width, flush all edges
                ========================================================= */
             section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label {
                 display: flex !important;
                 align-items: center !important;
-                width: 100% !important;
+                width: 220px !important;
                 min-width: 220px !important;
                 max-width: 220px !important;
                 margin: 0 !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
                 padding: 18px 16px !important;
                 border: none !important;
                 border-bottom: 1px solid rgba(255,255,255,0.15) !important;
@@ -102,14 +126,14 @@ def render_zone_b():
                 visibility: hidden !important;
             }
             
-            /* Hide the text span that wraps radio label to control padding */
+            /* Text in labels - no margins */
             section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label p {
                 margin: 0 !important;
                 padding: 0 !important;
             }
             
             /* =========================================================
-               HIDE ANY POPOVERS IN SIDEBAR (Config moved to top bar)
+               HIDE ANY POPOVERS IN SIDEBAR
                ========================================================= */
             section[data-testid="stSidebar"] .stPopover {
                 display: none !important;

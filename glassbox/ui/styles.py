@@ -3,6 +3,7 @@ import streamlit as st
 def inject_custom_css():
     """
     Injects Boeing Light Mode CSS with comprehensive styling.
+    Fixes: flush sidebar, card outlines, no flash on navigation.
     """
     st.markdown("""
         <style>
@@ -22,6 +23,8 @@ def inject_custom_css():
             --topbar-height: 60px;
             --transition-fast: 0.15s ease;
             --transition-normal: 0.25s ease;
+            --card-border: 1px solid #D0D0D0;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         html, body, .stApp {
@@ -64,7 +67,7 @@ def inject_custom_css():
             height: 32px;
         }
         
-        /* Gear Icon in Top Bar */
+        /* Gear Icon in Top Bar - Clickable */
         #top-bar-gear {
             background: transparent;
             border: none;
@@ -86,7 +89,7 @@ def inject_custom_css():
         }
 
         /* ========================================
-           3. SIDEBAR - FIXED WIDTH, FLUSH NAV
+           3. SIDEBAR - FIXED WIDTH, TRULY FLUSH
            ======================================== */
         section[data-testid="stSidebar"] {
             background-color: var(--slate-gray) !important;
@@ -95,11 +98,24 @@ def inject_custom_css():
             width: var(--sidebar-width) !important;
             min-width: var(--sidebar-width) !important;
             max-width: var(--sidebar-width) !important;
+            padding-top: var(--topbar-height) !important; /* Flush with top bar */
+            margin-top: 0 !important;
         }
         
-        /* Remove ALL padding from sidebar container */
-        section[data-testid="stSidebar"] > div:first-child {
+        /* AGGRESSIVE: Remove ALL internal padding in sidebar */
+        section[data-testid="stSidebar"] > div:first-child,
+        section[data-testid="stSidebar"] > div:first-child > div:first-child,
+        section[data-testid="stSidebar"] > div:first-child > div:first-child > div {
             padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        /* Target the block wrapper specifically */
+        section[data-testid="stSidebar"] [data-testid="stVerticalBlock"],
+        section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"] {
+            padding: 0 !important;
+            margin: 0 !important;
+            gap: 0 !important;
         }
         
         /* HIDE ALL COLLAPSE/RESIZE CONTROLS */
@@ -120,24 +136,9 @@ def inject_custom_css():
         }
 
         /* ========================================
-           4. CARD BOXES WITH HEADERS
+           4. CARD BOXES WITH HEADERS AND OUTLINES
            ======================================== */
-        .boeing-card {
-            background: #FFFFFF;
-            border: 1px solid #E0E0E0;
-            border-radius: 6px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-            transition: box-shadow var(--transition-normal), transform var(--transition-fast);
-            overflow: hidden;
-        }
-        
-        .boeing-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            transform: translateY(-1px);
-        }
-
-        .boeing-card-header {
+        .card-header {
             background: var(--slate-gray);
             color: white;
             padding: 10px 16px;
@@ -145,10 +146,18 @@ def inject_custom_css():
             font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            margin: 0;
+            border-radius: 6px 6px 0 0;
         }
         
-        .boeing-card-content {
-            padding: 16px;
+        /* Card outline container - targets Streamlit columns */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            border: var(--card-border) !important;
+            border-radius: 6px !important;
+            box-shadow: var(--card-shadow) !important;
+            background: #FFFFFF !important;
+            margin-bottom: 16px !important;
+            overflow: hidden;
         }
 
         /* ========================================
@@ -191,15 +200,16 @@ def inject_custom_css():
         }
 
         /* ========================================
-           7. ANIMATIONS
+           7. PREVENT FLASH ON NAVIGATION
            ======================================== */
-        .main .block-container {
-            animation: fadeIn var(--transition-normal);
+        /* Prevent background flash on rerun */
+        .stApp, .main, .block-container {
+            transition: none !important;
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0.7; }
-            to { opacity: 1; }
+        /* Keep sidebar stable during reruns */
+        section[data-testid="stSidebar"] {
+            transition: none !important;
         }
 
         /* ========================================

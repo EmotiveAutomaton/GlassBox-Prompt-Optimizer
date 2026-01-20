@@ -1,17 +1,18 @@
 """
 Zone C: Bottom Row Cards.
 - Card: POTENTIAL PROMPTS (left, wide).
-- Card: PROMPT RATINGS (right top - contains optimization progress graph).
-- Card: FINAL OUTPUT AND USER EVALUATION (right bottom - test bench).
+- Card: PROMPT RATINGS (right top - contains optimization progress graph, now larger).
+- Card: FINAL OUTPUT AND USER EVALUATION (right bottom - test bench only, inputs A/B/C horizontal).
 
 Uses Streamlit containers with CSS for proper card borders.
+Free Play mode removed. Only Test Bench with horizontal inputs.
 """
 
 import streamlit as st
 from typing import List, Optional
 import plotly.graph_objects as go
 
-from glassbox.models.session import CandidateResult, TestBenchConfig, TrajectoryEntry
+from glassbox.models.session import CandidateResult, TestBenchConfig
 
 
 def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBenchConfig] = None):
@@ -21,76 +22,67 @@ def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBe
     trajectory = st.session_state.get("trajectory", [])
     
     # --- BOTTOM ROW: Wide Left (POTENTIAL PROMPTS) | Right Column (RATINGS + FINAL OUTPUT) ---
-    col_prompts, col_right = st.columns([2, 1.2])
+    col_prompts, col_right = st.columns([2, 1.5])
     
     # === CARD: POTENTIAL PROMPTS (Wide, Left) ===
     with col_prompts:
-        st.markdown('<div class="card-header">POTENTIAL PROMPTS</div>', unsafe_allow_html=True)
-        
-        if not candidates:
-            st.info("No candidates yet. Start optimization to generate prompt variations.")
-        else:
-            sorted_candidates = sorted(candidates, key=lambda c: c.global_score, reverse=True)
+        with st.container(border=True):
+            st.markdown('<div class="card-header">POTENTIAL PROMPTS</div>', unsafe_allow_html=True)
             
-            for i, candidate in enumerate(sorted_candidates[:12]):
-                score = candidate.global_score
-                color = "#22c55e" if score >= 80 else "#eab308" if score >= 50 else "#ef4444"
-                preview = candidate.prompt_text[:80] + "..." if len(candidate.prompt_text) > 80 else candidate.prompt_text
+            if not candidates:
+                st.info("No candidates yet. Start optimization to generate prompt variations.")
+            else:
+                sorted_candidates = sorted(candidates, key=lambda c: c.global_score, reverse=True)
                 
-                col_rank, col_score, col_preview = st.columns([0.2, 0.3, 3])
-                with col_rank:
-                    st.markdown(f"**{i+1}**")
-                with col_score:
-                    st.markdown(f"<span style='color:{color};font-weight:bold;'>{score:.0f}</span>", unsafe_allow_html=True)
-                with col_preview:
-                    if st.button(preview[:60] + "...", key=f"select_{candidate.id}", use_container_width=True):
-                        st.session_state["selected_candidate"] = candidate.id
-                
-                if i < min(len(sorted_candidates), 12) - 1:
-                    st.markdown("<hr style='margin:2px 0;border-color:#E0E0E0;'>", unsafe_allow_html=True)
+                for i, candidate in enumerate(sorted_candidates[:12]):
+                    score = candidate.global_score
+                    color = "#22c55e" if score >= 80 else "#eab308" if score >= 50 else "#ef4444"
+                    preview = candidate.prompt_text[:80] + "..." if len(candidate.prompt_text) > 80 else candidate.prompt_text
+                    
+                    col_rank, col_score, col_preview = st.columns([0.2, 0.3, 3])
+                    with col_rank:
+                        st.markdown(f"**{i+1}**")
+                    with col_score:
+                        st.markdown(f"<span style='color:{color};font-weight:bold;'>{score:.0f}</span>", unsafe_allow_html=True)
+                    with col_preview:
+                        if st.button(preview[:60] + "...", key=f"select_{candidate.id}", use_container_width=True):
+                            st.session_state["selected_candidate"] = candidate.id
+                    
+                    if i < min(len(sorted_candidates), 12) - 1:
+                        st.markdown("<hr style='margin:2px 0;border-color:#E0E0E0;'>", unsafe_allow_html=True)
     
     # === RIGHT COLUMN: RATINGS + FINAL OUTPUT ===
     with col_right:
-        # === CARD: PROMPT RATINGS (Contains optimization progress graph) ===
-        st.markdown('<div class="card-header">PROMPT RATINGS</div>', unsafe_allow_html=True)
-        
-        # Render the optimization progress graph (from zone_d_telemetry)
-        _render_optimization_graph(trajectory, candidates)
-        
-        st.markdown("---")
-        
-        # === CARD: FINAL OUTPUT AND USER EVALUATION ===
-        st.markdown('<div class="card-header">FINAL OUTPUT AND USER EVALUATION</div>', unsafe_allow_html=True)
-        
-        # Test Bench Mode Toggle
-        mode = st.radio("Mode", options=["Test Bench", "Free Play"], horizontal=True, key="testbench_mode_c", label_visibility="collapsed")
-        
-        if mode == "Test Bench":
-            st.markdown("**Input A** (Golden Path)")
-            st.text_area("A", value="Standard test input...", height=50, key="test_input_a", label_visibility="collapsed")
+        # === CARD: PROMPT RATINGS (Contains optimization progress graph - NOW LARGER) ===
+        with st.container(border=True):
+            st.markdown('<div class="card-header">PROMPT RATINGS</div>', unsafe_allow_html=True)
             
-            st.markdown("**Input B** (Edge Case)")
-            st.text_area("B", value="Edge case...", height=50, key="test_input_b", label_visibility="collapsed")
+            # Render the optimization progress graph (larger now)
+            _render_optimization_graph(trajectory, candidates)
+        
+        # === CARD: FINAL OUTPUT AND USER EVALUATION (Test Bench Only, Horizontal Inputs) ===
+        with st.container(border=True):
+            st.markdown('<div class="card-header">FINAL OUTPUT AND USER EVALUATION</div>', unsafe_allow_html=True)
             
-            st.markdown("**Input C** (Adversarial)")
-            st.text_area("C", value="Adversarial...", height=50, key="test_input_c", label_visibility="collapsed")
-        else:
-            selected_id = st.session_state.get("selected_candidate")
-            if selected_id and candidates:
-                candidate = next((c for c in candidates if c.id == selected_id), None)
-                if candidate:
-                    st.code(candidate.prompt_text[:200] + "...", language="text")
-                    st.metric("Score", f"{candidate.global_score:.1f}")
-            else:
-                st.info("Select a prompt from POTENTIAL PROMPTS.")
+            # Test Bench Only - No mode toggle, no Free Play
+            # Inputs A, B, C arranged horizontally
+            col_a, col_b, col_c = st.columns(3)
             
-            st.text_area("Test Input", placeholder="Enter any input...", height=60, key="free_input")
-            if st.button("Run Test", type="primary", use_container_width=True, key="run_test_btn"):
-                st.success("Test completed!")
+            with col_a:
+                st.markdown("**A** (Golden)")
+                st.text_area("A", value="Standard test...", height=60, key="test_input_a", label_visibility="collapsed")
+            
+            with col_b:
+                st.markdown("**B** (Edge)")
+                st.text_area("B", value="Edge case...", height=60, key="test_input_b", label_visibility="collapsed")
+            
+            with col_c:
+                st.markdown("**C** (Adversarial)")
+                st.text_area("C", value="Adversarial...", height=60, key="test_input_c", label_visibility="collapsed")
 
 
 def _render_optimization_graph(trajectory: List, candidates: List[CandidateResult]):
-    """Render the optimization progress graph inside PROMPT RATINGS card."""
+    """Render the optimization progress graph inside PROMPT RATINGS card. Now larger."""
     
     if not trajectory and not candidates:
         # Placeholder when no data
@@ -103,7 +95,7 @@ def _render_optimization_graph(trajectory: List, candidates: List[CandidateResul
             showlegend=False
         ))
         fig.update_layout(
-            height=180,
+            height=250,  # Larger height
             margin=dict(l=30, r=10, t=10, b=30),
             plot_bgcolor='#FDFDFE',
             paper_bgcolor='#FDFDFE',
@@ -148,7 +140,7 @@ def _render_optimization_graph(trajectory: List, candidates: List[CandidateResul
         mode='lines+markers',
         name='Avg Score',
         line=dict(color='#0D7CB1', width=2),
-        marker=dict(size=4)
+        marker=dict(size=5)
     ))
     
     # Max score line
@@ -167,7 +159,7 @@ def _render_optimization_graph(trajectory: List, candidates: List[CandidateResul
     ))
     
     fig.update_layout(
-        height=180,
+        height=250,  # Larger height
         margin=dict(l=30, r=10, t=10, b=30),
         plot_bgcolor='#FDFDFE',
         paper_bgcolor='#FDFDFE',

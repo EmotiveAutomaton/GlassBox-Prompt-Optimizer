@@ -40,7 +40,47 @@
 
 | Bug ID | Date Fixed | Commit | Notes |
 |--------|------------|--------|-------|
-| BUG-001 | 2026-01-19 | Pending | Aggressive CSS for sidebar |
-| BUG-002 | 2026-01-19 | Pending | Global Settings popover in main area |
-| BUG-003 | 2026-01-19 | Pending | Simplified card header structure |
-| BUG-004 | 2026-01-19 | Pending | Restored optimization graph |
+| BUG-001 | 2026-01-19 | 88a8c30 | Aggressive CSS for sidebar |
+| BUG-002 | 2026-01-19 | 88a8c30 | Global Settings popover in main area |
+| BUG-003 | 2026-01-19 | 88a8c30 | Simplified card header structure |
+| BUG-004 | 2026-01-19 | 88a8c30 | Restored optimization graph |
+
+---
+
+## New Issues (2026-01-19 17:13)
+
+### BUG-005: Sidebar Buttons Not Flush Left or Top
+**Status:** In Progress  
+**Severity:** High  
+**Description:** Sidebar buttons still have dead space on the left side and need to move up to be flush with the blue top bar.  
+**Expected:** All 4 buttons flush with left edge and top edge of sidebar.
+
+### BUG-006: Gray Flash When Switching Engines
+**Status:** In Progress  
+**Severity:** Low  
+**Description:** The intersection between blue bar and gray sidebar flashes gray when clicking different engines.  
+**Expected:** No visual flash during navigation.
+
+### BUG-007: Gear Icon Does Not Open Config
+**Status:** In Progress  
+**Severity:** High  
+**Description:** The gear icon in the top-right of the top bar still does not open the configuration menu.  
+**Expected:** Clicking gear icon should open config popover with import/export.
+
+### BUG-008: Cards Need Visible Outlines
+**Status:** In Progress  
+**Severity:** Medium  
+**Description:** Card sections need visible outlines (shadow or border) to delineate each of the 5 sections.  
+**Expected:** Each card should have a visible border or shadow.
+
+### BUG-009: Global Settings Button in Wrong Location
+**Status:** In Progress  
+**Severity:** High  
+**Description:** The Global Settings button appears at the top-left of the white content area. It should only be accessible via gear icon.  
+**Expected:** Remove button from main area; config only via gear icon.
+
+### BUG-010: Remove Free Play Mode
+**Status:** In Progress  
+**Severity:** Medium  
+**Description:** Free Play mode should be removed. Only Test Bench with horizontal A/B/C inputs needed.  
+**Expected:** Test inputs arranged horizontally, card made smaller.
