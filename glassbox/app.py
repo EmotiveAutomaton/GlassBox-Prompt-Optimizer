@@ -231,6 +231,50 @@ def main():
     # === ZONE B: Sidebar (Flush Navigation Only) ===
     render_zone_b()
     
+    # === CONFIG POPOVER (Triggered by gear icon in top bar) ===
+    # Placed in main area so JavaScript can find it
+    with st.popover("⚙️ Global Settings", use_container_width=False):
+        st.markdown("### Configuration")
+        st.caption("Manage application state and preferences.")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Export Session", key="config_export_btn", use_container_width=True):
+                import json
+                session_data = {
+                    "engine": st.session_state.get("selected_engine", "OPro (Iterative)"),
+                    "model": st.session_state.get("selected_model", "gpt-4o-mini"),
+                    "temperature": st.session_state.get("temperature", 0.7),
+                    "seed_prompt": st.session_state.get("seed_prompt", "")
+                }
+                st.download_button(
+                    label="Download .opro",
+                    data=json.dumps(session_data, indent=2),
+                    file_name="session_export.opro",
+                    mime="application/json",
+                    key="download_session"
+                )
+        
+        with col2:
+            uploaded = st.file_uploader("Import", type=["opro", "json"], label_visibility="collapsed", key="config_import_file")
+            if uploaded:
+                import json
+                try:
+                    data = json.load(uploaded)
+                    st.session_state["selected_engine"] = data.get("engine", "OPro (Iterative)")
+                    st.session_state["selected_model"] = data.get("model", "gpt-4o-mini")
+                    st.session_state["temperature"] = data.get("temperature", 0.7)
+                    st.session_state["seed_prompt"] = data.get("seed_prompt", "")
+                    st.success("Session imported!")
+                except Exception as e:
+                    st.error(f"Import failed: {e}")
+        
+        st.markdown("---")
+        st.markdown("**Current Session**")
+        st.caption(f"Engine: {st.session_state.get('selected_engine', 'OPro')}")
+        st.caption(f"Model: {st.session_state.get('selected_model', 'gpt-4o-mini')}")
+        st.caption(f"Temperature: {st.session_state.get('temperature', 0.7)}")
+    
     # === Main Content Area ===
     
     # === TOP ROW: INPUT + GLASS BOX Cards ===

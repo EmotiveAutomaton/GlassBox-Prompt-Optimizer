@@ -1,7 +1,9 @@
 """
-Zone A: Top Row Cards
-- Card 1: INPUT STARTING PROMPT AND DATA (left, tall - contains all input elements)
-- Card 2: GLASS BOX (right - diagram + internal log)
+Zone A: Top Row Cards.
+- Card 1: INPUT STARTING PROMPT AND DATA (left).
+- Card 2: GLASS BOX (right - diagram + internal log).
+
+Uses Streamlit containers with CSS for proper card borders.
 """
 
 import streamlit as st
@@ -12,16 +14,42 @@ from glassbox.core.optimizer_base import AbstractOptimizer
 def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
     """Render the top row with INPUT and GLASS BOX cards."""
     
+    # Inject card styling CSS
+    st.markdown("""
+        <style>
+            /* Card container styling via border on st.container */
+            div[data-testid="stVerticalBlock"] > div.card-wrapper {
+                border: 1px solid #E0E0E0;
+                border-radius: 6px;
+                background: #FFFFFF;
+                margin-bottom: 16px;
+                overflow: hidden;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            }
+            
+            .card-header {
+                background: #394957;
+                color: white;
+                padding: 10px 16px;
+                font-weight: 500;
+                font-size: 13px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin: 0;
+            }
+            
+            .card-body {
+                padding: 16px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    
     # --- ROW 1: Two Card Boxes Side by Side ---
     col_input, col_glassbox = st.columns([1, 1.8])
     
     # === CARD 1: INPUT STARTING PROMPT AND DATA ===
     with col_input:
-        st.markdown('''
-            <div class="boeing-card">
-                <div class="boeing-card-header">INPUT STARTING PROMPT AND DATA</div>
-                <div class="boeing-card-content">
-        ''', unsafe_allow_html=True)
+        st.markdown('<div class="card-header">INPUT STARTING PROMPT AND DATA</div>', unsafe_allow_html=True)
         
         # Model Settings popover
         with st.popover("Model Settings", use_container_width=True):
@@ -64,16 +92,10 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
         with col_stop:
             if st.button("STOP", use_container_width=True):
                 st.session_state["stop_optimization"] = True
-        
-        st.markdown('</div></div>', unsafe_allow_html=True)
     
     # === CARD 2: GLASS BOX (Schematic + Internal Log) ===
     with col_glassbox:
-        st.markdown('''
-            <div class="boeing-card">
-                <div class="boeing-card-header">GLASS BOX</div>
-                <div class="boeing-card-content">
-        ''', unsafe_allow_html=True)
+        st.markdown('<div class="card-header">GLASS BOX</div>', unsafe_allow_html=True)
         
         col_schematic, col_log = st.columns([2, 1])
         
@@ -101,8 +123,6 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
             
             status = st.session_state.get("optimizer_status", "idle")
             st.markdown(f"<div style='margin-top:5px; font-weight:500; color:#333;'>STATUS: <span style='color:#0D7CB1'>{status.upper()}</span></div>", unsafe_allow_html=True)
-        
-        st.markdown('</div></div>', unsafe_allow_html=True)
 
 
 def _render_placeholder_schematic():
