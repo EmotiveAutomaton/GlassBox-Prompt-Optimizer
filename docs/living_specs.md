@@ -24,6 +24,14 @@
   * **Section Headers:** `#394957` (Slate Gray) for all card headers.
   * **Accent:** `#0D7CB1` (Selected Blue) for active states.
   * **Text:** Black/Dark Gray on light backgrounds; White on Sidebar/Headers.
+
+* **Robust UI Rendering Standards (Mandatory):**
+  * **Card Borders:** Standard CSS `border` properties are notoriously unreliable in Streamlit iframe contexts. All valid implementations MUST use a **Z-Index Overlay Strategy**:
+    * Construct borders using a `::after` pseudo-element on the card container.
+    * Properties: `position: absolute`, `top/left/right/bottom: 0`, `z-index: 999`, `pointer-events: none`.
+    * This ensures borders are drawn *topologically above* all content, bypassing specific browser rendering glitches or overflow clipping.
+  * **Input Visibility:** Textbox backgrounds must be strictly `#FFFFFF` (White) with high-contrast placeholder text (e.g., `#555555`) explicitly styled via `::placeholder` pseudo-selectors.
+  * **Button Colors:** Primary actions must use `!important` overrides for `background-color` to prevent theme leakage.
   
 * **Typography:** Helvetica Neue. Regular weight for body. Medium for card headers.
 
@@ -136,6 +144,9 @@ The system supports four distinct visualization topologies (implemented in `visu
 
 * **Session Management:**
 * "Export Run to JSON" / "Import Project".
+
+* **State Synchronization:**
+* The Sidebar Engine Selector MUST write directly to the `selected_engine` session state key (not a proxy key) to ensure immediate and atomic updates to the Main Content Area (Zone A/C).
 
 
 
@@ -472,7 +483,9 @@ The "Optimization Score" is **not** derived from a single run. Every candidate p
 To support the "Zip Drive" deployment strategy, the system must save state to a single portable file.
 
 * **File Format:** `.opro` (JSON).
-* **Schema (Pydantic):**
+* **Schema (Pydantic - `OptimizerSession`):**
+*   Root object containing `config`, `candidates`, `trajectories`, and `test_bench`.
+*   Uses `UnifiedCandidate` model for all engines, ensuring polymorphic stability.
 ```json
 {
   "metadata": {
