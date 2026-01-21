@@ -100,8 +100,9 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
 
 def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, placeholder: str = ""):
     """
-    Renders a File Uploader + Text Area + Tab Navigation combo.
-    tabs are rendered BELOW the text area.
+    Renders a File Uploader + Tab Navigation combo.
+    Text area is removed per requirements.
+    Apps 'tabs' are radio buttons BELOW the uploader.
     """
     # 1. State Management
     tab_key = f"{state_prefix}_active_tab"
@@ -118,23 +119,27 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
         st.session_state[data_key] = ""
 
     # 2. File Uploader (Top)
-    # We use a unique key per tab to reset uploader when switching? 
-    # Or strict "Upload to Current" logic. 
-    # Strict logic: Uploader is ephemeral. If user drops file, we read and dump to text area.
-    uploaded_file = st.file_uploader(f"Upload {label} ({active_tab})", type=["txt", "md", "csv", "json"], key=f"uploader_{state_prefix}_{suffix}", label_visibility="collapsed")
+    # Label requested: "Drag and drop a set of test data here"
+    # We maintain the unique key to reset on tab switch (standard Streamlit pattern)
+    uploaded_file = st.file_uploader(
+        "Drag and drop a set of test data here", 
+        type=["txt", "md", "csv", "json"], 
+        key=f"uploader_{state_prefix}_{suffix}", 
+        label_visibility="visible"
+    )
     
     if uploaded_file is not None:
         # Read and populate text area state
         string_data = uploaded_file.getvalue().decode("utf-8")
         st.session_state[data_key] = string_data
-
-    # 3. Editable Text Area (Middle)
-    # Bind to the specific slot's key
-    st.text_area(f"{label} Content", value=st.session_state[data_key], height=height, 
-                 key=f"text_{data_key}", # Unique key for widget
-                 placeholder=placeholder,
-                 label_visibility="collapsed",
-                 on_change=lambda: _update_state(data_key, f"text_{data_key}"))
+        
+    # 3. Status Indicator (Since text area is gone)
+    current_data = st.session_state[data_key]
+    if current_data:
+        # Show small confirmation so user knows this "Set" has data
+        st.caption(f"✅ **{active_tab}**: Loaded {len(current_data)} chars.")
+    else:
+        st.caption(f"ℹ️ **{active_tab}**: Empty")
 
     # 4. Tabs (Radio) (Bottom)
     st.radio("Data Set", ["Set 1", "Set 2", "Set 3"], 
