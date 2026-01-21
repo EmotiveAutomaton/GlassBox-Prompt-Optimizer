@@ -189,13 +189,6 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
         # Dataset 1
         if d_name == "Dataset 1":
             with cols[col_idx]:
-                if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, use_container_width=True):
-                    st.session_state[tab_key] = d_name
-                    st.rerun()
-            col_idx += 1
-            # Skip the "0.01" dummy if we added it? 
-            # In the construction above:
-            # if D1: extend([1]) ?? No I realized I shouldn't add dummy valid columns if I don't use them 
                 if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, help="Permanent Dataset", use_container_width=True):
                     st.session_state[tab_key] = d_name
                     st.rerun()
