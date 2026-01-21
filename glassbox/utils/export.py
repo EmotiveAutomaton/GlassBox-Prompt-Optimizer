@@ -10,7 +10,8 @@ from datetime import datetime
 from typing import Optional, List
 from dataclasses import asdict
 
-from glassbox.models.session import OptimizerSession, CandidateResult
+from glassbox.models.session import OptimizerSession
+from glassbox.models.candidate import UnifiedCandidate
 
 
 def generate_pdf_report(session: OptimizerSession) -> bytes:
@@ -98,9 +99,9 @@ def _generate_reportlab_pdf(session: OptimizerSession) -> bytes:
     # Winner
     if session.winner:
         elements.append(Paragraph("Winning Prompt", heading_style))
-        elements.append(Paragraph(f"Score: {session.winner.global_score:.1f}/100", body_style))
+        elements.append(Paragraph(f"Score: {session.winner.score_aggregate:.1f}/100", body_style))
         elements.append(Spacer(1, 5))
-        elements.append(Paragraph(session.winner.prompt_text, body_style))
+        elements.append(Paragraph(session.winner.full_content, body_style))
         elements.append(Spacer(1, 15))
     
     # Trajectory Summary
@@ -128,18 +129,23 @@ def _generate_reportlab_pdf(session: OptimizerSession) -> bytes:
     # Top Candidates
     if session.candidates:
         elements.append(Paragraph("Top Candidates", heading_style))
-        sorted_candidates = sorted(session.candidates, key=lambda c: c.global_score, reverse=True)
+        sorted_candidates = sorted(session.candidates, key=lambda c: c.score_aggregate, reverse=True)
         
         for i, candidate in enumerate(sorted_candidates[:5]):
+            results = candidate.test_results
+            score_a = results.get("input_a", 0)
+            score_b = results.get("input_b", 0)
+            score_c = results.get("input_c", 0)
+            
             elements.append(Paragraph(
-                f"#{i+1} - Score: {candidate.global_score:.1f} | "
-                f"Traffic: ({'✓' if candidate.score_a >= 50 else '✗'}"
-                f"{'✓' if candidate.score_b >= 50 else '✗'}"
-                f"{'✓' if candidate.score_c >= 50 else '✗'})",
+                f"#{i+1} - Score: {candidate.score_aggregate:.1f} | "
+                f"Traffic: ({'✓' if score_a >= 50 else '✗'}"
+                f"{'✓' if score_b >= 50 else '✗'}"
+                f"{'✓' if score_c >= 50 else '✗'})",
                 body_style
             ))
             elements.append(Paragraph(
-                candidate.prompt_text[:200] + "..." if len(candidate.prompt_text) > 200 else candidate.prompt_text,
+                candidate.display_text[:200] + "..." if len(candidate.display_text) > 200 else candidate.display_text,
                 body_style
             ))
             elements.append(Spacer(1, 8))
@@ -173,9 +179,9 @@ def _generate_simple_pdf(session: OptimizerSession) -> bytes:
     if session.winner:
         lines.extend([
             "-" * 40,
-            f"WINNING PROMPT (Score: {session.winner.global_score:.1f}):",
+            f"WINNING PROMPT (Score: {session.winner.score_aggregate:.1f}):",
             "-" * 40,
-            session.winner.prompt_text,
+            session.winner.full_content,
             "",
         ])
     
@@ -210,9 +216,14 @@ def export_candidates_csv(session: OptimizerSession) -> str:
     """Export all candidates to CSV format."""
     lines = ["id,global_score,score_a,score_b,score_c,generation,prompt"]
     for c in session.candidates:
-        prompt_escaped = c.prompt_text.replace('"', '""')
+        prompt_escaped = c.display_text.replace('"', '""')
+        results = c.test_results
+        score_a = results.get("input_a", 0)
+        score_b = results.get("input_b", 0)
+        score_c = results.get("input_c", 0)
+        
         lines.append(
-            f'{c.id},{c.global_score:.2f},{c.score_a:.2f},{c.score_b:.2f},'
-            f'{c.score_c:.2f},{c.generation},"{prompt_escaped}"'
+            f'{c.id},{c.score_aggregate:.2f},{score_a:.2f},{score_b:.2f},'
+            f'{score_c:.2f},{c.generation_index},"{prompt_escaped}"'
         )
     return "\n".join(lines)

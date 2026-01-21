@@ -17,10 +17,10 @@ from glassbox.core.api_client import BoeingAPIClient
 from glassbox.core.evaluator import Evaluator
 from glassbox.models.session import (
     OptimizerSession, 
-    CandidateResult, 
     TrajectoryEntry,
     SchematicState
 )
+from glassbox.models.candidate import UnifiedCandidate
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +38,8 @@ class OptimizerStatus(Enum):
 @dataclass
 class StepResult:
     """Result of a single optimization step."""
-    candidates: List[CandidateResult]
-    best_candidate: Optional[CandidateResult]
+    candidates: List[UnifiedCandidate]
+    best_candidate: Optional[UnifiedCandidate]
     step_number: int
     schematic_state: SchematicState
     active_node: str
@@ -235,19 +235,19 @@ class AbstractOptimizer(ABC):
         """Get the best score from current candidates."""
         if not self.session.candidates:
             return 0.0
-        return max(c.global_score for c in self.session.candidates)
+        return max(c.score_aggregate for c in self.session.candidates)
 
     def _notify_status_change(self):
         """Notify UI of status change."""
         if self._on_status_change:
             self._on_status_change(self._status)
 
-    def _add_trajectory_entry(self, candidate: CandidateResult):
+    def _add_trajectory_entry(self, candidate: UnifiedCandidate):
         """Add entry to optimization trajectory."""
         entry = TrajectoryEntry(
             step=self.session.current_step,
-            score=candidate.global_score,
-            prompt=candidate.prompt_text
+            score=candidate.score_aggregate,
+            prompt=candidate.display_text # OPro uses the prompt text
         )
         self.session.trajectory.append(entry)
 

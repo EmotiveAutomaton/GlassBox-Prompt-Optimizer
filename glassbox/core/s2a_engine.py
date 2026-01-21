@@ -11,7 +11,8 @@ from typing import List, Dict, Any, Tuple
 
 from glassbox.core.optimizer_base import AbstractOptimizer, StepResult
 from glassbox.core.api_client import Message
-from glassbox.models.session import CandidateResult, SchematicState
+from glassbox.models.session import SchematicState
+from glassbox.models.candidate import UnifiedCandidate
 from glassbox.prompts.templates import (
     S2A_FILTER_SYSTEM_PROMPT,
     S2A_FILTER_USER_TEMPLATE,
@@ -51,6 +52,11 @@ class S2AEngine(AbstractOptimizer):
     @property
     def schematic_type(self) -> str:
         return "conveyor"
+
+    @property
+    def engine_type_enum(self):
+        from glassbox.models.candidate import EngineType
+        return EngineType.S2A
 
     def set_context(self, raw_context: str, query: str):
         """Set the raw context and query for filtering."""
@@ -102,27 +108,51 @@ class S2AEngine(AbstractOptimizer):
                 self._current_filter_prompt = new_filter
 
         # Create candidate result
-        candidate = CandidateResult(
-            prompt_text=self._current_filter_prompt,
-            response_a=response,
-            score_a=eval_result.score,
-            evaluator_reasoning_a=eval_result.reasoning,
-            generation=self._pass_number,
-            mutation_operator="S2A Filter"
+        input_tokens = len(raw_context.split())
+        output_tokens = len(clean_context.split())
+        noise_reduction = (1 - output_tokens / max(input_tokens, 1)) if input_tokens else 0.0
+
+        scores = {"input_a": eval_result.score} # Primary
+        responses = {"input_a": response}
+        
+        candidate = UnifiedCandidate(
+            engine_type=self.engine_type_enum,
+            generation_index=self._pass_number,
+            display_text=f"Strategy: {self._current_filter_prompt}",
+            full_content=self._current_filter_prompt,
+            score_aggregate=eval_result.score,
+            test_results=scores,
+            meta={
+                "clean_context": clean_context,
+                "filtered_items": filtered_out,
+                "noise_reduction_rate": noise_reduction,
+                "mutation_type": "s2a_optimization",
+                "test_details": {
+                    "responses": responses,
+                    "reasoning": {"input_a": eval_result.reasoning}
+                }
+            }
         )
 
         # Quick evaluation on other test inputs
         for label, input_text in [("b", self.session.test_bench.input_b), 
                                    ("c", self.session.test_bench.input_c)]:
+            key = f"input_{label}"
             if input_text.strip():
                 try:
                     filtered = self._apply_filter(input_text, query)
                     resp = self._generate_response(filtered.get("clean", input_text), query)
                     ev = self.evaluator.evaluate(self._current_filter_prompt, input_text, resp)
-                    setattr(candidate, f"score_{label}", ev.score)
-                    setattr(candidate, f"response_{label}", resp)
+                    
+                    candidate.test_results[key] = ev.score
+                    candidate.score_aggregate = (candidate.score_aggregate + ev.score) / 2 # simplified avg
+                    candidate.meta["test_details"]["responses"][key] = resp
+                    candidate.meta["test_details"]["reasoning"][key] = ev.reasoning
+                    
                 except Exception as e:
-                    setattr(candidate, f"score_{label}", 0.0)
+                    candidate.test_results[key] = 0.0
+                    candidate.meta["test_details"]["responses"][key] = ""
+                    candidate.meta["test_details"]["reasoning"][key] = f"Error: {e}"
 
         self.session.candidates.append(candidate)
         self._add_trajectory_entry(candidate)
@@ -131,8 +161,6 @@ class S2AEngine(AbstractOptimizer):
         self.session.schematic_state = SchematicState.IDLE
         self.session.active_node = ""
 
-        input_tokens = len(raw_context.split())
-        output_tokens = len(clean_context.split())
         self._update_monologue(
             f"Pass {self._pass_number} complete",
             self._pass_number,

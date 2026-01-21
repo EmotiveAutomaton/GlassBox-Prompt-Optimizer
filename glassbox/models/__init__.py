@@ -1,13 +1,16 @@
 # Models package
 from glassbox.models.session import (
-    EngineType,
     SchematicState,
     TrajectoryEntry,
     TestBenchConfig,
-    CandidateResult,
     SessionConfig,
     SessionMetadata,
     OptimizerSession
+)
+
+from glassbox.models.candidate import (
+    UnifiedCandidate,
+    EngineType
 )
 
 __all__ = [
@@ -15,7 +18,7 @@ __all__ = [
     "SchematicState", 
     "TrajectoryEntry",
     "TestBenchConfig",
-    "CandidateResult",
+    "UnifiedCandidate",
     "SessionConfig",
     "SessionMetadata",
     "OptimizerSession"

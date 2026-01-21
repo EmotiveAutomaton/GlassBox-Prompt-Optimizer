@@ -35,12 +35,8 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
         with st.container(border=True):
             st.markdown(f'<div class="card-header">INITIAL PROMPT AND DATA ({engine_id.upper()})</div>', unsafe_allow_html=True)
             
-            # --- SHARED SETTINGS POPOVER ---
-            with st.popover("Model Settings", use_container_width=True):
-                st.markdown("**Model Configuration**")
-                models = ["gpt-4o-mini", "gpt-4o", "gpt-4", "claude-3-5-sonnet"]
-                st.selectbox("LLM Model", options=models, index=0, key="selected_model")
-                st.slider("Temperature", 0.0, 1.0, 0.7, 0.1, key="temperature")
+            # --- SHARED SETTINGS POPOVER (Moved to Zone F) ---
+            # Model configuration is now handled globally via the top bar gear icon.
             
             # --- DYNAMIC INPUTS ---
             if engine_id == "opro":

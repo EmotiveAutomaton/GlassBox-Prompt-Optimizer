@@ -10,9 +10,11 @@ import random
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 
+import uuid
 from glassbox.core.optimizer_base import AbstractOptimizer, StepResult
 from glassbox.core.api_client import Message
-from glassbox.models.session import CandidateResult, SchematicState
+from glassbox.models.session import SchematicState
+from glassbox.models.candidate import UnifiedCandidate
 from glassbox.prompts.templates import (
     PROMPTBREEDER_ZERO_ORDER_MUTATION,
     PROMPTBREEDER_FIRST_ORDER_MUTATION,
@@ -70,6 +72,11 @@ class PromptbreederEngine(AbstractOptimizer):
     @property
     def engine_name(self) -> str:
         return "Promptbreeder (Evolutionary)"
+
+    @property
+    def engine_type_enum(self):
+        from glassbox.models.candidate import EngineType
+        return EngineType.BREEDER
 
     @property
     def schematic_type(self) -> str:
@@ -133,25 +140,38 @@ class PromptbreederEngine(AbstractOptimizer):
 
         self.population = new_population[:self.POPULATION_SIZE]
 
-        # Convert to CandidateResults for session tracking
+        # Convert to UnifiedCandidate for session tracking
         step_candidates = []
         for unit in self.population:
-            candidate = CandidateResult(
-                id=unit.id,
-                prompt_text=unit.task_prompt,
-                score_a=unit.fitness,
-                score_b=unit.fitness * 0.9,  # Estimated
-                score_c=unit.fitness * 0.8,
-                generation=self._generation,
-                mutation_operator=unit.mutation_prompt[:50]
+            # Estimate other scores if not computed (hackathon shortcut per original code)
+            score_a = unit.fitness
+            score_b = unit.fitness * 0.9
+            score_c = unit.fitness * 0.8
+            scores = {"input_a": score_a, "input_b": score_b, "input_c": score_c}
+            
+            candidate = UnifiedCandidate(
+                id=uuid.UUID(hex=hash(unit.id) & ((1<<128)-1)), # Deterministic UUID from unit ID string
+                engine_type=self.engine_type_enum,
+                generation_index=self._generation,
+                display_text=f"Unit {unit.id}: {unit.task_prompt[:30]}...",
+                full_content=unit.task_prompt,
+                score_aggregate=unit.fitness, # Primary fitness is what matters for Breeder
+                test_results=scores,
+                meta={
+                    "unit_id": unit.id,
+                    "mutation_prompt": unit.mutation_prompt,
+                    "parent_ids": unit.parent_ids,
+                    "fitness": unit.fitness,
+                    "mutation_operator": "mixed" # Simplification
+                }
             )
             step_candidates.append(candidate)
             
-            # Add to session if not already there
-            if not any(c.id == unit.id for c in self.session.candidates):
+            # Add to session if not already there (check by ID string match in meta)
+            if not any(c.meta.get("unit_id") == unit.id for c in self.session.candidates):
                 self.session.candidates.append(candidate)
 
-        best = max(step_candidates, key=lambda c: c.global_score)
+        best = max(step_candidates, key=lambda c: c.score_aggregate)
         self._add_trajectory_entry(best)
         self.session.winner = self.session.get_best_candidate()
 

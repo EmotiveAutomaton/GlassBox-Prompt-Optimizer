@@ -10,10 +10,11 @@ Contains:
 import streamlit as st
 from typing import Optional
 
-from glassbox.models.session import TestBenchConfig, CandidateResult
+from glassbox.models.session import TestBenchConfig
+from glassbox.models.candidate import UnifiedCandidate
 
 
-def render_zone_e(test_bench: TestBenchConfig, winner: Optional[CandidateResult] = None):
+def render_zone_e(test_bench: TestBenchConfig, winner: Optional[UnifiedCandidate] = None):
     """Render the test bench zone."""
     
     # Mode toggle
@@ -86,7 +87,7 @@ def _render_test_bench_mode(test_bench: TestBenchConfig):
     st.session_state["test_bench"] = test_bench
 
 
-def _render_free_play_mode(winner: Optional[CandidateResult]):
+def _render_free_play_mode(winner: Optional[UnifiedCandidate]):
     """Render free play mode for testing the winning prompt."""
     st.markdown("### 🎮 Free Play")
     
@@ -95,8 +96,8 @@ def _render_free_play_mode(winner: Optional[CandidateResult]):
         return
 
     st.markdown("**Winning Prompt:**")
-    st.code(winner.prompt_text, language="text")
-    st.metric("Final Score", f"{winner.global_score:.1f}")
+    st.code(winner.full_content, language="text")
+    st.metric("Final Score", f"{winner.score_aggregate:.1f}")
 
     st.markdown("---")
     st.markdown("**Test with any input:**")

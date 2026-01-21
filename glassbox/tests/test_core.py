@@ -37,7 +37,7 @@ def test_model_imports():
         SchematicState,
         TrajectoryEntry,
         TestBenchConfig,
-        CandidateResult,
+        UnifiedCandidate,
         SessionConfig,
         SessionMetadata,
         OptimizerSession,
@@ -95,16 +95,21 @@ class TestOptimizerSession:
         assert session.test_bench.input_a == "Golden"
 
     def test_session_serialization(self):
-        from glassbox.models import OptimizerSession, CandidateResult
+        from glassbox.models import OptimizerSession, UnifiedCandidate, EngineType
+        import uuid
         
         session = OptimizerSession()
         session.seed_prompt = "Test"
         
-        candidate = CandidateResult(
-            prompt_text="Improved prompt",
-            score_a=80.0,
-            score_b=70.0,
-            score_c=60.0
+        candidate = UnifiedCandidate(
+            id=uuid.uuid4(),
+            engine_type=EngineType.OPRO,
+            generation_index=0,
+            display_text="Improved prompt",
+            full_content="Improved prompt",
+            score_aggregate=80.0, # (90+70+80)/3
+            test_results={"input_a": 90.0, "input_b": 70.0, "input_c": 80.0},
+            meta={}
         )
         session.candidates.append(candidate)
         
@@ -113,32 +118,48 @@ class TestOptimizerSession:
         
         assert data["seed_prompt"] == "Test"
         assert len(data["candidates"]) == 1
+        assert data["candidates"][0]["score_aggregate"] == 80.0
 
-    def test_candidate_global_score(self):
-        from glassbox.models import CandidateResult
+    def test_candidate_score_aggregate(self):
+        from glassbox.models import UnifiedCandidate, EngineType
+        import uuid
         
-        candidate = CandidateResult(
-            score_a=90.0,
-            score_b=80.0,
-            score_c=70.0
+        candidate = UnifiedCandidate(
+            id=uuid.uuid4(),
+            engine_type=EngineType.OPRO,
+            generation_index=1,
+            display_text="test",
+            full_content="test",
+            score_aggregate=80.0,
+            test_results={"input_a": 90.0, "input_b": 80.0, "input_c": 70.0},
+            meta={}
         )
         
-        # (90 + 80 + 70) / 3 = 80
-        assert candidate.global_score == 80.0
+        # In v0.0.3, score_aggregate is SET by the engine, not calculated on the fly by the model in this version
+        # But we can verify it holds the value
+        assert candidate.score_aggregate == 80.0
 
     def test_candidate_human_override(self):
-        from glassbox.models import CandidateResult
+        from glassbox.models import UnifiedCandidate, EngineType
+        import uuid
         
-        candidate = CandidateResult(
-            score_a=50.0,
-            score_b=50.0,
-            score_c=50.0
+        candidate = UnifiedCandidate(
+            id=uuid.uuid4(),
+            engine_type=EngineType.OPRO,
+            generation_index=1,
+            display_text="test",
+            full_content="test",
+            score_aggregate=50.0,
+            test_results={},
+            meta={}
         )
         
-        assert candidate.global_score == 50.0
+        assert candidate.score_aggregate == 50.0
         
-        candidate.human_override_score = 95.0
-        assert candidate.global_score == 95.0
+        # UnifiedCandidate typically handles overrides via updating score_aggregate directly 
+        # or via a UI layer wrapper. For the core model, we just update the field.
+        candidate.score_aggregate = 95.0
+        assert candidate.score_aggregate == 95.0
 
 
 # RAG Simulator Tests

@@ -12,10 +12,11 @@ import streamlit as st
 from typing import List, Optional
 import plotly.graph_objects as go
 
-from glassbox.models.session import CandidateResult, TestBenchConfig
+from glassbox.models.session import TestBenchConfig
+from glassbox.models.candidate import UnifiedCandidate
 
 
-def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBenchConfig] = None):
+def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestBenchConfig] = None):
     """Render the bottom row with three cards."""
     
     # Get trajectory from session state for the graph
@@ -36,12 +37,12 @@ def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBe
             if not candidates:
                 st.info("No candidates yet. Start optimization to generate prompt variations.")
             else:
-                sorted_candidates = sorted(candidates, key=lambda c: c.global_score, reverse=True)
+                sorted_candidates = sorted(candidates, key=lambda c: c.score_aggregate, reverse=True)
                 
                 for i, candidate in enumerate(sorted_candidates[:12]):
-                    score = candidate.global_score
+                    score = candidate.score_aggregate
                     color = "#22c55e" if score >= 80 else "#eab308" if score >= 50 else "#ef4444"
-                    preview = candidate.prompt_text[:80] + "..." if len(candidate.prompt_text) > 80 else candidate.prompt_text
+                    preview = candidate.display_text[:80] + "..." if len(candidate.display_text) > 80 else candidate.display_text
                     
                     col_rank, col_score, col_preview = st.columns([0.2, 0.3, 3])
                     with col_rank:
@@ -50,7 +51,7 @@ def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBe
                         st.markdown(f"<span style='color:{color};font-weight:bold;'>{score:.0f}</span>", unsafe_allow_html=True)
                     with col_preview:
                         if st.button(preview[:60] + "...", key=f"select_{candidate.id}", use_container_width=True):
-                            st.session_state["selected_candidate"] = candidate.id
+                            st.session_state["selected_candidate"] = str(candidate.id)
                     
                     if i < min(len(sorted_candidates), 12) - 1:
                         st.markdown("<hr style='margin:2px 0;border-color:#E0E0E0;'>", unsafe_allow_html=True)
@@ -89,7 +90,7 @@ def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBe
 
 
 
-def _render_optimization_graph(trajectory: List, candidates: List[CandidateResult]):
+def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandidate]):
     """Render the optimization progress graph inside PROMPT RATINGS card. Now larger."""
     
     if not trajectory and not candidates:
@@ -130,9 +131,9 @@ def _render_optimization_graph(trajectory: List, candidates: List[CandidateResul
         scores = [entry.score if hasattr(entry, 'score') else 0 for entry in trajectory]
     else:
         # Use candidate scores as fallback
-        sorted_candidates = sorted(candidates, key=lambda c: c.global_score, reverse=True)[:10]
+        sorted_candidates = sorted(candidates, key=lambda c: c.score_aggregate, reverse=True)[:10]
         steps = list(range(len(sorted_candidates)))
-        scores = [c.global_score for c in sorted_candidates]
+        scores = [c.score_aggregate for c in sorted_candidates]
     
     # Calculate running average
     avg_scores = []

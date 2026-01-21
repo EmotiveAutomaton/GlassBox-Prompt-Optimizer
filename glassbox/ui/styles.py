@@ -2,27 +2,46 @@ import streamlit as st
 
 def inject_custom_css():
     """
-    Injects Boeing Light Mode CSS with comprehensive styling.
-    Fixes: flush sidebar, card outlines, no flash, full-height cards.
+    Injects Boeing CSS with comprehensive styling.
+    Supports Light/Dark mode via session state.
     """
+    is_dark = st.session_state.get("dark_mode", False)
+    
+    # Define theme colors
+    bg_color = "#0E1117" if is_dark else "#FDFDFE"
+    text_color = "#FAFAFA" if is_dark else "#394957"
+    card_bg = "#161b22" if is_dark else "#FFFFFF"
+    card_border = "#30363d" if is_dark else "#D0D0D0"
+    
+    # === 1. DYNAMIC CSS (F-String) ===
+    # Must use double braces {{ }} for CSS to escape f-string formatting
+    st.markdown(f"""
+        <style>
+        :root {{
+            /* Dynamic Colors */
+            --white: {bg_color};
+            --text-color: {text_color};
+            --card-bg: {card_bg};
+            --card-border-color: {card_border};
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
+    # === 2. STATIC CSS (Normal String) ===
+    # Single braces { } are fine here
     st.markdown("""
         <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
         
-        /* ========================================
-           1. CSS VARIABLES & GLOBAL RESET
-           ======================================== */
         :root {
             --boeing-blue: #1A409F;
             --selected-blue: #0D7CB1;
             --slate-gray: #394957;
-            --white: #FDFDFE;
-            --text-color: #394957;
             --text-white: #FFFFFF;
+            
             --sidebar-width: 220px;
             --topbar-height: 60px;
             --transition-fast: 0.1s ease;
-            --card-border: 1px solid #D0D0D0;
             --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
@@ -151,11 +170,11 @@ def inject_custom_css():
 
         /* Card borders - visible outlines */
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-header) {
-            border: 1px solid #D0D0D0 !important;
+            border: 1px solid var(--card-border-color) !important;
             border-radius: 6px !important;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
             overflow: hidden !important;
-            background: white !important;
+            background: var(--card-bg) !important;
         }
         
         .card-header {
@@ -167,16 +186,9 @@ def inject_custom_css():
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin: 0;
-            border-radius: 0; /* No radius since parent wrapper has it */
+            border-radius: 0;
         }
         
-        /* Spacer classes removed */
-
-        /* ========================================
-           5. FULL-HEIGHT BOTTOM CARDS
-           ======================================== */
-        /* Bottom spacer classes removed */
-
         /* ========================================
            6. BUTTONS
            ======================================== */
@@ -205,8 +217,8 @@ def inject_custom_css():
         .stTextInput > div > div > input, 
         .stTextArea > div > div > textarea, 
         .stSelectbox > div > div > div {
-            background-color: #FFFFFF !important;
-            color: #333 !important;
+            background-color: var(--card-bg) !important;
+            color: var(--text-color) !important;
             border: 1px solid #CCC !important;
             border-radius: 4px !important;
         }
@@ -214,7 +226,6 @@ def inject_custom_css():
         /* ========================================
            8. SETTINGS POPOVER POSITIONING
            ======================================== */
-        /* Position settings popover trigger in top-right */
         .settings-popover-container {
             position: fixed !important;
             top: 70px !important;
@@ -228,7 +239,6 @@ def inject_custom_css():
             position: static !important;
         }
         
-        /* Style the popover trigger button */
         .settings-popover-container button[data-testid="stPopoverButton"] {
             background: transparent !important;
             border: none !important;

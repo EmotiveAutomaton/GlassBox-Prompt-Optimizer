@@ -14,9 +14,9 @@ from glassbox.core.api_client import BoeingAPIClient, Message
 from glassbox.core.evaluator import Evaluator
 from glassbox.models.session import (
     OptimizerSession, 
-    CandidateResult, 
     SchematicState
 )
+from glassbox.models.candidate import UnifiedCandidate
 from glassbox.prompts.templates import (
     OPRO_OPTIMIZER_SYSTEM_PROMPT,
     OPRO_OPTIMIZER_USER_TEMPLATE,
@@ -95,12 +95,12 @@ class OProEngine(AbstractOptimizer):
             logger.info(f"Evaluating candidate {i+1}/{len(variations)}")
             
             candidate = self._evaluate_candidate(prompt_text, step_num)
-            candidate.evaluator_reasoning_a = reasoning  # Store generation reasoning
+            candidate.meta["generation_reasoning"] = reasoning  # Store generation reasoning
             step_candidates.append(candidate)
             self.session.candidates.append(candidate)
 
         # Phase 3: Select best (greedy)
-        best = max(step_candidates, key=lambda c: c.global_score) if step_candidates else None
+        best = max(step_candidates, key=lambda c: c.score_aggregate) if step_candidates else None
         
         if best:
             self._add_trajectory_entry(best)
@@ -110,7 +110,7 @@ class OProEngine(AbstractOptimizer):
         self.session.schematic_state = SchematicState.IDLE
         self.session.active_node = ""
         self._update_monologue(
-            f"Step {step_num} complete. Best: {best.global_score:.1f}%" if best else "No candidates",
+            f"Step {step_num} complete. Best: {best.score_aggregate:.1f}%" if best else "No candidates",
             "complete"
         )
 
@@ -202,13 +202,8 @@ class OProEngine(AbstractOptimizer):
 
         return variations[:self.session.config.generations_per_step]
 
-    def _evaluate_candidate(self, prompt_text: str, generation: int) -> CandidateResult:
+    def _evaluate_candidate(self, prompt_text: str, generation: int) -> UnifiedCandidate:
         """Evaluate a single candidate against the tri-state test bench."""
-        candidate = CandidateResult(
-            prompt_text=prompt_text,
-            generation=generation
-        )
-
         # Execute and evaluate against each test input
         test_inputs = [
             (self.session.test_bench.input_a, "a"),
@@ -216,31 +211,59 @@ class OProEngine(AbstractOptimizer):
             (self.session.test_bench.input_c, "c"),
         ]
 
+        scores = {}
+        responses = {}
+        reasoning = {}
+        
         for input_text, label in test_inputs:
+            key = f"input_{label}"
+            
             if not input_text.strip():
-                # Empty test input - use neutral score
-                setattr(candidate, f"score_{label}", 50.0)
-                setattr(candidate, f"response_{label}", "")
-                setattr(candidate, f"evaluator_reasoning_{label}", "Test input empty")
+                scores[key] = 50.0  # Neutral
+                responses[key] = ""
+                reasoning[key] = "Test input empty"
                 continue
 
             try:
                 # Execute the prompt
                 response = self._execute_prompt(prompt_text, input_text)
-                setattr(candidate, f"response_{label}", response)
+                responses[key] = response
                 
                 # Evaluate the response
                 eval_result = self.evaluator.evaluate(prompt_text, input_text, response)
-                setattr(candidate, f"score_{label}", eval_result.score)
-                setattr(candidate, f"evaluator_reasoning_{label}", eval_result.reasoning)
+                scores[key] = eval_result.score
+                reasoning[key] = eval_result.reasoning
                 
             except Exception as e:
                 logger.error(f"Evaluation failed for {label}: {e}")
-                setattr(candidate, f"score_{label}", 0.0)
-                setattr(candidate, f"response_{label}", "")
-                setattr(candidate, f"evaluator_reasoning_{label}", f"Error: {str(e)}")
+                scores[key] = 0.0
+                responses[key] = ""
+                reasoning[key] = f"Error: {str(e)}"
 
-        return candidate
+        # Calculate aggregate (mean of active inputs)
+        valid_scores = [v for v in scores.values()]
+        aggregate = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
+
+        return UnifiedCandidate(
+            engine_type=self.engine_type_enum,
+            generation_index=generation,
+            display_text=prompt_text,
+            full_content=prompt_text,
+            score_aggregate=aggregate,
+            test_results=scores,
+            meta={
+                "test_details": {
+                    "responses": responses,
+                    "reasoning": reasoning
+                },
+                "mutation_type": "rephrase" # Default for OPro
+            }
+        )
+
+    @property
+    def engine_type_enum(self):
+        from glassbox.models.candidate import EngineType
+        return EngineType.OPRO
 
     def _update_monologue(self, strategy: str, phase: str):
         """Update the Glass Box internal monologue display."""

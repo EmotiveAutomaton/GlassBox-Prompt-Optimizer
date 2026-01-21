@@ -47,7 +47,8 @@ from glassbox.ui import (
     render_zone_c,
     render_zone_d,
     render_zone_e,
-    get_test_bench_config
+    get_test_bench_config,
+    render_zone_f
 )
 from glassbox.ui.styles import inject_custom_css
 from glassbox.rag import BaristaSimulator
@@ -228,6 +229,9 @@ def main():
         stop_optimization()
         st.rerun()
     
+    # === ZONE F: Settings Popover (Hidden/Triggered via Top Bar) ===
+    render_zone_f()
+
     # === ZONE B: Sidebar (Flush Navigation Only) ===
     render_zone_b()
     

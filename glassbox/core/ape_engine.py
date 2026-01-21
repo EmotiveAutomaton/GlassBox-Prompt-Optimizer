@@ -11,7 +11,8 @@ from typing import List, Dict, Any, Tuple
 
 from glassbox.core.optimizer_base import AbstractOptimizer, StepResult
 from glassbox.core.api_client import Message
-from glassbox.models.session import CandidateResult, SchematicState
+from glassbox.models.session import SchematicState
+from glassbox.models.candidate import UnifiedCandidate
 from glassbox.prompts.templates import (
     APE_INDUCTION_SYSTEM_PROMPT,
     APE_INDUCTION_USER_TEMPLATE,
@@ -111,7 +112,7 @@ class APEEngine(AbstractOptimizer):
             self.session.candidates.append(candidate)
 
         # Select best
-        best = max(step_candidates, key=lambda c: c.global_score) if step_candidates else None
+        best = max(step_candidates, key=lambda c: c.score_aggregate) if step_candidates else None
         
         if best:
             self._add_trajectory_entry(best)
@@ -205,37 +206,64 @@ class APEEngine(AbstractOptimizer):
 
         return variations[:num_variations + 1]
 
-    def _evaluate_candidate(self, prompt_text: str, generation: int) -> CandidateResult:
+    def _evaluate_candidate(self, prompt_text: str, generation: int) -> UnifiedCandidate:
         """Evaluate candidate against test bench."""
-        candidate = CandidateResult(
-            prompt_text=prompt_text,
-            generation=generation
-        )
-
         test_inputs = [
             (self.session.test_bench.input_a, "a"),
             (self.session.test_bench.input_b, "b"),
             (self.session.test_bench.input_c, "c"),
         ]
 
+        scores = {}
+        responses = {}
+        reasoning = {}
+        
         for input_text, label in test_inputs:
+            key = f"input_{label}"
+            
             if not input_text.strip():
-                setattr(candidate, f"score_{label}", 50.0)
+                scores[key] = 50.0
+                responses[key] = ""
+                reasoning[key] = "Test input empty"
                 continue
 
             try:
                 response = self._execute_prompt(prompt_text, input_text)
-                setattr(candidate, f"response_{label}", response)
+                responses[key] = response
                 
                 eval_result = self.evaluator.evaluate(prompt_text, input_text, response)
-                setattr(candidate, f"score_{label}", eval_result.score)
-                setattr(candidate, f"evaluator_reasoning_{label}", eval_result.reasoning)
+                scores[key] = eval_result.score
+                reasoning[key] = eval_result.reasoning
                 
             except Exception as e:
-                setattr(candidate, f"score_{label}", 0.0)
-                setattr(candidate, f"evaluator_reasoning_{label}", f"Error: {str(e)}")
+                scores[key] = 0.0
+                responses[key] = ""
+                reasoning[key] = f"Error: {str(e)}"
+        
+        # Calculate aggregate
+        valid_scores = [v for v in scores.values()]
+        aggregate = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
 
-        return candidate
+        return UnifiedCandidate(
+            engine_type=self.engine_type_enum,
+            generation_index=generation,
+            display_text=f"Instruction: {prompt_text}", # Per spec 6.2.2 requirement
+            full_content=prompt_text,
+            score_aggregate=aggregate,
+            test_results=scores,
+            meta={
+                "test_details": {
+                    "responses": responses,
+                    "reasoning": reasoning
+                },
+                "deduced_from_indices": list(range(len(self.examples))) if self.examples else []
+            }
+        )
+
+    @property
+    def engine_type_enum(self):
+        from glassbox.models.candidate import EngineType
+        return EngineType.APE
 
     def _update_monologue(self, instruction_preview: str, phase: str, confidence: int):
         """Update Glass Box monologue."""

@@ -4,6 +4,7 @@ from glassbox.ui.zone_b_sidebar import render_zone_b, get_session_config
 from glassbox.ui.zone_c_results import render_zone_c
 from glassbox.ui.zone_d_telemetry import render_zone_d, render_mini_telemetry
 from glassbox.ui.zone_e_testbench import render_zone_e, get_test_bench_config
+from glassbox.ui.zone_f_settings import render_zone_f
 from glassbox.ui.styles import inject_custom_css
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "render_mini_telemetry",
     "render_zone_e",
     "get_test_bench_config",
+    "render_zone_f",
     "inject_custom_css",
 ]
