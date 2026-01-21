@@ -10,31 +10,52 @@ def render_zone_f():
     """Render the hidden settings popover."""
     
     # CSS to position the popover transparently over the top-gear icon
+    # CSS to position the popover transparently over the top-gear icon
     st.markdown("""
         <style>
         /* Position the popover container over the top-right gear icon */
-        [data-testid="stPopover"] {
+        /* Use high specificity to override any default Streamlit styling */
+        html body .stApp [data-testid="stPopover"] {
             position: fixed !important;
-            top: 10px !important;
+            top: 10px !important; /* Align with top bar vertical center (approx) */
             right: 20px !important;
             z-index: 1000000 !important;
+            width: 40px !important;
+            height: 40px !important;
+            border: none !important;
+            background: transparent !important;
         }
-        
-        /* Make the button transparent but clickable */
-        [data-testid="stPopover"] > button {
+
+        /* Target the button inside the popover container */
+        html body .stApp [data-testid="stPopover"] button {
             width: 40px !important;
             height: 40px !important;
             background: transparent !important;
             border: none !important;
             color: transparent !important; /* Hide the emoji */
             padding: 0 !important;
+            margin: 0 !important;
             box-shadow: none !important;
+            outline: none !important;
+            min-height: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
         }
         
-        /* Optional: Add hover effect to match the underlying icon's hover */
-        [data-testid="stPopover"] > button:hover {
-            background: rgba(255,255,255,0.1) !important;
+        /* Ensure no hover effects make it visible */
+        html body .stApp [data-testid="stPopover"] button:hover,
+        html body .stApp [data-testid="stPopover"] button:active,
+        html body .stApp [data-testid="stPopover"] button:focus {
+            background: rgba(255, 255, 255, 0.0) !important; /* Completely transparent on hover too, let the icon below show hover */
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            color: transparent !important;
         }
+        
+        /* The icon below has its own hover effect (.1 opacity white), so we don't need one here. 
+           We just want this to be an invisible click layer. */
         </style>
     """, unsafe_allow_html=True)
 
