@@ -196,24 +196,28 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
             # Skip the "0.01" dummy if we added it? 
             # In the construction above:
             # if D1: extend([1]) ?? No I realized I shouldn't add dummy valid columns if I don't use them 
-            # UNLESS 'gap' is applied between them. 
-            # I'll stick to: D1 gets 1 slot. D2 gets 2 slots.
-            # I need to rebuild the ratio list logic to match EXACTLY what I consume.
-            
-        else:
-            # Dataset N + Sidecar
-            # Main Button
-            with cols[col_idx]:
-                # We add a trick for "Joined" look?
-                # For now just render.
-                if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, use_container_width=True):
+                if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, help="Permanent Dataset", use_container_width=True):
                     st.session_state[tab_key] = d_name
                     st.rerun()
             col_idx += 1
             
-            # Sidecar X
+        else:
+            # Dataset N + Sidecar layout
+            
+            # Helper to determine correct CSS hook via tooltip
+            select_help = f"Select {d_name}"
+            
+            # Main Select Button
             with cols[col_idx]:
-                 if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"): # "Remove" prefix triggers CSS
+                if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, help=select_help, use_container_width=True):
+                    st.session_state[tab_key] = d_name
+                    st.rerun()
+            col_idx += 1
+            
+            # Sidecar X Button
+            with cols[col_idx]:
+                 # Use a distinct X character. 
+                 if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"):
                     # Check for Data existence
                     suffix = d_name.split(" ")[1]
                     d_key = f"{state_prefix}_data_{suffix}"
@@ -226,7 +230,7 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
 
     # 3. Add Button (Last Column)
     with cols[col_idx]:
-        if st.button("＋", key=f"add_{state_prefix}", help="Add new dataset"): # "Add new dataset" triggers CSS
+        if st.button("＋", key=f"add_{state_prefix}", help="Add new dataset"):
             new_idx = len(datasets) + 1
             while f"Dataset {new_idx}" in datasets:
                 new_idx += 1
