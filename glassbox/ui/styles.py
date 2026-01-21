@@ -287,10 +287,12 @@ def inject_custom_css():
             border: 1px solid transparent !important; /* Clean border */
         }
         
-        /* Active State Border Hook */
+        /* Active State Border Hook - ensure bg is also forced if Streamlit overrides */
         .stButton button[title^="Select Dataset"][kind="primary"],
         .stButton button[title="Permanent Dataset"][kind="primary"] {
             border: 1px solid var(--boeing-blue) !important;
+            background-color: var(--selected-blue) !important;
+            color: white !important;
         }
 
         /* 10.3 "Remove" BADGE Button (The overlap X) */
