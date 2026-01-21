@@ -15,7 +15,9 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
     """Render the top row with INPUT and GLASS BOX cards."""
     
     # --- ROW 1: Two Card Boxes Side by Side (40% viewport height) ---
-    st.markdown('<div class="top-row-cards">', unsafe_allow_html=True)
+    
+    # --- ROW 1: Two Card Boxes Side by Side ---
+
     
     col_input, col_glassbox = st.columns([1, 1.8])
     
@@ -99,7 +101,8 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
                 st.markdown(f"<div style='margin-top:5px; font-weight:500; color:#333;'>STATUS: <span style='color:#0D7CB1'>{status.upper()}</span></div>", unsafe_allow_html=True)
     
     # Close top-row-cards wrapper
-    st.markdown('</div>', unsafe_allow_html=True)
+    # End Row 1
+
 
 
 def _render_placeholder_schematic():

@@ -68,8 +68,9 @@ def inject_custom_css():
         }
 
         .block-container {
-            padding-top: 80px !important;
-            min-height: calc(100vh - 80px);
+            padding-top: 64px !important;
+            padding-bottom: 20px !important;
+            max-width: 100% !important;
         }
 
         /* ========================================
@@ -127,6 +128,11 @@ def inject_custom_css():
         /* ========================================
            4. CARD BOXES WITH OUTLINES
            ======================================== */
+        /* Reduce Gap between vertical blocks */
+        [data-testid="stVerticalBlock"] {
+            gap: 1rem !important;
+        }
+
         /* Card borders - visible outlines */
         div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-header) {
             border: 1px solid #D0D0D0 !important;
@@ -148,32 +154,12 @@ def inject_custom_css():
             border-radius: 0; /* No radius since parent wrapper has it */
         }
         
-        /* Top row cards should be ~40% of viewport height */
-        .top-row-cards {
-            min-height: 40vh;
-        }
-        
-        .top-row-cards div[data-testid="stVerticalBlockBorderWrapper"] {
-            min-height: 38vh;
-        }
+        /* Spacer classes removed */
 
         /* ========================================
            5. FULL-HEIGHT BOTTOM CARDS
            ======================================== */
-        /* Make bottom row cards extend to near-bottom of screen */
-        .bottom-card-container {
-            min-height: calc(60vh - 80px);
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .bottom-card-container > div {
-            flex: 1;
-        }
-        
-        .bottom-card-container div[data-testid="stVerticalBlockBorderWrapper"] {
-            min-height: calc(60vh - 100px);
-        }
+        /* Bottom spacer classes removed */
 
         /* ========================================
            6. BUTTONS

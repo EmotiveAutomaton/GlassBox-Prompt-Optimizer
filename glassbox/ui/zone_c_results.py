@@ -23,7 +23,8 @@ def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBe
     
     # --- BOTTOM ROW: Full-Height Cards ---
     # Wrap in a container for CSS full-height styling
-    st.markdown('<div class="bottom-card-container">', unsafe_allow_html=True)
+    # --- BOTTOM ROW: Full-Height Cards ---
+
     
     col_prompts, col_right = st.columns([2, 1.5])
     
@@ -84,7 +85,8 @@ def render_zone_c(candidates: List[CandidateResult], test_bench: Optional[TestBe
                 st.text_area("C", value="Adversarial...", height=60, key="test_input_c", label_visibility="collapsed")
     
     # Close full-height container
-    st.markdown('</div>', unsafe_allow_html=True)
+    # End Bottom Row
+
 
 
 def _render_optimization_graph(trajectory: List, candidates: List[CandidateResult]):
