@@ -161,44 +161,55 @@ def inject_custom_css():
         }
 
         /* ========================================
-           4. CARD BOXES WITH OUTLINES
+           4. CARD BOXES WITH OUTLINES & FLUSH HEADERS
            ======================================== */
         /* Reduce Gap between vertical blocks */
         [data-testid="stVerticalBlock"] {
             gap: 1rem !important;
         }
 
-        /* Card borders - visible outlines */
-        div[data-testid="stVerticalBlockBorderWrapper"]:has(.card-header) {
-            border: 1px solid var(--card-border-color) !important;
-            border-radius: 6px !important;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
-            overflow: hidden !important;
-            /* FORCE VISIBLE CARD OUTLINES */
+        /* 
+           Target the Border Wrapper (st.container(border=True))
+           We ensure it has a visible border and standard padding.
+        */
         div[data-testid="stVerticalBlockBorderWrapper"] {
-            border: 1px solid #e0e0e0 !important;
+            border: 1px solid var(--card-border-color) !important;
             border-radius: 8px !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: var(--card-shadow) !important;
             padding: 1rem !important;
-            background-color: white;
+            background-color: var(--card-bg) !important;
         }
 
-        /* Adjust card header to sit nicely in the border box */
+        /* 
+           Flush Header Trick:
+           Use negative margins matching the container padding 
+           to pull the header to the edges.
+        */
         .card-header {
             background: var(--slate-gray);
-            color: white;
+            color: var(--text-white);
             padding: 10px 16px;
             font-weight: 500;
             font-size: 13px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin: 0;
-            border-radius: 0;
+            border-radius: 6px 6px 0 0; /* Top corners match container */
+            
+            /* Negative margin to counteract container padding (1rem = ~16px) */
+            margin-top: -1rem;
+            margin-left: -1rem;
+            margin-right: -1rem;
+            margin-bottom: 1rem;
+            
+            /* Ensure it sits on top */
+            position: relative;
+            z-index: 1;
         }
         
         /* ========================================
            6. BUTTONS
            ======================================== */
+        /* Default Button (Secondary) - Gray */
         .stButton > button {
             background-color: var(--slate-gray) !important;
             color: white !important;
@@ -210,25 +221,39 @@ def inject_custom_css():
             transition: all var(--transition-fast);
         }
         
-        .stButton > button:hover {
-            background-color: var(--selected-blue) !important;
-        }
-        
+        /* Primary Button - Boeing Blue */
+        /* Use specificity hack if needed, but [kind='primary'] is standard st */
         .stButton > button[kind="primary"] {
             background-color: var(--boeing-blue) !important;
+            border: 1px solid var(--boeing-blue) !important;
+        }
+        
+        .stButton > button:hover {
+            background-color: var(--selected-blue) !important;
+            border-color: var(--selected-blue) !important;
+        }
+        
+        .stButton > button[kind="primary"]:hover {
+            background-color: #153580 !important; /* Darker blue */
         }
 
         /* ========================================
            7. TEXT INPUTS
            ======================================== */
+        /* Restore standard gray background for inputs */
         .stTextInput > div > div > input, 
         .stTextArea > div > div > textarea, 
         .stSelectbox > div > div > div {
-            background-color: var(--card-bg) !important;
-            color: var(--text-color) !important;
-            border: 1px solid #CCC !important;
+            background-color: #F0F2F6 !important; /* Streamlit default light gray */
+            color: #31333F !important;
+            border: 1px solid #D6D6D6 !important;
             border-radius: 4px !important;
         }
+        
+        /* Dark mode overrides for inputs would be handled by var(--card-bg) if we wanted dynamic, 
+           but user asked for 'the gray we are using', implying specific look. 
+           We'll stick to a safe light-gray for now, or use a variable if defined. */
+
 
         /* ========================================
            8. SETTINGS POPOVER POSITIONING
