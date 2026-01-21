@@ -141,69 +141,106 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     else:
         st.caption(f"ℹ️ **{active_tab}**: Empty")
 
-    # 4. Tabs & Management (Bottom)
-    # Layout: [ Radio Group (Horizontal) ] [ + ] [ X ]
+    # 4. Tabs & Management (Bottom - Inline Button Strip)
+    # Layout: [Dataset 1]  [Dataset 2] [x]  [Dataset 3] [x]  [+]
     
     # helper for keys
     list_key = f"{state_prefix}_dataset_list"
     
-    # Initialize the dynamic list of datasets if not processing
+    # Initialize list if missing
     if list_key not in st.session_state:
         st.session_state[list_key] = ["Dataset 1", "Dataset 2"]
     
     datasets = st.session_state[list_key]
 
-    # Container for controls
-    c_tabs, c_add, c_del = st.columns([1, 0.1, 0.1], gap="small")
+    # Ensure active tab is valid
+    if active_tab not in datasets:
+        # Fallback to Dataset 1 if active was deleted
+        active_tab = "Dataset 1"
+        st.session_state[tab_key] = active_tab
+        st.rerun()
+
+    # --- DYNAMIC COLUMN GENERATION ---
+    # Structure match: 
+    # Dataset 1: [Button] (1 col)
+    # Others:    [Button] [X] (2 cols)
+    # Final:     [+] (1 col)
     
-    with c_tabs:
-        # Ensure active tab is valid (handle deletion case)
-        if active_tab not in datasets:
-            active_tab = datasets[0]
-            st.session_state[tab_key] = active_tab
+    # Calculate total columns and relative widths
+    # Ratios: Dataset buttons = 1, X buttons = 0.15, + button = 0.15
+    col_ratios = []
+    
+    # Pass 1: Build schema
+    # We will iterate datasets. 
+    # If D1 -> Add [1]
+    # If D>1 -> Add [1, 0.15]
+    # Finally -> Add [0.15]
+    
+    for d_name in datasets:
+        if d_name == "Dataset 1":
+            col_ratios.append(1)
+        else:
+            col_ratios.append(1)
+            col_ratios.append(0.15)
+    
+    col_ratios.append(0.15) # For the [+]
+    
+    # Create columns
+    cols = st.columns(col_ratios, gap="small")
+    
+    col_idx = 0
+    
+    # --- RENDER CONTROLS ---
+    for d_name in datasets:
+        # 1. Dataset Select Button
+        c_btn = cols[col_idx]
+        col_idx += 1
+        
+        is_active = (d_name == active_tab)
+        btn_type = "primary" if is_active else "secondary"
+        
+        if c_btn.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, use_container_width=True):
+            st.session_state[tab_key] = d_name
             st.rerun()
-
-        st.radio("Data Set", datasets, 
-                 key=tab_key, 
-                 horizontal=True, 
-                 label_visibility="collapsed")
-
-    with c_add:
-        # Add Button - small +
-        if st.button("➕", key=f"add_{state_prefix}", help="Add new dataset"):
-            new_idx = len(datasets) + 1
-            # Find next available number if needed, simple increment for now
-            while f"Dataset {new_idx}" in datasets:
-                new_idx += 1
             
-            datasets.append(f"Dataset {new_idx}")
-            st.rerun()
-
-    with c_del:
-        # Delete Button - small x / trash
-        # Only show if > 1 dataset (must keep at least one)
-        # And user wants to delete the ACTIVE one
-        if len(datasets) > 1:
-            if st.button("❌", key=f"del_{state_prefix}", help=f"Remove {active_tab}"):
-                # Check for data
-                if st.session_state.get(data_key, "").strip():
-                    # Data exists, trigger confirmation flag
-                    st.session_state[f"confirm_del_{state_prefix}"] = True
+        # 2. Delete Button (If not Dataset 1)
+        if d_name != "Dataset 1":
+            c_x = cols[col_idx]
+            col_idx += 1
+            
+            # X Button
+            if c_x.button("❌", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"):
+                # Check for Data existence
+                suffix = d_name.split(" ")[1]
+                d_key = f"{state_prefix}_data_{suffix}"
+                
+                if st.session_state.get(d_key, "").strip():
+                    st.session_state[f"confirm_del_{state_prefix}"] = d_name # Store name to confirm
                 else:
-                    # Empty, safe delete
-                    _delete_dataset(state_prefix, active_tab)
+                    _delete_dataset(state_prefix, d_name)
                     st.rerun()
 
-    # Confirmation Modal/Warning (Safe inline check)
-    if st.session_state.get(f"confirm_del_{state_prefix}", False):
-        st.warning(f"'{active_tab}' contains data. Delete anyway?")
+    # 3. Add Button (Last Column)
+    c_plus = cols[col_idx]
+    if c_plus.button("➕", key=f"add_{state_prefix}", help="Add new dataset"):
+        new_idx = len(datasets) + 1
+        while f"Dataset {new_idx}" in datasets:
+            new_idx += 1
+        datasets.append(f"Dataset {new_idx}")
+        st.rerun()
+
+    # --- CONFIRMATION DIALOG ---
+    # Check if a deletion is pending confirmation
+    pending_del = st.session_state.get(f"confirm_del_{state_prefix}", None)
+    if pending_del:
+        st.warning(f"'{pending_del}' contains data. Delete anyway?")
         col_yes, col_no = st.columns([0.2, 0.8])
         if col_yes.button("Yes, Drop it", key=f"yes_del_{state_prefix}"):
-            _delete_dataset(state_prefix, active_tab)
-            st.session_state[f"confirm_del_{state_prefix}"] = False
+            _delete_dataset(state_prefix, pending_del)
+            st.session_state[f"confirm_del_{state_prefix}"] = None
             st.rerun()
         if col_no.button("Cancel", key=f"no_del_{state_prefix}"):
-            st.session_state[f"confirm_del_{state_prefix}"] = False
+            st.session_state[f"confirm_del_{state_prefix}"] = None
             st.rerun()
 
 def _delete_dataset(state_prefix, tab_name):
