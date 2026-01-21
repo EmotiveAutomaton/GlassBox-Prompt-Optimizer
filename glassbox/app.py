@@ -241,77 +241,7 @@ def main():
     session = get_or_create_session()
     render_zone_c(session.candidates, session.test_bench)
     
-    # === SETTINGS POPOVER (at end, positioned over gear icon via CSS) ===
-    # Put at end so it's easier to target with CSS
-    st.markdown('''
-        <style>
-        /* Position the LAST element container with a popover trigger */
-        .main .block-container > div:last-child {
-            position: fixed !important;
-            top: 10px !important;
-            right: 10px !important;
-            z-index: 999999 !important;
-            width: 40px !important;
-            height: 40px !important;
-        }
-        .main .block-container > div:last-child button[data-testid="stPopoverButton"] {
-            background: transparent !important;
-            border: none !important;
-            color: transparent !important;
-            width: 40px !important;
-            height: 40px !important;
-            padding: 0 !important;
-            min-height: 40px !important;
-        }
-        .main .block-container > div:last-child p {
-            display: none !important;
-        }
-        </style>
-    ''', unsafe_allow_html=True)
-    
-    with st.popover("⚙️", use_container_width=False):
-        st.markdown("### Settings")
-        
-        # Light/Dark Mode Toggle (disabled for now)
-        st.markdown("**Theme**")
-        theme = st.radio(
-            "Theme Mode",
-            options=["Light Mode", "Dark Mode"],
-            index=0,
-            key="theme_mode",
-            disabled=True,
-            label_visibility="collapsed"
-        )
-        st.caption("*Dark mode coming soon*")
-        
-        st.divider()
-        
-        # Import/Export
-        st.markdown("**Session Management**")
-        
-        # Export
-        session = get_or_create_session()
-        import json
-        session_json = json.dumps(session.to_dict(), indent=2)
-        st.download_button(
-            "📤 Export Session",
-            data=session_json,
-            file_name="glassbox_session.opro",
-            mime="application/json",
-            use_container_width=True
-        )
-        
-        # Import
-        uploaded = st.file_uploader("📥 Import Session", type=["opro", "json"], key="import_session_file", label_visibility="collapsed")
-        if uploaded:
-            try:
-                data = json.load(uploaded)
-                imported = OptimizerSession.from_dict(data)
-                st.session_state["session"] = imported
-                st.success("Session imported!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Import failed: {e}")
+
     
     # === Auto-refresh during optimization ===
     if st.session_state.get("is_running", False):
