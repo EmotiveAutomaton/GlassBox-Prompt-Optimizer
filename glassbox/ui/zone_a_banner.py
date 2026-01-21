@@ -107,7 +107,7 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     # 1. State Management
     tab_key = f"{state_prefix}_active_tab"
     if tab_key not in st.session_state:
-        st.session_state[tab_key] = "Set 1"
+        st.session_state[tab_key] = "Dataset 1"
     
     active_tab = st.session_state[tab_key]
     # Normalize tab name to index suffix (Set 1 -> 1)
@@ -141,11 +141,87 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     else:
         st.caption(f"ℹ️ **{active_tab}**: Empty")
 
-    # 4. Tabs (Radio) (Bottom)
-    st.radio("Data Set", ["Set 1", "Set 2", "Set 3"], 
-             key=tab_key, 
-             horizontal=True, 
-             label_visibility="collapsed")
+    # 4. Tabs & Management (Bottom)
+    # Layout: [ Radio Group (Horizontal) ] [ + ] [ X ]
+    
+    # helper for keys
+    list_key = f"{state_prefix}_dataset_list"
+    
+    # Initialize the dynamic list of datasets if not processing
+    if list_key not in st.session_state:
+        st.session_state[list_key] = ["Dataset 1", "Dataset 2"]
+    
+    datasets = st.session_state[list_key]
+
+    # Container for controls
+    c_tabs, c_add, c_del = st.columns([1, 0.1, 0.1], gap="small")
+    
+    with c_tabs:
+        # Ensure active tab is valid (handle deletion case)
+        if active_tab not in datasets:
+            active_tab = datasets[0]
+            st.session_state[tab_key] = active_tab
+            st.rerun()
+
+        st.radio("Data Set", datasets, 
+                 key=tab_key, 
+                 horizontal=True, 
+                 label_visibility="collapsed")
+
+    with c_add:
+        # Add Button - small +
+        if st.button("➕", key=f"add_{state_prefix}", help="Add new dataset"):
+            new_idx = len(datasets) + 1
+            # Find next available number if needed, simple increment for now
+            while f"Dataset {new_idx}" in datasets:
+                new_idx += 1
+            
+            datasets.append(f"Dataset {new_idx}")
+            st.rerun()
+
+    with c_del:
+        # Delete Button - small x / trash
+        # Only show if > 1 dataset (must keep at least one)
+        # And user wants to delete the ACTIVE one
+        if len(datasets) > 1:
+            if st.button("❌", key=f"del_{state_prefix}", help=f"Remove {active_tab}"):
+                # Check for data
+                if st.session_state.get(data_key, "").strip():
+                    # Data exists, trigger confirmation flag
+                    st.session_state[f"confirm_del_{state_prefix}"] = True
+                else:
+                    # Empty, safe delete
+                    _delete_dataset(state_prefix, active_tab)
+                    st.rerun()
+
+    # Confirmation Modal/Warning (Safe inline check)
+    if st.session_state.get(f"confirm_del_{state_prefix}", False):
+        st.warning(f"'{active_tab}' contains data. Delete anyway?")
+        col_yes, col_no = st.columns([0.2, 0.8])
+        if col_yes.button("Yes, Drop it", key=f"yes_del_{state_prefix}"):
+            _delete_dataset(state_prefix, active_tab)
+            st.session_state[f"confirm_del_{state_prefix}"] = False
+            st.rerun()
+        if col_no.button("Cancel", key=f"no_del_{state_prefix}"):
+            st.session_state[f"confirm_del_{state_prefix}"] = False
+            st.rerun()
+
+def _delete_dataset(state_prefix, tab_name):
+    """Helper to remove dataset from list and clear its data."""
+    list_key = f"{state_prefix}_dataset_list"
+    datasets = st.session_state[list_key]
+    
+    if tab_name in datasets:
+        datasets.remove(tab_name)
+    
+    # Clear the data
+    suffix = tab_name.split(" ")[1]
+    data_key = f"{state_prefix}_data_{suffix}"
+    if data_key in st.session_state:
+        del st.session_state[data_key]
+    
+    # Reset specific keys if needed
+    # (Streamlit widgets might hold onto state if key matches, but we usually rely on binding)
 
 def _update_state(target_key, source_widget_key):
     """Callback to sync text widget back to main state variable"""

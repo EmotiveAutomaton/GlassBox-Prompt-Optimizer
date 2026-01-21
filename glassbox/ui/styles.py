@@ -306,9 +306,28 @@ def inject_custom_css():
            but user asked for 'the gray we are using', implying specific look. 
            We'll stick to a safe light-gray for now, or use a variable if defined. */
 
+        /* ========================================
+           8. RADIO BUTTONS (Custom Blue)
+           ======================================== */
+        /* Target the radio circle when selected */
+        div[role="radiogroup"] > label[data-baseweb="radio"] > div:first-child {
+            background-color: transparent !important; /* Outer ring default */
+            border-color: #999 !important;
+        }
+
+        /* Checked State - The inner dot or fill */
+        div[role="radiogroup"] > label[data-baseweb="radio"] > div:first-child[aria-checked="true"] {
+            background-color: var(--selected-blue) !important;
+            border-color: var(--selected-blue) !important;
+        }
+        
+        /* If Streamlit uses a nested div for the fill */
+        div[role="radiogroup"] > label[data-baseweb="radio"] > div:first-child[aria-checked="true"] > div {
+             background-color: white !important;
+        }
 
         /* ========================================
-           8. SETTINGS POPOVER POSITIONING
+           9. SETTINGS POPOVER POSITIONING
            ======================================== */
         .settings-popover-container {
             position: fixed !important;
