@@ -42,32 +42,32 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
             if engine_id == "opro":
                 # OPro: Prompt + Test Data
                 st.text_area("Seed Prompt", height=80, key="seed_prompt", 
-                           placeholder="Enter your initial prompt here...", label_visibility="collapsed")
+                           placeholder="Initial prompt to be optimized. This should be the raw prompt text you want to improve.", label_visibility="collapsed")
                 st.text_area("Test Data", height=80, key="test_data",
-                           placeholder="Enter test cases (one per line)...", label_visibility="collapsed")
+                           placeholder="Test cases for evaluation (one per line). Provide input examples that the prompt should handle correctly.", label_visibility="collapsed")
             
             elif engine_id == "ape":
                 # APE: Input/Ideal Output Pairs
                 st.text_area("Input Data [Ex 1]", height=60, key="ape_input_1",
-                           placeholder="Input example...", label_visibility="collapsed")
+                           placeholder="Input example for reverse engineering. This is the user input that triggers the desired output.", label_visibility="collapsed")
                 st.text_area("Ideal Output [Ex 1]", height=60, key="ape_output_1",
-                           placeholder="Ideal output...", label_visibility="collapsed")
+                           placeholder="Ideal target output. This is the exact response you want the model to generate for the given input.", label_visibility="collapsed")
                 if st.button("[+] Add Example", key="ape_add_btn"):
                     st.info("Multi-example support coming in beta.")
 
             elif engine_id == "promptbreeder":
                 # PromptBreeder: Prompt + Population
                 st.text_area("Seed Prompt", height=80, key="seed_prompt",
-                           placeholder="Enter base prompt...", label_visibility="collapsed")
+                           placeholder="Base prompt for evolutionary optimization. This prompt will serve as the initial seed for mutation.", label_visibility="collapsed")
                 st.slider("Population Size", 10, 100, 50, 10, key="pb_population")
                 st.caption("Evolutionary params managed by backend.")
 
             elif engine_id == "s2a":
                 # S2A: Query + Raw Context
                 st.text_area("Starting Query", height=60, key="s2a_query",
-                           placeholder="User query...", label_visibility="collapsed")
+                           placeholder="User query to answer. This is the question the model needs to answer using the provided context.", label_visibility="collapsed")
                 st.text_area("Raw Context", height=100, key="s2a_context",
-                           placeholder="Paste retrieved context chunks here...", label_visibility="collapsed")
+                           placeholder="Retrieved context chunks. Paste the raw text or JSON context here that needs to be filtered and refined.", label_visibility="collapsed")
 
             # --- ACTION BUTTONS ---
             col_start, col_stop = st.columns(2)
