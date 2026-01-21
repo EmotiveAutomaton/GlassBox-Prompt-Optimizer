@@ -33,11 +33,13 @@
   * Title "GLASSBOX PROMPT OPTIMIZER" on the LEFT (not bold).
   * Boeing logo (`BoeingWhiteOnTransparentLogo.png`) CENTERED.
   * Tiny gear icon (SVG) on far RIGHT - opens configuration menu.
+  * Style: White icon on Blue header (Transparent background). No gray button styling.
 
 * **Sidebar:**
   * Fixed 220px width (not resizable).
   * Collapse arrows hidden at all times.
   * Navigation items flush with all 4 edges (no dead space, no padding).
+  * Hover Effect: Background lightens (translucent white overlay), Text remains White (no inner highlight).
   * No configuration button (config moved to top bar gear icon).
 
 * **Animations:**
@@ -95,9 +97,23 @@
 * **Component:** Read-only `st.code` or `st.text_area`.
 * **Function:** Displays the **System Prompt** of the currently active agent node.
 * *Example:* When the "Optimizer Node" is active, this panel displays: *"You are an optimization expert. The previous score was 82. Generate a variation..."*
+* **Behavior:** "Follow Along" mode is permanently active. Clicking nodes (future feature) is disabled for v2.0-Alpha.
 
 
 * **Why:** This fulfills the "Glass Box" requirement—showing the user exactly how the sausage is made.
+
+---
+
+## 1.2.4 Supported Engines & Topologies
+
+The system supports four distinct visualization topologies (implemented in `visualizer.py`):
+
+1.  **OPro (Iterative):** Circular Loop. `START` -> `TEST` -> `RATE` -> `CHANGE`.
+2.  **APE (Reverse Eng.):** Circular Loop. `START` -> `TEST` -> `RATE` -> `CHANGE` (Resample).
+3.  **PromptBreeder (Evolutionary):** Two Concentric Circles.
+    *   Inner: `TEST` -> `RATE` -> `POOL`.
+    *   Outer: `MUTATE` -> `CROSS` -> `POOL`.
+4.  **S2A (Context Filter):** Linear Pipeline. `READ` -> `FILTER` -> `REFINE` -> `ANSWER`.
 
 ---
 
