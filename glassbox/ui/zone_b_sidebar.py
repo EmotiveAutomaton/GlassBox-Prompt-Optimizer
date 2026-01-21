@@ -101,7 +101,12 @@ def render_zone_b():
             
             section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label:hover {
                 background-color: rgba(255,255,255,0.1) !important;
-                color: white !important; /* Force text to stay white */
+                color: white !important;
+            }
+            
+            section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label:hover * {
+                background-color: transparent !important;
+                color: white !important;
             }
             
             section[data-testid="stSidebar"] .stRadio > div[role="radiogroup"] > label:has(input:checked) {

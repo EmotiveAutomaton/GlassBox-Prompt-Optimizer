@@ -73,6 +73,22 @@ def inject_custom_css():
             max-width: 100% !important;
         }
 
+        /* Top Bar Gear Icon */
+        #top-bar-gear {
+            background: transparent !important;
+            border: none !important;
+            cursor: pointer !important;
+            padding: 8px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify_content: center !important;
+            transition: background 0.2s ease !important;
+        }
+        #top-bar-gear:hover {
+            background-color: rgba(255,255,255,0.1) !important;
+        }
+
         /* ========================================
            3. SIDEBAR - FIXED, NO FLASH
            ======================================== */
