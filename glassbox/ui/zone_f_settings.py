@@ -9,30 +9,38 @@ import streamlit as st
 def render_zone_f():
     """Render the hidden settings popover."""
     
-    # CSS to hide the trigger button visually but keep it clickable via JS
+    # CSS to position the popover transparently over the top-gear icon
     st.markdown("""
         <style>
-        #settings-trigger-container {
-            position: fixed;
-            top: -100px; /* Hide off-screen or make transparent */
-            left: 0;
-            opacity: 0;
-            pointer-events: none; /* Prevent accidental clicks, though JS click() works */
-            height: 0;
-            width: 0;
-            overflow: hidden;
+        /* Position the popover container over the top-right gear icon */
+        [data-testid="stPopover"] {
+            position: fixed !important;
+            top: 10px !important;
+            right: 20px !important;
+            z-index: 1000000 !important;
         }
-        /* Make the button clickable even if container is hidden/zero-size? 
-           Actually, for JS click() to work, it shouldn't be display:none. 
-           Opacity 0 is safer. */
+        
+        /* Make the button transparent but clickable */
+        [data-testid="stPopover"] > button {
+            width: 40px !important;
+            height: 40px !important;
+            background: transparent !important;
+            border: none !important;
+            color: transparent !important; /* Hide the emoji */
+            padding: 0 !important;
+            box-shadow: none !important;
+        }
+        
+        /* Optional: Add hover effect to match the underlying icon's hover */
+        [data-testid="stPopover"] > button:hover {
+            background: rgba(255,255,255,0.1) !important;
+        }
         </style>
     """, unsafe_allow_html=True)
 
-    # Wrap in a container to target with JS
-    with st.container():
-        st.markdown('<div id="settings-trigger-container">', unsafe_allow_html=True)
-        
-        with st.popover("⚙️"): # The label doesn't matter much if hidden
+    # Render popover directly (no wrapper div needed for targeting if it's the unique popover)
+    with st.popover("⚙️"):
+
             st.markdown("### Settings")
             
             # --- THEME SETTINGS ---
@@ -115,4 +123,4 @@ def render_zone_f():
                 except Exception as e:
                     st.error(f"Failed to load session: {e}")
 
-        st.markdown('</div>', unsafe_allow_html=True)
+
