@@ -174,9 +174,16 @@ def inject_custom_css():
             border-radius: 6px !important;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
             overflow: hidden !important;
-            background: var(--card-bg) !important;
+            /* FORCE VISIBLE CARD OUTLINES */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            border: 1px solid #e0e0e0 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            padding: 1rem !important;
+            background-color: white;
         }
-        
+
+        /* Adjust card header to sit nicely in the border box */
         .card-header {
             background: var(--slate-gray);
             color: white;

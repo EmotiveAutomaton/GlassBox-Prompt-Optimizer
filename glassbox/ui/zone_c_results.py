@@ -75,15 +75,15 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
             
             with col_a:
                 st.markdown("**A** (Golden)")
-                st.text_area("A", value="Standard test...", height=60, key="test_input_a", label_visibility="collapsed")
+                st.text_area("A", value="", placeholder="Standard representative input scenario...", height=60, key="test_input_a", label_visibility="collapsed")
             
             with col_b:
                 st.markdown("**B** (Edge)")
-                st.text_area("B", value="Edge case...", height=60, key="test_input_b", label_visibility="collapsed")
+                st.text_area("B", value="", placeholder="Edge case or difficult input logic...", height=60, key="test_input_b", label_visibility="collapsed")
             
             with col_c:
                 st.markdown("**C** (Adversarial)")
-                st.text_area("C", value="Adversarial...", height=60, key="test_input_c", label_visibility="collapsed")
+                st.text_area("C", value="", placeholder="Adversarial input or out-of-domain test...", height=60, key="test_input_c", label_visibility="collapsed")
     
     # Close full-height container
     # End Bottom Row

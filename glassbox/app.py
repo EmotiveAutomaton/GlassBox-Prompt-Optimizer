@@ -98,7 +98,7 @@ def init_session_state():
         "evaluator": None,
         "is_running": False,
         "optimizer_status": "idle",
-        "seed_prompt": "Write a clear, concise summary of the given text that captures the key points...",
+        "seed_prompt": "",
         "selected_engine": "OPro (Iterative)",
         "selected_model": "gpt-4o-mini",
         "temperature": 0.7,
