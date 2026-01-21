@@ -181,9 +181,13 @@ def inject_custom_css():
            We ensure it has a visible border and standard padding.
         */
         div[data-testid="stVerticalBlockBorderWrapper"] {
-            border: 2px solid #555555 !important; /* Thick Dark Gray for assured visibility */
+            border: 2px solid #000000 !important; /* Pure Black for maximum visibility debugging */
+            /* 
+               Use box-shadow as a backup border mechanism. 
+               0 0 0 2px #000000 simulates a 2px black border that can't be collapsed.
+            */
+            box-shadow: 0 0 0 2px #000000, var(--card-shadow) !important;
             border-radius: 8px !important;
-            box-shadow: var(--card-shadow) !important;
             padding: 1rem !important;
             background-color: var(--card-bg) !important;
         }

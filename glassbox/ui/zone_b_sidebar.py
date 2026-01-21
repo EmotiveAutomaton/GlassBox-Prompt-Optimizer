@@ -127,19 +127,18 @@ def render_zone_b():
     """, unsafe_allow_html=True)
     
     # Navigation Blocks ONLY
-    view_options = [
-        "OPro (Iterative)",
+    mode_options = [
+        "OPro (Iterative",
         "APE (Reverse Eng.)",
         "Promptbreeder (Evol.)",
         "S2A (Context Filter)"
     ]
     
-    st.sidebar.radio(
+    selected_view = st.sidebar.radio(
         "Navigation",
-        options=view_options,
-        index=0,
-        key="selected_engine",
-        label_visibility="collapsed"
+        options=mode_options,
+        label_visibility="collapsed",
+        key="selected_view_radio"
     )
 
 
