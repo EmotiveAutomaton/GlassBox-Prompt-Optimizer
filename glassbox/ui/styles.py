@@ -278,60 +278,78 @@ def inject_custom_css():
             font-size: 16px !important;
             line-height: 1 !important;
             padding: 0px 10px !important;
+            width: auto !important;
         }
 
-        /* 10.2 Standard Dataset Button (Reset to normal rounded) */
+        /* 10.2 Standard Dataset Button */
         .stButton button[title^="Select Dataset"],
         .stButton button[title="Permanent Dataset"] {
             border-radius: 4px !important;
-            border: 1px solid transparent !important; /* Clean border */
+            border: 1px solid transparent !important;
+            /* Narrow Look handled by Python cols, but let's ensure text fits */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         
-        /* Active State Border Hook - ensure bg is also forced if Streamlit overrides */
-        .stButton button[title^="Select Dataset"][kind="primary"],
-        .stButton button[title="Permanent Dataset"][kind="primary"] {
-            border: 1px solid var(--boeing-blue) !important;
-            background-color: var(--selected-blue) !important;
+        /* ACTIVE STATE - FORCE BLUE */
+        /* Target every possible Streamlit primary button variation */
+        .stButton button[kind="primary"],
+        button[data-testid="baseButton-primary"] {
+            background-color: var(--boeing-blue) !important;
+            border-color: var(--boeing-blue) !important;
             color: white !important;
+        }
+        
+        .stButton button[kind="primary"]:hover,
+        button[data-testid="baseButton-primary"]:hover {
+            background-color: var(--selected-blue) !important;
         }
 
         /* 10.3 "Remove" BADGE Button (The overlap X) */
         .stButton button[title^="Remove"] {
-            /* Shape & Size */
-            width: 22px !important;
-            height: 22px !important;
+            /* Shape: Small Circle */
+            width: 20px !important;
+            height: 20px !important;
             padding: 0 !important;
             border-radius: 50% !important;
             min-height: 0px !important;
             
             /* Visuals */
             background-color: #FFFFFF !important;
-            color: #666 !important;
+            color: #555 !important;
             border: 1px solid #CCC !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
-            font-size: 14px !important;
-            line-height: 1 !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+            font-size: 12px !important;
+            line-height: 0 !important; /* Fix centering */
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
             
-            /* POSITIONING HACK: Pull nicely onto the previous button's shoulder */
-            /* Streamlit columns have gaps. We need to jump the gap + height offset */
-            position: relative !important;
-            left: -35px !important; /* Move Left across gap */
-            top: -12px !important;   /* Move Up to corner */
-            margin-bottom: -22px !important; /* Collapse height footprint */
-            
-            z-index: 10 !important;
+            /* POSITIONING:
+               The button is in the column TO THE RIGHT.
+               We want to pull it LEFT to sit on the corner of the previous button.
+               And UP to sit on the top edge.
+            */
+            position: absolute !important;
+            /* Use transform for safer moving than Left/Top relative to flow? */
+            transform: translate(-30px, -15px); 
+            z-index: 9999 !important; /* Must be on top of everything */
         }
         
         .stButton button[title^="Remove"]:hover {
-            background-color: #FFF0F0 !important;
-            color: #D32F2F !important;
-            border-color: #D32F2F !important;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.2) !important;
+            background-color: #F8D7DA !important; /* Light Red */
+            color: #721C24 !important;
+            border-color: #721C24 !important;
         }
         
-        /* Ensure the container doesn't clip the badge */
+        /* CONTAINER OVERFLOW FIX */
+        /* Ensure columns allow the badge to stick out */
         div[data-testid="column"] {
             overflow: visible !important;
+        }
+        div[data-testid="stVerticalBlock"] {
+             overflow: visible !important;
         }
 
 

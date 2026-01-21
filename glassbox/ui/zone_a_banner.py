@@ -162,21 +162,21 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
 
     # --- DYNAMIC COLUMN GENERATION ---
     # Structure match: 
-    # Dataset 1: [Button] (1 col)
-    # Others:    [Button] [Badge X] (2 cols)
-    # Final:     [+] (1 col)
+    # [Button (~0.4)] [Badge (~0.01)] [Spacer (~0.6)]
+    # This reduces the visual width of the buttons as requested.
     
     col_ratios = []
     
     for d_name in datasets:
         if d_name == "Dataset 1":
-            col_ratios.append(1)
+            col_ratios.append(0.5) # Main button (Narrower)
+            col_ratios.append(0.5) # Spacer to fill void
         else:
-            col_ratios.append(1) # Main button
-            col_ratios.append(0.01) # Badge Slot - Keep minimal width, CSS handles overflow/overlay
-            # Note: If too small, Streamlit might squash. 0.01 forces smallest possible.
+            col_ratios.append(0.5)  # Main button
+            col_ratios.append(0.01) # Badge Slot
+            col_ratios.append(0.5)  # Spacer
     
-    col_ratios.append(0.3) # For the [+] button
+    col_ratios.append(0.3) # For the [+] button (keep it smallish)
     
     cols = st.columns(col_ratios, gap="small")
     col_idx = 0
@@ -194,9 +194,10 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
                     st.session_state[tab_key] = d_name
                     st.rerun()
             col_idx += 1
+            col_idx += 1 # Skip Spacer
             
         else:
-            # Dataset N + Sidecar layout
+            # Dataset N + Badge + Spacer
             
             # Helper to determine correct CSS hook via tooltip
             select_help = f"Select {d_name}"
@@ -208,9 +209,8 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
                     st.rerun()
             col_idx += 1
             
-            # Sidecar X Button
+            # Badge X Button
             with cols[col_idx]:
-                 # Use a distinct X character. 
                  if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"):
                     # Check for Data existence
                     suffix = d_name.split(" ")[1]
@@ -221,6 +221,7 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
                          _delete_dataset(state_prefix, d_name)
                          st.rerun()
             col_idx += 1
+            col_idx += 1 # Skip Spacer
 
     # 3. Add Button (Last Column)
     with cols[col_idx]:
