@@ -172,8 +172,12 @@ def inject_custom_css():
            Target the Border Wrapper (st.container(border=True))
            We ensure it has a visible border and standard padding.
         */
+        /* 
+           Target the Border Wrapper (st.container(border=True))
+           We ensure it has a visible border and standard padding.
+        */
         div[data-testid="stVerticalBlockBorderWrapper"] {
-            border: 1px solid var(--card-border-color) !important;
+            border: 1px solid #B0B0B0 !important; /* Darker gray for visibility */
             border-radius: 8px !important;
             box-shadow: var(--card-shadow) !important;
             padding: 1rem !important;
@@ -240,11 +244,11 @@ def inject_custom_css():
         /* ========================================
            7. TEXT INPUTS
            ======================================== */
-        /* Restore standard gray background for inputs */
+        /* Restore White background for inputs so gray placeholders are visible */
         .stTextInput > div > div > input, 
         .stTextArea > div > div > textarea, 
         .stSelectbox > div > div > div {
-            background-color: #F0F2F6 !important; /* Streamlit default light gray */
+            background-color: #FFFFFF !important; 
             color: #31333F !important;
             border: 1px solid #D6D6D6 !important;
             border-radius: 4px !important;
