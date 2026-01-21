@@ -267,7 +267,7 @@ def inject_custom_css():
         }
 
         /* ========================================
-           10. DATASET CONTROL STYLING (Split Buttons)
+           10. DATASET CONTROL STYLING (Corner Badge)
            ======================================== */
         
         /* 10.1 "Add" Button (Plus) */
@@ -279,50 +279,59 @@ def inject_custom_css():
             line-height: 1 !important;
             padding: 0px 10px !important;
         }
-        .stButton button[title="Add new dataset"]:hover {
-            background-color: #F0F5FA !important;
+
+        /* 10.2 Standard Dataset Button (Reset to normal rounded) */
+        .stButton button[title^="Select Dataset"],
+        .stButton button[title="Permanent Dataset"] {
+            border-radius: 4px !important;
+            border: 1px solid transparent !important; /* Clean border */
+        }
+        
+        /* Active State Border Hook */
+        .stButton button[title^="Select Dataset"][kind="primary"],
+        .stButton button[title="Permanent Dataset"][kind="primary"] {
+            border: 1px solid var(--boeing-blue) !important;
         }
 
-        /* 10.2 Removable Dataset Main Button (Left half) */
-        /* We hook onto 'Select Dataset X' tooltip */
-        .stButton button[title^="Select Dataset"] {
-            border-top-right-radius: 0 !important;
-            border-bottom-right-radius: 0 !important;
-            border-right: none !important; /* Merge seam */
-            margin-right: -15px !important; /* Pull neighbor closer if possible, though container gap dominates */
-            z-index: 0;
-        }
-
-        /* 10.3 "Remove" Sidecar Button (Right half - The X) */
+        /* 10.3 "Remove" BADGE Button (The overlap X) */
         .stButton button[title^="Remove"] {
+            /* Shape & Size */
+            width: 22px !important;
+            height: 22px !important;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            min-height: 0px !important;
+            
+            /* Visuals */
             background-color: #FFFFFF !important;
-            color: var(--boeing-blue) !important; /* Blue X per request */
-            border: 1px solid #D0D0D0 !important; /* Standard border */
-            border-left: 1px solid #D0D0D0 !important; /* The vertical line separator */
-            border-top-left-radius: 0 !important;
-            border-bottom-left-radius: 0 !important;
+            color: #666 !important;
+            border: 1px solid #CCC !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+            font-size: 14px !important;
+            line-height: 1 !important;
             
-            /* CRITICAL: Overcome Streamlit Column Gap */
-            /* Streamlit st.columns(gap="small") is usually ~1rem range. We need negative margin to touch. */
-            margin-left: -50px !important; /* Aggressive pull */
-            position: relative;
-            left: -10px; /* Fine tune */
-            z-index: 1; /* Sit slightly above to ensure border clean */
+            /* POSITIONING HACK: Pull nicely onto the previous button's shoulder */
+            /* Streamlit columns have gaps. We need to jump the gap + height offset */
+            position: relative !important;
+            left: -35px !important; /* Move Left across gap */
+            top: -12px !important;   /* Move Up to corner */
+            margin-bottom: -22px !important; /* Collapse height footprint */
             
-            padding: 0 8px !important;
-            min-width: 0 !important;
+            z-index: 10 !important;
         }
+        
         .stButton button[title^="Remove"]:hover {
             background-color: #FFF0F0 !important;
             color: #D32F2F !important;
             border-color: #D32F2F !important;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2) !important;
         }
         
-        /* 10.4 Permanent Dataset (No X) - Keep Rounded */
-        .stButton button[title="Permanent Dataset"] {
-            border-radius: 4px !important;
-            /* Ensure it looks distinct or same as others? Standard btn is fine. */
+        /* Ensure the container doesn't clip the badge */
+        div[data-testid="column"] {
+            overflow: visible !important;
         }
+
 
         /* ========================================
            7. TEXT INPUTS

@@ -163,7 +163,7 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     # --- DYNAMIC COLUMN GENERATION ---
     # Structure match: 
     # Dataset 1: [Button] (1 col)
-    # Others:    [Button] [Sidecar X] (2 cols - tightly packed)
+    # Others:    [Button] [Badge X] (2 cols)
     # Final:     [+] (1 col)
     
     col_ratios = []
@@ -173,7 +173,8 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
             col_ratios.append(1)
         else:
             col_ratios.append(1) # Main button
-            col_ratios.append(0.25) # Sidecar X
+            col_ratios.append(0.01) # Badge Slot - Keep minimal width, CSS handles overflow/overlay
+            # Note: If too small, Streamlit might squash. 0.01 forces smallest possible.
     
     col_ratios.append(0.3) # For the [+] button
     
