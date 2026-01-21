@@ -181,12 +181,20 @@ def inject_custom_css():
            We ensure it has a visible border and standard padding.
         */
         div[data-testid="stVerticalBlockBorderWrapper"] {
-            border: 2px solid #000000 !important; /* Pure Black for maximum visibility debugging */
             /* 
-               Use box-shadow as a backup border mechanism. 
-               0 0 0 2px #000000 simulates a 2px black border that can't be collapsed.
+               ROBUST BORDER STRATEGY:
+               1. Reset native border to prevent conflicts.
+               2. Use 'outline' with negative offset to draw ON TOP of the element content, ensuring visibility.
+               3. Use 'box-shadow' (inset) as a backup inner border.
             */
-            box-shadow: 0 0 0 2px #000000, var(--card-shadow) !important;
+            border: none !important;
+            
+            /* Outline is distinct from border, sits above z-index usually */
+            outline: 2px solid #808080 !important;
+            outline-offset: -2px; 
+            
+            box-shadow: inset 0 0 0 1px #808080, var(--card-shadow) !important;
+            
             border-radius: 8px !important;
             padding: 1rem !important;
             background-color: var(--card-bg) !important;

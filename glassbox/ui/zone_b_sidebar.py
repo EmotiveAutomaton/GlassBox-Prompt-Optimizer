@@ -128,7 +128,7 @@ def render_zone_b():
     
     # Navigation Blocks ONLY
     mode_options = [
-        "OPro (Iterative",
+        "OPro (Iterative)",
         "APE (Reverse Eng.)",
         "Promptbreeder (Evol.)",
         "S2A (Context Filter)"
