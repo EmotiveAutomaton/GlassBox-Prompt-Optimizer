@@ -163,74 +163,77 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     # --- DYNAMIC COLUMN GENERATION ---
     # Structure match: 
     # Dataset 1: [Button] (1 col)
-    # Others:    [Button] [X] (2 cols)
+    # Others:    [Button] [Sidecar X] (2 cols - tightly packed)
     # Final:     [+] (1 col)
     
-    # Calculate total columns and relative widths
-    # Ratios: Dataset buttons = 1, X buttons = 0.15, + button = 0.15
     col_ratios = []
-    
-    # Pass 1: Build schema
-    # We will iterate datasets. 
-    # If D1 -> Add [1]
-    # If D>1 -> Add [1, 0.15]
-    # Finally -> Add [0.15]
     
     for d_name in datasets:
         if d_name == "Dataset 1":
             col_ratios.append(1)
         else:
-            col_ratios.append(1)
-            col_ratios.append(0.15)
+            col_ratios.append(1) # Main button
+            col_ratios.append(0.25) # Sidecar X
     
-    col_ratios.append(0.15) # For the [+]
+    col_ratios.append(0.3) # For the [+] button
     
-    # Create columns
     cols = st.columns(col_ratios, gap="small")
-    
     col_idx = 0
     
     # --- RENDER CONTROLS ---
     for d_name in datasets:
         # 1. Dataset Select Button
-        c_btn = cols[col_idx]
-        col_idx += 1
-        
         is_active = (d_name == active_tab)
         btn_type = "primary" if is_active else "secondary"
         
-        if c_btn.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, use_container_width=True):
-            st.session_state[tab_key] = d_name
-            st.rerun()
+        # Dataset 1
+        if d_name == "Dataset 1":
+            with cols[col_idx]:
+                if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, use_container_width=True):
+                    st.session_state[tab_key] = d_name
+                    st.rerun()
+            col_idx += 1
+            # Skip the "0.01" dummy if we added it? 
+            # In the construction above:
+            # if D1: extend([1]) ?? No I realized I shouldn't add dummy valid columns if I don't use them 
+            # UNLESS 'gap' is applied between them. 
+            # I'll stick to: D1 gets 1 slot. D2 gets 2 slots.
+            # I need to rebuild the ratio list logic to match EXACTLY what I consume.
             
-        # 2. Delete Button (If not Dataset 1)
-        if d_name != "Dataset 1":
-            c_x = cols[col_idx]
+        else:
+            # Dataset N + Sidecar
+            # Main Button
+            with cols[col_idx]:
+                # We add a trick for "Joined" look?
+                # For now just render.
+                if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, use_container_width=True):
+                    st.session_state[tab_key] = d_name
+                    st.rerun()
             col_idx += 1
             
-            # X Button
-            if c_x.button("❌", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"):
-                # Check for Data existence
-                suffix = d_name.split(" ")[1]
-                d_key = f"{state_prefix}_data_{suffix}"
-                
-                if st.session_state.get(d_key, "").strip():
-                    st.session_state[f"confirm_del_{state_prefix}"] = d_name # Store name to confirm
-                else:
-                    _delete_dataset(state_prefix, d_name)
-                    st.rerun()
+            # Sidecar X
+            with cols[col_idx]:
+                 if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"): # "Remove" prefix triggers CSS
+                    # Check for Data existence
+                    suffix = d_name.split(" ")[1]
+                    d_key = f"{state_prefix}_data_{suffix}"
+                    if st.session_state.get(d_key, "").strip():
+                         st.session_state[f"confirm_del_{state_prefix}"] = d_name
+                    else:
+                         _delete_dataset(state_prefix, d_name)
+                         st.rerun()
+            col_idx += 1
 
     # 3. Add Button (Last Column)
-    c_plus = cols[col_idx]
-    if c_plus.button("➕", key=f"add_{state_prefix}", help="Add new dataset"):
-        new_idx = len(datasets) + 1
-        while f"Dataset {new_idx}" in datasets:
-            new_idx += 1
-        datasets.append(f"Dataset {new_idx}")
-        st.rerun()
+    with cols[col_idx]:
+        if st.button("＋", key=f"add_{state_prefix}", help="Add new dataset"): # "Add new dataset" triggers CSS
+            new_idx = len(datasets) + 1
+            while f"Dataset {new_idx}" in datasets:
+                new_idx += 1
+            datasets.append(f"Dataset {new_idx}")
+            st.rerun()
 
     # --- CONFIRMATION DIALOG ---
-    # Check if a deletion is pending confirmation
     pending_del = st.session_state.get(f"confirm_del_{state_prefix}", None)
     if pending_del:
         st.warning(f"'{pending_del}' contains data. Delete anyway?")
