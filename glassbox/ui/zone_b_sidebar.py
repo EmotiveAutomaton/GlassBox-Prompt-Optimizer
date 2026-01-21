@@ -128,7 +128,7 @@ def render_zone_b():
     
     # Navigation Blocks ONLY
     mode_options = [
-        "OPro (Iterative",
+        "OPro (Iterative)",
         "APE (Reverse Eng.)",
         "Promptbreeder (Evol.)",
         "S2A (Context Filter)"
@@ -138,7 +138,7 @@ def render_zone_b():
         "Navigation",
         options=mode_options,
         label_visibility="collapsed",
-        key="selected_view_radio"
+        key="selected_engine"
     )
 
 
