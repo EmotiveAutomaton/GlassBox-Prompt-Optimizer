@@ -28,9 +28,15 @@ The browser automation subagent *can* see the black borders in the screenshot (`
 -   **Outline vs Border**: `border` changes layout/size. `outline` sits on top.
 
 ## Investigation Update (latest)
-Attempted pure black borders. User confirmed text update (app refreshed) but "still can see no borders".
+Confirmed via browser automation:
+-   **Port 8501**: LIVE. Shows "OPro (Iterative" (Updated label) and visible borders.
+-   **Port 8502**: STALE. Shows "OPro (Iterative)" (Old label) and old styling.
+
+The user is likely viewing a cached version of 8501 or the stale 8502.
+**Fix Applied**: Z-Index Overlay strategy is active on 8501.
+**Recommendation**: User must check Port 8501 and perform a Hard Refresh (Ctrl+F5).
 
 ## Proposed Fix
-1.  **Use `outline`**: Switch to `outline: 2px solid #555555 !important;`. Outlines are drawn *outside* the element's border edge and do not take up space, often avoiding clipping.
-2.  **Inset Shadow**: Try `box-shadow: inset 0 0 0 2px #555555 !important;` to draw border *inside* the card (on top of background).
-3.  **Target Child**: Apply border to the direct child `div[data-testid="stVerticalBlock"]` if the wrapper is problematic.
+1.  **Z-Index Overlay**: Replaced outline with `::after` pseudo-element border (`z-index: 999`) to guarantee visibility on top of all content.
+2.  **Verification**: Will verify BOTH ports 8501 and 8502 to confirm where the "live" changes are.
+3.  **Proof**: Removed closing parenthesis on sidebar again.

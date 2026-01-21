@@ -182,22 +182,30 @@ def inject_custom_css():
         */
         div[data-testid="stVerticalBlockBorderWrapper"] {
             /* 
-               ROBUST BORDER STRATEGY:
-               1. Reset native border to prevent conflicts.
-               2. Use 'outline' with negative offset to draw ON TOP of the element content, ensuring visibility.
-               3. Use 'box-shadow' (inset) as a backup inner border.
+               NUCLEAR OPTION FOR BORDERS:
+               Use a pseudo-element overlay with high z-index to draw the border 
+               ON TOP of all content. This bypasses any internal clipping or stacking.
             */
-            border: none !important;
-            
-            /* Outline is distinct from border, sits above z-index usually */
-            outline: 2px solid #808080 !important;
-            outline-offset: -2px; 
-            
-            box-shadow: inset 0 0 0 1px #808080, var(--card-shadow) !important;
-            
-            border-radius: 8px !important;
-            padding: 1rem !important;
+            position: relative !important;
             background-color: var(--card-bg) !important;
+            padding: 1rem !important;
+            border-radius: 8px !important;
+            border: none !important; /* Disable native border */
+            box-shadow: var(--card-shadow) !important;
+            overflow: visible !important; /* Allow overlay to sit cleanly */
+        }
+
+        div[data-testid="stVerticalBlockBorderWrapper"]::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 8px;
+            border: 2px solid #555555 !important; /* Visible Gray */
+            z-index: 999; /* Sit on top of everything inside the card */
+            pointer-events: none; /* Let clicks pass through to content */
         }
 
         /* 
