@@ -176,8 +176,12 @@ def inject_custom_css():
            Target the Border Wrapper (st.container(border=True))
            We ensure it has a visible border and standard padding.
         */
+        /* 
+           Target the Border Wrapper (st.container(border=True))
+           We ensure it has a visible border and standard padding.
+        */
         div[data-testid="stVerticalBlockBorderWrapper"] {
-            border: 1px solid #B0B0B0 !important; /* Darker gray for visibility */
+            border: 2px solid #555555 !important; /* Thick Dark Gray for assured visibility */
             border-radius: 8px !important;
             box-shadow: var(--card-shadow) !important;
             padding: 1rem !important;
@@ -230,6 +234,7 @@ def inject_custom_css():
         .stButton > button[kind="primary"] {
             background-color: var(--boeing-blue) !important;
             border: 1px solid var(--boeing-blue) !important;
+            color: white !important;
         }
         
         .stButton > button:hover {
@@ -244,14 +249,37 @@ def inject_custom_css():
         /* ========================================
            7. TEXT INPUTS
            ======================================== */
-        /* Restore White background for inputs so gray placeholders are visible */
+        /* Standard Input Styling */
         .stTextInput > div > div > input, 
         .stTextArea > div > div > textarea, 
         .stSelectbox > div > div > div {
             background-color: #FFFFFF !important; 
-            color: #31333F !important;
-            border: 1px solid #D6D6D6 !important;
+            color: #333333 !important;
+            border: 1px solid #CCC !important;
             border-radius: 4px !important;
+        }
+
+        /* FORCE VISIBLE PLACEHOLDERS */
+        /* Webkit/Blink */
+        .stTextInput input::-webkit-input-placeholder,
+        .stTextArea textarea::-webkit-input-placeholder {
+            color: #555555 !important;
+            opacity: 1 !important;
+            font-weight: 500;
+        }
+        /* Mozilla */
+        .stTextInput input::-moz-placeholder,
+        .stTextArea textarea::-moz-placeholder {
+            color: #555555 !important;
+            opacity: 1 !important;
+            font-weight: 500;
+        }
+        /* Default */
+        .stTextInput input::placeholder,
+        .stTextArea textarea::placeholder {
+            color: #555555 !important;
+            opacity: 1 !important;
+            font-weight: 500;
         }
         
         /* Dark mode overrides for inputs would be handled by var(--card-bg) if we wanted dynamic, 
