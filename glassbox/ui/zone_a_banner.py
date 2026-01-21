@@ -35,41 +35,56 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
         with st.container(border=True):
             st.markdown(f'<div class="card-header">INITIAL PROMPT AND DATA ({engine_id.upper()})</div>', unsafe_allow_html=True)
             
-            # --- SHARED SETTINGS POPOVER (Moved to Zone F) ---
-            # Model configuration is now handled globally via the top bar gear icon.
-            
             # --- DYNAMIC INPUTS ---
             if engine_id == "opro":
-                # OPro: Prompt + Test Data
-                st.text_area("Seed Prompt", height=80, key="seed_prompt", 
-                           placeholder="Initial prompt to be optimized. This should be the raw prompt text you want to improve.", label_visibility="collapsed")
-                st.text_area("Test Data", height=80, key="test_data",
-                           placeholder="Test cases for evaluation (one per line). Provide input examples that the prompt should handle correctly.", label_visibility="collapsed")
+                # OPro: Prompt (Text Only) + Test Data (File/Tabbed)
+                st.text_area("Seed Prompt", height=80, key="opro_seed_prompt", 
+                           placeholder="Initial prompt to be optimized...", label_visibility="collapsed")
+                
+                # Test Data with Tabs
+                _render_tabbed_input(
+                    label="Test Data",
+                    state_prefix="opro_test",
+                    height=150,
+                    placeholder="Enter or upload test cases (one per line)..."
+                )
             
             elif engine_id == "ape":
-                # APE: Input/Ideal Output Pairs
-                st.text_area("Input Data [Ex 1]", height=60, key="ape_input_1",
-                           placeholder="Input example for reverse engineering. This is the user input that triggers the desired output.", label_visibility="collapsed")
-                st.text_area("Ideal Output [Ex 1]", height=60, key="ape_output_1",
-                           placeholder="Ideal target output. This is the exact response you want the model to generate for the given input.", label_visibility="collapsed")
-                if st.button("[+] Add Example", key="ape_add_btn"):
-                    st.info("Multi-example support coming in beta.")
+                # APE: Input Data (File/Tabbed) + Ideal Output (Text/File?) -> Spec said "Top box... Initial prompt and data area"
+                # User Request: "APE... same thing with the top box... these test cases... driven by outside data sources"
+                
+                # APE Input Data (Tabbed)
+                _render_tabbed_input(
+                    label="Input Data (Examples)",
+                    state_prefix="ape_input",
+                    height=100,
+                    placeholder="Upload or paste input examples for reverse engineering..."
+                )
+                
+                # Ideally APE also needs Output data, but requirements focused on "Top box". 
+                # We will keep Ideal Output as simple text for now to match strict instructions, 
+                # or applying to both if "Initial prompt and area" implies the full pair.
+                # Request says "replace the top box... initial prompt and data area". 
+                # I will leave the second box (Ideal Output) as text for now to avoid over-engineering unless specified.
+                st.text_area("Ideal Output [Target]", height=60, key="ape_output_target",
+                           placeholder="Ideal target output...", label_visibility="collapsed")
 
             elif engine_id == "promptbreeder":
                 # PromptBreeder: Prompt + Population
-                st.text_area("Seed Prompt", height=80, key="seed_prompt",
-                           placeholder="Base prompt for evolutionary optimization. This prompt will serve as the initial seed for mutation.", label_visibility="collapsed")
+                st.text_area("Seed Prompt", height=80, key="pb_seed_prompt",
+                           placeholder="Base prompt for evolutionary optimization...", label_visibility="collapsed")
                 st.slider("Population Size", 10, 100, 50, 10, key="pb_population")
                 st.caption("Evolutionary params managed by backend.")
 
             elif engine_id == "s2a":
                 # S2A: Query + Raw Context
                 st.text_area("Starting Query", height=60, key="s2a_query",
-                           placeholder="User query to answer. This is the question the model needs to answer using the provided context.", label_visibility="collapsed")
+                           placeholder="User query to answer...", label_visibility="collapsed")
                 st.text_area("Raw Context", height=100, key="s2a_context",
-                           placeholder="Retrieved context chunks. Paste the raw text or JSON context here that needs to be filtered and refined.", label_visibility="collapsed")
+                           placeholder="Retrieved context chunks...", label_visibility="collapsed")
 
             # --- ACTION BUTTONS ---
+            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True) # Spacer
             col_start, col_stop = st.columns(2)
             with col_start:
                 if st.button("START OPTIMIZATION", type="primary", use_container_width=True):
@@ -80,41 +95,93 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
     
     # === CARD 2: GLASS BOX (Visualizer + Logic Readout) ===
     with col_glassbox:
-        with st.container(border=True):
-            # Header - Full Width, No Checkbox
-            st.markdown('<div class="card-header">GLASS BOX</div>', unsafe_allow_html=True)
+        render_glassbox_card(engine_id)
 
-            col_schematic, col_log = st.columns([2, 1.2])
+
+def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, placeholder: str = ""):
+    """
+    Renders a File Uploader + Text Area + Tab Navigation combo.
+    tabs are rendered BELOW the text area.
+    """
+    # 1. State Management
+    tab_key = f"{state_prefix}_active_tab"
+    if tab_key not in st.session_state:
+        st.session_state[tab_key] = "Set 1"
+    
+    active_tab = st.session_state[tab_key]
+    # Normalize tab name to index suffix (Set 1 -> 1)
+    suffix = active_tab.split(" ")[1] 
+    data_key = f"{state_prefix}_data_{suffix}"
+    
+    # Initialize data slot if missing
+    if data_key not in st.session_state:
+        st.session_state[data_key] = ""
+
+    # 2. File Uploader (Top)
+    # We use a unique key per tab to reset uploader when switching? 
+    # Or strict "Upload to Current" logic. 
+    # Strict logic: Uploader is ephemeral. If user drops file, we read and dump to text area.
+    uploaded_file = st.file_uploader(f"Upload {label} ({active_tab})", type=["txt", "md", "csv", "json"], key=f"uploader_{state_prefix}_{suffix}", label_visibility="collapsed")
+    
+    if uploaded_file is not None:
+        # Read and populate text area state
+        string_data = uploaded_file.getvalue().decode("utf-8")
+        st.session_state[data_key] = string_data
+
+    # 3. Editable Text Area (Middle)
+    # Bind to the specific slot's key
+    st.text_area(f"{label} Content", value=st.session_state[data_key], height=height, 
+                 key=f"text_{data_key}", # Unique key for widget
+                 placeholder=placeholder,
+                 label_visibility="collapsed",
+                 on_change=lambda: _update_state(data_key, f"text_{data_key}"))
+
+    # 4. Tabs (Radio) (Bottom)
+    st.radio("Data Set", ["Set 1", "Set 2", "Set 3"], 
+             key=tab_key, 
+             horizontal=True, 
+             label_visibility="collapsed")
+
+def _update_state(target_key, source_widget_key):
+    """Callback to sync text widget back to main state variable"""
+    st.session_state[target_key] = st.session_state[source_widget_key]
+
+def render_glassbox_card(engine_id: str):
+    with st.container(border=True):
+        # Header - Full Width, No Checkbox
+        st.markdown('<div class="card-header">GLASS BOX</div>', unsafe_allow_html=True)
+
+        col_schematic, col_log = st.columns([2, 1.2])
+        
+        # 1. GRAPHVIZ SCHEMATIC
+        with col_schematic:
+            visualizer = GraphVisualizer()
             
-            # 1. GRAPHVIZ SCHEMATIC
-            with col_schematic:
-                visualizer = GraphVisualizer()
-                
-                # Determine active node based on backend state (mocked for now if idle)
-                active_node = st.session_state.get("active_node_id", "START" if engine_id in ["opro", "ape"] else "POOL")
-                
-                # Check for idle state override
-                status = st.session_state.get("optimizer_status", "idle")
-                if status == "idle":
-                    active_node = None 
+            # Determine active node based on backend state (mocked for now if idle)
+            active_node = st.session_state.get("active_node_id", "START" if engine_id in ["opro", "ape"] else "POOL")
+            
+            # Check for idle state override
+            status = st.session_state.get("optimizer_status", "idle")
+            if status == "idle":
+                active_node = None 
 
-                # Generate DOT
-                try:
-                    dot_source = visualizer.get_engine_chart(engine_id, active_node)
-                    st.graphviz_chart(dot_source, use_container_width=True)
-                except Exception as e:
-                    st.error(f"Viz Error: {e}")
+            # Generate DOT
+            try:
+                dot_source = visualizer.get_engine_chart(engine_id, active_node)
+                st.graphviz_chart(dot_source, use_container_width=True)
+            except Exception as e:
+                st.error(f"Viz Error: {e}")
 
-            # 2. READOUT PANEL (Logic Inspection)
-            with col_log:
-                # Content depends on active node
-                node_content = _get_readout_content(engine_id, active_node)
-                
-                st.markdown("**System Logic / Prompt**")
-                st.code(node_content, language="text", line_numbers=False)
-                
-                # Status Footer
-                st.markdown(f"<div style='margin-top:5px; font-size:11px; font-weight:500; color:#666;'>STATUS: <span style='color:#0D7CB1'>{status.upper()}</span></div>", unsafe_allow_html=True)
+        # 2. READOUT PANEL (Logic Inspection)
+        with col_log:
+            # Content depends on active node
+            node_content = _get_readout_content(engine_id, active_node)
+            
+            st.markdown("**System Logic / Prompt**")
+            st.code(node_content, language="text", line_numbers=False)
+            
+            # Status Footer
+            st.markdown(f"<div style='margin-top:5px; font-size:11px; font-weight:500; color:#666;'>STATUS: <span style='color:#0D7CB1'>{status.upper()}</span></div>", unsafe_allow_html=True)
 
 
 def _get_readout_content(engine: str, node: Optional[str]) -> str:
