@@ -647,5 +647,19 @@ def inject_custom_css():
         /* Specific fix to prevent horizontal scroll if shift pushes too far? */
         /* Checking... */
 
+        /* ITER 20 FIX (RETRY 2): Robust Scroll via Marker */
+        /* We use the injected marker class to safely target the container */
+        div[data-testid="stVerticalBlock"]:has(.file-list-scrollbar-marker) {
+             height: 100% !important;
+             max-height: 100% !important; /* Ensure it respects parent height */
+             overflow-y: auto !important;
+             overflow-x: hidden !important;
+             display: flex !important;
+             flex-direction: column !important;
+             /* Iter 22: Polish Whitespace (User Req: 3px) */
+             padding-top: 3px !important;
+             gap: 3px !important;
+        }
+        
         </style>
     """, unsafe_allow_html=True)

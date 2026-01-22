@@ -160,27 +160,29 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     # Replaces old caption. "Preset area... viewing three files... scroll"
     file_list = st.session_state[files_key]
     
-    if file_list:
-        # Height 100px ~ 3 compact items (32px * 3)
-        with st.container(height=100):
+    # 3. File List Area (Always Persistent)
+    # Height 68px ~ 2 lines (User Request) to prevent overlap with buttons below
+    with st.container(height=68):
+        # MARKER: Injected for CSS targeting (Iter 20 Fix)
+        # Must be present even if empty so CSS applies correctly
+        st.markdown('<div class="file-list-scrollbar-marker" style="display:none;"></div>', unsafe_allow_html=True)
+        
+        file_list = st.session_state[files_key]
+        if file_list:
             for i, f_info in enumerate(file_list):
                  # Layout: [Name (0.9)] [Remove (0.1)]
-                 # Use key logic to target styling
                  c_name, c_rem = st.columns([0.9, 0.1])
                  with c_name:
-                     st.text(f_info['name']) # Simple text to be compact
+                     st.text(f_info['name']) 
                  with c_rem:
-                     # Remove button
                      if st.button("✕", key=f"rm_file_{state_prefix}_{suffix}_{i}_{f_info['name']}"):
                          st.session_state[files_key].pop(i)
-                         # Update text
                          all_text = "\n\n".join([f['content'] for f in st.session_state[files_key]])
                          st.session_state[data_key] = all_text
                          st.rerun()
-    else:
-        # Empty State Placeholder
-        st.caption(f"ℹ️ **{active_tab}**: No files loaded.")
-        st.markdown("<div style='height: 80px;'></div>", unsafe_allow_html=True) # Maintain height
+        else:
+             # Empty state - just empty space as requested
+             pass
 
     # 4. Tabs & Management (Bottom - Inline Button Strip)
     # Layout: [Dataset 1]  [Dataset 2] [x]  [Dataset 3] [x]  [+]

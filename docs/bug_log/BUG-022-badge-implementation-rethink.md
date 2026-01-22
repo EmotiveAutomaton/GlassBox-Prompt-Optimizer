@@ -33,3 +33,10 @@ User rejected the previous implementation of "Dataset Closing Badges" (Iteration
 - **Style:** "Floating Icon" (White Circle, Box Shadow, No Border). matches "Internal Object" aesthetic.
 - **Position:** `position: absolute`, `top: -50px`.
 - **Verified:** Visible in browser. Exact coordinate "dialing in" pending user feedback.
+
+## Regression Log
+### Iteration 20 (Rolled Back)
+- **Action:** Removed global `overflow: visible !important` from `styles.py` to fix a scrolling issue in the File List.
+- **Impact:** The "Dataset Removal Badges" (Dataset 2, 3, 4 [X]) disappeared or were clipped.
+- **Reason:** These badges use `position: absolute` with negative coordinates (hanging outside their container). `overflow: visible` is **REQUIRED** for them to be seen.
+- **Lesson:** Any solution for scrolling (which requires `overflow: auto/hidden`) MUST be scoped locally to the specific element and NOT affect the global `stColumn` containers where these badges live.
