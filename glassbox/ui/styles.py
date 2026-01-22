@@ -551,28 +551,32 @@ def inject_custom_css():
         div[data-testid="stToolbar"] { display: none !important; }
 
         /* ------------------------------------------------------------- */
-        /* ITER 17: PLUS BUTTON REFINEMENT (Ghost, Small, Shifted)       */
+        /* ITER 18: PLUS BUTTON FINE-TUNING (Tiny, Shifted, Opaque)      */
         /* ------------------------------------------------------------- */
         div[data-testid="stColumn"] div[class*="st-key-add_"] button {
              /* 1. Style: Ghost Blue (White BG, Blue Borders) */
              background-color: #FFFFFF !important;
              color: var(--boeing-blue) !important;
              border: 1px solid var(--boeing-blue) !important;
-             opacity: 0.5 !important;
+             opacity: 0.7 !important; /* Increased from 0.5 */
              
-             /* 2. Size: Shorter and Narrower */
-             height: 24px !important;       /* ~50% of standard 48px */
-             min-height: 24px !important;
+             /* 2. Size: Reduced to ~60% of previous 24px -> ~15px */
+             height: 15px !important;       
+             min-height: 15px !important;
              line-height: 1 !important;
-             padding: 0px 8px !important;   /* Narrower padding */
+             padding: 0px !important;       /* Remove padding to fit icon */
              width: auto !important; 
-             min-width: 32px !important;    /* ~2/3rds of previous 40-50px */
-             font-size: 14px !important;    
+             min-width: 24px !important;    /* Proportional width reduction */
+             font-size: 12px !important;    
              
-             /* 3. Position: Shift Right */
-             /* "Center of where dataset 3 would be" -> Shift approx half a column width */
-             margin-left: 50px !important;  
+             /* 3. Position: Shift Down & Right */
+             /* Down ~15px (35% of dataset btn). Right ~65px (50 + 15) */
+             margin-top: 15px !important;
+             margin-left: 65px !important;  
              border-radius: 4px !important;
+             
+             /* Flex alignment check */
+             align-self: flex-start !important; 
         }
 
         div[data-testid="stColumn"] div[class*="st-key-add_"] button:hover {
