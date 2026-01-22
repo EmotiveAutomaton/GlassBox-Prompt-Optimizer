@@ -429,27 +429,7 @@ def inject_custom_css():
              overflow: visible !important;
         }
 
-        /* ------------------------------------------------------------- */
-        /* ITER 16 FIX: PLUS BUTTON OVERRIDE (Must be last)              */
-        /* ------------------------------------------------------------- */
-        /* Match specificity of the generic rule + class key */
-        div[data-testid="stColumn"] div[class*="st-key-add_"] button {
-            /* Logic: Override the 'white' background of .stButton button */
-             background-color: #394957 !important; /* Solid Slate Gray */
-             color: #FFFFFF !important;
-             border: 1px solid #394957 !important;
-             opacity: 1.0 !important;
-             
-             /* Restore Size/Shape */
-             width: auto !important;
-             min-width: 40px !important;
-             border-radius: 4px !important;
-        }
 
-        div[data-testid="stColumn"] div[class*="st-key-add_"] button:hover {
-             background-color: var(--selected-blue) !important; 
-             border-color: var(--selected-blue) !important;
-        }
 
 
         /* ========================================
@@ -569,6 +549,42 @@ def inject_custom_css():
         header[data-testid="stHeader"] { display: none; }
         footer { display: none; }
         div[data-testid="stToolbar"] { display: none !important; }
+
+        /* ------------------------------------------------------------- */
+        /* ITER 17: PLUS BUTTON REFINEMENT (Ghost, Small, Shifted)       */
+        /* ------------------------------------------------------------- */
+        div[data-testid="stColumn"] div[class*="st-key-add_"] button {
+             /* 1. Style: Ghost Blue (White BG, Blue Borders) */
+             background-color: #FFFFFF !important;
+             color: var(--boeing-blue) !important;
+             border: 1px solid var(--boeing-blue) !important;
+             opacity: 0.5 !important;
+             
+             /* 2. Size: Shorter and Narrower */
+             height: 24px !important;       /* ~50% of standard 48px */
+             min-height: 24px !important;
+             line-height: 1 !important;
+             padding: 0px 8px !important;   /* Narrower padding */
+             width: auto !important; 
+             min-width: 32px !important;    /* ~2/3rds of previous 40-50px */
+             font-size: 14px !important;    
+             
+             /* 3. Position: Shift Right */
+             /* "Center of where dataset 3 would be" -> Shift approx half a column width */
+             margin-left: 50px !important;  
+             border-radius: 4px !important;
+        }
+
+        div[data-testid="stColumn"] div[class*="st-key-add_"] button:hover {
+             /* Hover: Solid Blue, Full Opacity */
+             background-color: var(--boeing-blue) !important; 
+             color: white !important;
+             border-color: var(--boeing-blue) !important;
+             opacity: 1.0 !important;
+        }
+        
+        /* Specific fix to prevent horizontal scroll if shift pushes too far? */
+        /* Checking... */
 
         </style>
     """, unsafe_allow_html=True)
