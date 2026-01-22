@@ -325,76 +325,94 @@ def inject_custom_css():
             border-color: var(--boeing-blue) !important;
         }
 
-        /* 10.3 "Remove" BADGE Wrapper & Button */
+        /* 10.3 "Floating Icon" BADGE (Iter 10 - Alignment Fix) */
         
-        /* FORCE OVERFLOW VISIBLE on the Column Parent so badge can hang out */
-        div[data-testid="stColumn"] {
+        /* FORCE OVERFLOW VISIBLE on all layout containers */
+        div[data-testid="stColumn"], 
+        div[data-testid="stVerticalBlock"],
+        div[data-testid="stHorizontalBlock"] {
             overflow: visible !important;
         }
 
-        /* 1. Target the Wrapper (div:nth-of-type(2) in the column's vertical block) */
-        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] > div:nth-of-type(2) {
-            position: absolute !important;
-            top: 0 !important;
-            right: 0 !important;
-            width: 0 !important;
-            height: 0 !important;
-            overflow: visible !important; 
-            z-index: 999999 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            pointer-events: none; /* Let clicks pass through wrapper if empty? No, button needs clicks */
-            pointer-events: auto;
+        /* 1. WRAPPER CONTROL: Fix Vertical Alignment Issue (Raised Buttons) */
+        /* The 2nd element (Badge Wrapper) was taking up space/flow. We crush it. */
+        /* 1. WRAPPER CONTROL: Fix Vertical Alignment Issue (Raised Buttons) */
+        /* 1. WRAPPER CONTROL: Fix Vertical Alignment Issue (Raised Buttons) */
+        /* CRITICAL FIX (Iter 14): Anchor the Parent Block so Absolute Position works! */
+        /* Otherwise top:0 goes to the page root (Header). */
+        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"]:has([data-type="dataset-column-marker"]) {
+            position: relative !important;
+            overflow: visible !important;
         }
 
-        /* 2. Target the Button inside the wrapper */
-        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] > div:nth-of-type(2) button {
-            /* Shape: Small Circle */
-            width: 18px !important;
-            height: 18px !important;
-            min-height: 18px !important;
+        /* Target the Badge Wrapper (3rd element) inside the anchored block */
+        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"]:has([data-type="dataset-column-marker"]) > div:nth-of-type(3) {
+             position: absolute !important;
+             top: 0 !important;
+             left: 0 !important;
+             width: 0 !important;
+             height: 0 !important;
+             margin: 0 !important;
+             padding: 0 !important;
+             overflow: visible !important;
+             z-index: 1000000 !important;
+        }
+
+        /* 2. BADGE BUTTON STYLING */
+        /* Target the button inside the 3rd div */
+        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"]:has([data-type="dataset-column-marker"]) > div:nth-of-type(3) button {
+            /* RESET STYLES */
+            border: 1px solid #E0E0E0 !important;
             padding: 0 !important;
+            margin: 0 !important;
+            min-height: 0 !important;
+            
+            /* SHAPE & SIZE */
+            width: 20px !important;
+            height: 20px !important;
+            min-width: 20px !important;
             border-radius: 50% !important;
             
-            /* Visuals */
+            /* VISUALS */
             background-color: #FFFFFF !important;
-            color: #888 !important;
-            border: 1px solid #CCC !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            color: #666 !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
             
-            /* Text Centering */
+            /* TYPOGRAPHY */
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             font-size: 10px !important;
-            line-height: 18px !important;
+            line-height: 1 !important;
             
-            /* Positioning relative to wrapper (which is at top-right of column) */
+            /* POSITIONING relative to the Absolute Wrapper (Top-Left of Column) */
             position: absolute !important;
-            top: 0px !important;
-            right: 18px !important; /* Shift left slightly so it's not off-edge? Or 0? */
-            /* User asked for it to overlap the corner.
-               If Wrapper is Top-Right (0,0).
-               Button at (0,0) centers on Top-Right? 
-               Wait, wrapper width is 0.
-               Let's translate to center it on the corner?
-               Or User said "left -24px" before?
-               Let's adjust carefully. 
-               Wrapper is at Top-Right of column.
-               Dataset Pill ends at Right of column.
-               Badge should be at Right edge.
-               Let's set `right: -5px` to hang off slightly?
-               Or `transform: translate(30%, -30%)`.
-            */
-            top: -2px !important;
-            right: -2px !important; 
-            margin: 0 !important;
+            
+            /* Move RIGHT (Dialed in Iter 15: 120px - 15px = 105px) */
+            left: 105px !important; 
+            
+            /* Vertical: (Dialed in Iter 15: -10px + 22px = 12px) */
+            /* Lowered by half-height of button */
+            top: 12px !important; 
+            
+            z-index: 1000001 !important; /* Higher than wrapper */
+            pointer-events: auto !important;
         }
         
-        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] > div:nth-of-type(2) button:hover {
-            background-color: #DC3545 !important;
-            color: white !important;
-            border-color: #DC3545 !important;
+        /* HOVER STATE */
+        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"]:has([data-type="dataset-column-marker"]) > div:nth-of-type(3) button:hover {
+             border-color: #FF4B4B !important;
+             color: #FF4B4B !important;
+             background-color: #FFFFFF !important;
+             box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;
+             transform: scale(1.1);
+        }
+        
+        /* ACTIVE/FOCUS STATE */
+        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"]:has([data-type="dataset-column-marker"]) > div:nth-of-type(3) button:focus:not(:active) {
+            border-color: #E0E0E0 !important;
+            color: #666 !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15) !important;
         }
         
         /* CONTAINER OVERFLOW FIX */

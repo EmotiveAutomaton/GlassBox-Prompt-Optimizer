@@ -188,6 +188,9 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     # --- RENDER CONTROLS ---
     for d_name in datasets:
         with cols[col_idx]:
+            # 0. Marker for CSS Targeting (Iter 12)
+            st.markdown('<div data-type="dataset-column-marker" style="display:none;"></div>', unsafe_allow_html=True)
+
             # 1. Main Dataset Button
             is_active = (d_name == active_tab)
             btn_type = "primary" if is_active else "secondary"
@@ -200,8 +203,9 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
                  st.session_state[tab_key] = d_name
                  st.rerun()
             
-            # 2. Render Badge INSIDE the same column (stacked by Streamlit, absolute by CSS)
+            # 2. Render Badge (Re-enabled for Iter 9 "Floating Icon")
             if d_name != "Dataset 1":
+                # Use standard secondary button, but CSS will transform it into a floating icon
                 if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"):
                     # Check for data existence
                     suffix = d_name.split(" ")[1]
