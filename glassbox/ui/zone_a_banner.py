@@ -110,36 +110,77 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
         st.session_state[tab_key] = "Dataset 1"
     
     active_tab = st.session_state[tab_key]
-    # Normalize tab name to index suffix (Set 1 -> 1)
     suffix = active_tab.split(" ")[1] 
-    data_key = f"{state_prefix}_data_{suffix}"
     
-    # Initialize data slot if missing
-    if data_key not in st.session_state:
-        st.session_state[data_key] = ""
+    # Data Keys
+    data_key = f"{state_prefix}_data_{suffix}"         # The actual string text
+    files_key = f"{state_prefix}_file_list_{suffix}"   # List of filenames/metadata
+    upl_key_base = f"uploader_{state_prefix}_{suffix}" # Base key for uploader
+    ctr_key = f"{state_prefix}_upl_ctr_{suffix}"       # Counter to clear uploader
 
-    # 2. File Uploader (Top)
-    # Label requested: "Drag and drop a set of test data here"
-    # We maintain the unique key to reset on tab switch (standard Streamlit pattern)
-    uploaded_file = st.file_uploader(
+    # Initialize
+    if data_key not in st.session_state: st.session_state[data_key] = ""
+    if files_key not in st.session_state: st.session_state[files_key] = []
+    if ctr_key not in st.session_state: st.session_state[ctr_key] = 0
+
+    # 2. File Uploader ("Drop Zone")
+    # We use a dynamic key to "clear" the input after processing (Accumulator Pattern)
+    current_upl_key = f"{upl_key_base}_{st.session_state[ctr_key]}"
+    
+    uploaded_files = st.file_uploader(
         "Drag and drop a set of test data here", 
         type=["txt", "md", "csv", "json"], 
-        key=f"uploader_{state_prefix}_{suffix}", 
+        key=current_upl_key,
+        accept_multiple_files=True, # Iter 19: Allow multiple
         label_visibility="visible"
     )
     
-    if uploaded_file is not None:
-        # Read and populate text area state
-        string_data = uploaded_file.getvalue().decode("utf-8")
-        st.session_state[data_key] = string_data
+    # Process New Uploads
+    if uploaded_files:
+        for uf in uploaded_files:
+            # Check duplicates by name?
+            existing_names = [f['name'] for f in st.session_state[files_key]]
+            if uf.name not in existing_names:
+                content = uf.getvalue().decode("utf-8")
+                st.session_state[files_key].append({
+                    "name": uf.name,
+                    "size": uf.size,
+                    "content": content
+                })
         
-    # 3. Status Indicator (Since text area is gone)
-    current_data = st.session_state[data_key]
-    if current_data:
-        # Show small confirmation so user knows this "Set" has data
-        st.caption(f"✅ **{active_tab}**: Loaded {len(current_data)} chars.")
+        # Update concatenated text data
+        all_text = "\n\n".join([f['content'] for f in st.session_state[files_key]])
+        st.session_state[data_key] = all_text
+        
+        # Clear uploader by incrementing key
+        st.session_state[ctr_key] += 1
+        st.rerun()
+
+    # 3. Custom File List (Vertical, Scrollable, Compact)
+    # Replaces old caption. "Preset area... viewing three files... scroll"
+    file_list = st.session_state[files_key]
+    
+    if file_list:
+        # Height 100px ~ 3 compact items (32px * 3)
+        with st.container(height=100):
+            for i, f_info in enumerate(file_list):
+                 # Layout: [Name (0.9)] [Remove (0.1)]
+                 # Use key logic to target styling
+                 c_name, c_rem = st.columns([0.9, 0.1])
+                 with c_name:
+                     st.text(f_info['name']) # Simple text to be compact
+                 with c_rem:
+                     # Remove button
+                     if st.button("✕", key=f"rm_file_{state_prefix}_{suffix}_{i}_{f_info['name']}"):
+                         st.session_state[files_key].pop(i)
+                         # Update text
+                         all_text = "\n\n".join([f['content'] for f in st.session_state[files_key]])
+                         st.session_state[data_key] = all_text
+                         st.rerun()
     else:
-        st.caption(f"ℹ️ **{active_tab}**: Empty")
+        # Empty State Placeholder
+        st.caption(f"ℹ️ **{active_tab}**: No files loaded.")
+        st.markdown("<div style='height: 80px;'></div>", unsafe_allow_html=True) # Maintain height
 
     # 4. Tabs & Management (Bottom - Inline Button Strip)
     # Layout: [Dataset 1]  [Dataset 2] [x]  [Dataset 3] [x]  [+]

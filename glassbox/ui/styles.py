@@ -551,6 +551,63 @@ def inject_custom_css():
         div[data-testid="stToolbar"] { display: none !important; }
 
         /* ------------------------------------------------------------- */
+        /* ITER 19: MULTI-FILE LIST STYLING                              */
+        /* ------------------------------------------------------------- */
+        
+        /* 1. HIDE Native Streamlit File List */
+        div[data-testid="stFileUploader"] ul[data-testid="stUploadedFileList"] {
+             display: none !important;
+        }
+        
+        /* 2. Custom File List Container (The "Preset Area") */
+        /* Border, BG, Radius */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+             border: 1px solid #E0E0E0 !important;
+             background-color: #F8F9FA !important; 
+             border-radius: 4px !important;
+        }
+
+        /* 3. Items inside the list */
+        div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stText"] {
+             font-size: 13px !important;
+             color: #333 !important;
+             padding: 4px 0px !important;
+             white-space: nowrap !important;
+             overflow: hidden !important;
+             text-overflow: ellipsis !important;
+        }
+        
+        /* Remove Button (X) */
+        div[class*="st-key-rm_file_"] button {
+             border: none !important;
+             background: transparent !important;
+             color: #999 !important;
+             padding: 0px !important;
+             width: 20px !important;
+             height: 20px !important;
+             min-height: 0 !important;
+             line-height: 1 !important;
+        }
+        div[class*="st-key-rm_file_"] button:hover {
+             color: #FF4B4B !important;
+             background: rgba(255, 75, 75, 0.1) !important;
+             border-radius: 50% !important;
+        }
+        
+        /* 4. Custom Scrollbar */
+        div[data-testid="stVerticalBlockBorderWrapper"] ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] ::-webkit-scrollbar-track {
+            background: transparent; 
+        }
+        div[data-testid="stVerticalBlockBorderWrapper"] ::-webkit-scrollbar-thumb {
+            background-color: #CCC; 
+            border-radius: 3px;
+        }
+
+        /* ------------------------------------------------------------- */
         /* ITER 18: PLUS BUTTON FINE-TUNING (Tiny, Shifted, Opaque)      */
         /* ------------------------------------------------------------- */
         div[data-testid="stColumn"] div[class*="st-key-add_"] button {
