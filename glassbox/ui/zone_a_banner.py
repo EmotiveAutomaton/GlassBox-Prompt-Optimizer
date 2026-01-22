@@ -170,12 +170,16 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     col_ratios = []
     
     for d_name in datasets:
-        # Each dataset gets ONE column. Badges are rendered INSIDE explicitly.
-        col_ratios.append(0.05) 
+        # Fixed relative weight (approx 15% of screen) per button.
+        # This keeps size constant as N increases (until overflow).
+        col_ratios.append(0.15) 
     
-    col_ratios.append(0.12) # Plus Button (slightly larger to account for gaps)
-
-    col_ratios.append(0.12) # Plus Button (slightly larger to account for gaps)
+    col_ratios.append(0.08) # Plus Button
+    
+    # Calculate remaining space for Spacer
+    current_sum = sum(col_ratios)
+    spacer = max(0.01, 1.0 - current_sum)
+    col_ratios.append(spacer)
 
     # Vertical alignment 'center' ensures the "+" button aligns with the text pills
     cols = st.columns(col_ratios, gap="small", vertical_alignment="center")
