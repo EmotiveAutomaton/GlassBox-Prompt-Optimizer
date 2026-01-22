@@ -13,9 +13,8 @@ Current state: Buttons are Red (default theme), X badge is invisible, and Drag/D
     *   **Side Effect**: Drag/Drop area darkened (Generic CSS selector collision?).
     *   **Side Effect**: Buttons remained Red (CSS Specificity lower than Streamlit default).
 
-## Resolution Plan
-1.  **Color**: Use `div[data-testid="stButton"] > button` specificity to override Theme Primary Color.
-2.  **Visibility**: Remove aggressive negative margins if they cause clipping. Try "Overlay" approach or revert to "Tight Sidecar" with zero gaps.
-    *   *Decision*: User insisted on "Attached". Will try to make the sidecar physically closer and ensure `overflow: visible` is applied to parents.
-3.  **Width**: Reduce column width ratios for buttons.
-4.  **Drag/Drop**: Inspect CSS for `background-color` leaks.
+## Resolution (Fixed)
+- **Column Logic**: Switched to `stColumn` CSS selectors and extremely narrow python column ratios (`0.08` vs `0.2`) to force the "Pill" look.
+- **Badge Positioning**: Used `position: absolute` with `left: -12px` and `top: 0` on the *next* column's button to visually superimpose it on the previous column's button.
+- **Transparency**: Added `opacity: 0.5` to the Add button.
+- **Coloration**: Used `data-testid="stColumn"` structural selectors to reliably target buttons and apply Boeing Blue (`#1A409F`) to active states and White to inactive.

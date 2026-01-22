@@ -90,7 +90,7 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
                 if st.button("START OPTIMIZATION", type="primary", use_container_width=True):
                     st.session_state["start_optimization"] = True
             with col_stop:
-                if st.button("STOP", use_container_width=True):
+                if st.button("STOP OPTIMIZATION", use_container_width=True):
                     st.session_state["stop_optimization"] = True
     
     # === CARD 2: GLASS BOX (Visualizer + Logic Readout) ===
@@ -165,72 +165,66 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     # [Button (~0.4)] [Badge (~0.01)] [Spacer (~0.6)]
     # This reduces the visual width of the buttons as requested.
     
+    # Updated Ratios: One column per dataset (0.05) + Plus button (0.1)
+    # This removes "dead space" caused by extra badge columns.
     col_ratios = []
     
     for d_name in datasets:
-        if d_name == "Dataset 1":
-            col_ratios.append(0.5) # Main button (Narrower)
-            col_ratios.append(0.5) # Spacer to fill void
-        else:
-            col_ratios.append(0.5)  # Main button
-            col_ratios.append(0.01) # Badge Slot
-            col_ratios.append(0.5)  # Spacer
+        # Each dataset gets ONE column. Badges are rendered INSIDE explicitly.
+        col_ratios.append(0.05) 
     
-    col_ratios.append(0.3) # For the [+] button (keep it smallish)
-    
-    cols = st.columns(col_ratios, gap="small")
+    col_ratios.append(0.12) # Plus Button (slightly larger to account for gaps)
+
+    col_ratios.append(0.12) # Plus Button (slightly larger to account for gaps)
+
+    # Vertical alignment 'center' ensures the "+" button aligns with the text pills
+    cols = st.columns(col_ratios, gap="small", vertical_alignment="center")
     col_idx = 0
     
     # --- RENDER CONTROLS ---
     for d_name in datasets:
-        # 1. Dataset Select Button
-        is_active = (d_name == active_tab)
-        btn_type = "primary" if is_active else "secondary"
-        
-        # Dataset 1
-        if d_name == "Dataset 1":
-            with cols[col_idx]:
-                if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, help="Permanent Dataset", use_container_width=True):
-                    st.session_state[tab_key] = d_name
-                    st.rerun()
-            col_idx += 1
-            col_idx += 1 # Skip Spacer
+        with cols[col_idx]:
+            # 1. Main Dataset Button
+            is_active = (d_name == active_tab)
+            btn_type = "primary" if is_active else "secondary"
+            tooltip = f"Select {d_name}" if d_name != "Dataset 1" else "Permanent Dataset"
             
-        else:
-            # Dataset N + Badge + Spacer
+            # Helper for CSS hook
+            # If we render two buttons in one column, we rely on nth-child CSS
             
-            # Helper to determine correct CSS hook via tooltip
-            select_help = f"Select {d_name}"
+            if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, help=tooltip, use_container_width=True):
+                 st.session_state[tab_key] = d_name
+                 st.rerun()
             
-            # Main Select Button
-            with cols[col_idx]:
-                if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, help=select_help, use_container_width=True):
-                    st.session_state[tab_key] = d_name
-                    st.rerun()
-            col_idx += 1
-            
-            # Badge X Button
-            with cols[col_idx]:
-                 if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"):
-                    # Check for Data existence
+            # 2. Render Badge INSIDE the same column (stacked by Streamlit, absolute by CSS)
+            if d_name != "Dataset 1":
+                if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"):
+                    # Check for data existence
                     suffix = d_name.split(" ")[1]
                     d_key = f"{state_prefix}_data_{suffix}"
-                    if st.session_state.get(d_key, "").strip():
+                    # Simple check - if data exists in memory
+                    if st.session_state.get(d_key, ""):
                          st.session_state[f"confirm_del_{state_prefix}"] = d_name
                     else:
                          _delete_dataset(state_prefix, d_name)
+                         # If we deleted the active tab, switch to D1
+                         if active_tab == d_name:
+                             st.session_state[tab_key] = "Dataset 1"
                          st.rerun()
-            col_idx += 1
-            col_idx += 1 # Skip Spacer
 
+        col_idx += 1
+            
     # 3. Add Button (Last Column)
     with cols[col_idx]:
-        if st.button("＋", key=f"add_{state_prefix}", help="Add new dataset"):
-            new_idx = len(datasets) + 1
-            while f"Dataset {new_idx}" in datasets:
-                new_idx += 1
-            datasets.append(f"Dataset {new_idx}")
-            st.rerun()
+         if st.button("＋", key=f"add_{state_prefix}", help="Add new dataset"):
+             new_idx = len(datasets) + 1
+             # Find next available index
+             while f"Dataset {new_idx}" in datasets:
+                 new_idx += 1
+             datasets.append(f"Dataset {new_idx}")
+             # Auto-select new
+             st.session_state[tab_key] = f"Dataset {new_idx}"
+             st.rerun()
 
     # --- CONFIRMATION DIALOG ---
     pending_del = st.session_state.get(f"confirm_del_{state_prefix}", None)

@@ -49,7 +49,14 @@ def inject_custom_css():
             background-color: var(--white) !important;
             color: var(--text-color) !important;
             font-family: 'Helvetica Neue', Arial, sans-serif !important;
+            font-family: 'Helvetica Neue', Arial, sans-serif !important;
             overflow-x: hidden;
+        }
+        
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
         }
 
         /* ========================================
@@ -270,77 +277,124 @@ def inject_custom_css():
            10. DATASET CONTROL STYLING (Corner Badge)
            ======================================== */
         
-        /* 10.1 "Add" Button (Plus) */
-        .stButton button[title="Add new dataset"] {
+        /* 10.1 "Add" Button (Plus) - LAST COLUMN */
+        div[data-testid="stColumn"]:last-child .stButton button {
             background-color: #FFFFFF !important;
             color: var(--boeing-blue) !important;
             border: 1px solid var(--boeing-blue) !important;
+            border-radius: 4px !important;
             font-size: 16px !important;
             line-height: 1 !important;
-            padding: 0px 10px !important;
+            padding: 0px 12px !important;
             width: auto !important;
+            min-width: 40px !important;
+            opacity: 0.5 !important; /* 50% Transparency */
+        }
+        
+        div[data-testid="stColumn"]:last-child .stButton button:hover {
+             background-color: var(--boeing-blue) !important;
+             color: white !important;
+             opacity: 1.0 !important; /* Full opacity on hover */
         }
 
-        /* 10.2 Standard Dataset Button */
-        .stButton button[title^="Select Dataset"],
-        .stButton button[title="Permanent Dataset"] {
-            border-radius: 4px !important;
-            border: 1px solid transparent !important;
-            /* Narrow Look handled by Python cols, but let's ensure text fits */
+        /* 10.2 Standard Dataset Buttons */
+        /* Dataset 1 (First Column) and Subsequent */
+        div[data-testid="stColumn"] .stButton button {
+            /* Layout Structure */
+            border-radius: 20px !important;
+            padding: 2px 15px !important;
+            width: 100% !important; 
+            min-width: 0 !important;
+            min-height: 0px !important; 
+            height: auto !important;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-        }
-        
-        /* ACTIVE STATE - FORCE BLUE */
-        /* Target every possible Streamlit primary button variation */
-        .stButton button[kind="primary"],
-        button[data-testid="baseButton-primary"] {
-            background-color: var(--boeing-blue) !important;
-            border-color: var(--boeing-blue) !important;
-            color: white !important;
-        }
-        
-        .stButton button[kind="primary"]:hover,
-        button[data-testid="baseButton-primary"]:hover {
-            background-color: var(--selected-blue) !important;
+            
+            /* Default Colors (Unselected/Secondary) */
+            background-color: #FFFFFF !important;
+            color: #555555 !important;
+            border: 1px solid var(--boeing-blue) !important;
         }
 
-        /* 10.3 "Remove" BADGE Button (The overlap X) */
-        .stButton button[title^="Remove"] {
+        /* 10.2.1 ACTIVE State (Primary) - Force Blue */
+        /* Must match specific columns to override the rule above */
+        div[data-testid="stColumn"] .stButton button[kind="primary"] {
+            background-color: var(--boeing-blue) !important;
+            color: white !important;
+            border-color: var(--boeing-blue) !important;
+        }
+
+        /* 10.3 "Remove" BADGE Wrapper & Button */
+        
+        /* FORCE OVERFLOW VISIBLE on the Column Parent so badge can hang out */
+        div[data-testid="stColumn"] {
+            overflow: visible !important;
+        }
+
+        /* 1. Target the Wrapper (div:nth-of-type(2) in the column's vertical block) */
+        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] > div:nth-of-type(2) {
+            position: absolute !important;
+            top: 0 !important;
+            right: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            overflow: visible !important; 
+            z-index: 999999 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            pointer-events: none; /* Let clicks pass through wrapper if empty? No, button needs clicks */
+            pointer-events: auto;
+        }
+
+        /* 2. Target the Button inside the wrapper */
+        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] > div:nth-of-type(2) button {
             /* Shape: Small Circle */
-            width: 20px !important;
-            height: 20px !important;
+            width: 18px !important;
+            height: 18px !important;
+            min-height: 18px !important;
             padding: 0 !important;
             border-radius: 50% !important;
-            min-height: 0px !important;
             
             /* Visuals */
             background-color: #FFFFFF !important;
-            color: #555 !important;
+            color: #888 !important;
             border: 1px solid #CCC !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
-            font-size: 12px !important;
-            line-height: 0 !important; /* Fix centering */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            
+            /* Text Centering */
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            font-size: 10px !important;
+            line-height: 18px !important;
             
-            /* POSITIONING:
-               The button is in the column TO THE RIGHT.
-               We want to pull it LEFT to sit on the corner of the previous button.
-               And UP to sit on the top edge.
-            */
+            /* Positioning relative to wrapper (which is at top-right of column) */
             position: absolute !important;
-            /* Use transform for safer moving than Left/Top relative to flow? */
-            transform: translate(-30px, -15px); 
-            z-index: 9999 !important; /* Must be on top of everything */
+            top: 0px !important;
+            right: 18px !important; /* Shift left slightly so it's not off-edge? Or 0? */
+            /* User asked for it to overlap the corner.
+               If Wrapper is Top-Right (0,0).
+               Button at (0,0) centers on Top-Right? 
+               Wait, wrapper width is 0.
+               Let's translate to center it on the corner?
+               Or User said "left -24px" before?
+               Let's adjust carefully. 
+               Wrapper is at Top-Right of column.
+               Dataset Pill ends at Right of column.
+               Badge should be at Right edge.
+               Let's set `right: -5px` to hang off slightly?
+               Or `transform: translate(30%, -30%)`.
+            */
+            top: -2px !important;
+            right: -2px !important; 
+            margin: 0 !important;
         }
         
-        .stButton button[title^="Remove"]:hover {
-            background-color: #F8D7DA !important; /* Light Red */
-            color: #721C24 !important;
-            border-color: #721C24 !important;
+        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] > div:nth-of-type(2) button:hover {
+            background-color: #DC3545 !important;
+            color: white !important;
+            border-color: #DC3545 !important;
         }
         
         /* CONTAINER OVERFLOW FIX */
@@ -434,6 +488,34 @@ def inject_custom_css():
             border: none !important;
             padding: 5px !important;
             font-size: 18px !important;
+        }
+
+        /* ========================================
+           10. DRAG AND DROP FIX (Darker Gray)
+           ======================================== */
+        section[data-testid="stFileUploaderDropzone"] {
+            background-color: var(--slate-gray) !important;
+            border: 1px dashed #555 !important;
+            color: white !important;
+        }
+        div[data-testid="stFileUploader"] section {
+            background-color: var(--slate-gray) !important;
+            border: 1px dashed #555 !important;
+            color: white !important;
+        }
+        
+        /* 10.1 "Browse files" Button */
+        section[data-testid="stFileUploaderDropzone"] button,
+        div[data-testid="stFileUploader"] section button {
+             background-color: #2B3843 !important; /* Slightly darker than slate-gray */
+             color: white !important;
+             border: 1px solid #555 !important;
+        }
+        
+        /* Fix text color inside dropzone */
+        section[data-testid="stFileUploaderDropzone"] *, 
+        div[data-testid="stFileUploader"] section * {
+             color: white !important;
         }
 
         /* ========================================
