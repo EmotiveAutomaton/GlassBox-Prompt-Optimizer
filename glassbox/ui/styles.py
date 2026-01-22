@@ -278,23 +278,28 @@ def inject_custom_css():
            ======================================== */
         
         /* 10.1 "Add" Button (Plus) - LAST COLUMN */
-        div[data-testid="stColumn"]:last-child .stButton button {
+
+        
+        /* 10.1 "Add" Button (Plus) - Targeted via Streamlit Key Class */
+        /* Iter 16 SWAP: Revert to Standard Gray (Solid) */
+        /* Targets any key starting with 'add_' (e.g. st-key-add_opro, st-key-add_ape) */
+
+        
+        /* 10.1.b "STOP OPTIMIZATION" Button (Iter 16: Ghost Style) */
+        /* Targeted via explicit key: st-key-stop_opt_btn */
+        .st-key-stop_opt_btn button {
             background-color: #FFFFFF !important;
             color: var(--boeing-blue) !important;
             border: 1px solid var(--boeing-blue) !important;
             border-radius: 4px !important;
-            font-size: 16px !important;
-            line-height: 1 !important;
-            padding: 0px 12px !important;
-            width: auto !important;
-            min-width: 40px !important;
-            opacity: 0.5 !important; /* 50% Transparency */
+            opacity: 0.5 !important;
+            transition: all var(--transition-fast) !important;
         }
-        
-        div[data-testid="stColumn"]:last-child .stButton button:hover {
+
+        .st-key-stop_opt_btn button:hover {
              background-color: var(--boeing-blue) !important;
              color: white !important;
-             opacity: 1.0 !important; /* Full opacity on hover */
+             opacity: 1.0 !important;
         }
 
         /* 10.2 Standard Dataset Buttons */
@@ -422,6 +427,28 @@ def inject_custom_css():
         }
         div[data-testid="stVerticalBlock"] {
              overflow: visible !important;
+        }
+
+        /* ------------------------------------------------------------- */
+        /* ITER 16 FIX: PLUS BUTTON OVERRIDE (Must be last)              */
+        /* ------------------------------------------------------------- */
+        /* Match specificity of the generic rule + class key */
+        div[data-testid="stColumn"] div[class*="st-key-add_"] button {
+            /* Logic: Override the 'white' background of .stButton button */
+             background-color: #394957 !important; /* Solid Slate Gray */
+             color: #FFFFFF !important;
+             border: 1px solid #394957 !important;
+             opacity: 1.0 !important;
+             
+             /* Restore Size/Shape */
+             width: auto !important;
+             min-width: 40px !important;
+             border-radius: 4px !important;
+        }
+
+        div[data-testid="stColumn"] div[class*="st-key-add_"] button:hover {
+             background-color: var(--selected-blue) !important; 
+             border-color: var(--selected-blue) !important;
         }
 
 

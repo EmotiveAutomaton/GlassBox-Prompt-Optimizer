@@ -87,10 +87,10 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
             st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True) # Spacer
             col_start, col_stop = st.columns(2)
             with col_start:
-                if st.button("START OPTIMIZATION", type="primary", use_container_width=True):
+                if st.button("START OPTIMIZATION", type="primary", use_container_width=True, key="start_opt_btn"):
                     st.session_state["start_optimization"] = True
             with col_stop:
-                if st.button("STOP OPTIMIZATION", use_container_width=True):
+                if st.button("STOP OPTIMIZATION", use_container_width=True, key="stop_opt_btn"):
                     st.session_state["stop_optimization"] = True
     
     # === CARD 2: GLASS BOX (Visualizer + Logic Readout) ===
