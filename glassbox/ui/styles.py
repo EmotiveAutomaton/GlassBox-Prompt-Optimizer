@@ -660,6 +660,24 @@ def inject_custom_css():
              padding-top: 3px !important;
              gap: 3px !important;
         }
+
+        /* ITER 23 FIX: GlassBox Height Match (384px) */
+        /* Target both wrapper and inner block to be safe */
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.glassbox-height-marker),
+        div[data-testid="stVerticalBlock"]:has(.glassbox-height-marker) {
+             min-height: 400px !important;
+             display: flex !important;
+             flex-direction: column !important;
+        }
+
+        /* ITER 23 REVISION: Fix Header Cutoff (Overflow Visible) */
+        div[data-testid="stVerticalBlockBorderWrapper"]:has(.zone-a-left-marker),
+        div[data-testid="stVerticalBlock"]:has(.zone-a-left-marker) {
+             overflow: visible !important;
+             padding-top: 8px !important;
+        }
+
+
         
         </style>
     """, unsafe_allow_html=True)

@@ -32,6 +32,7 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
     
     # === CARD 1: INITIAL PROMPT AND DATA (Dynamic based on Engine) ===
     with col_input:
+        # Iter 23 Fix: Remove Spacer, usage CSS marker below
         with st.container(border=True):
             st.markdown(f'<div class="card-header">INITIAL PROMPT AND DATA ({engine_id.upper()})</div>', unsafe_allow_html=True)
             
@@ -92,6 +93,11 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
             with col_stop:
                 if st.button("STOP OPTIMIZATION", use_container_width=True, key="stop_opt_btn"):
                     st.session_state["stop_optimization"] = True
+
+            # Iter 23: Marker for CSS Overflow Fix
+            st.markdown('<div class="zone-a-left-marker" style="display:none;"></div>', unsafe_allow_html=True)
+
+
     
     # === CARD 2: GLASS BOX (Visualizer + Logic Readout) ===
     with col_glassbox:
@@ -347,6 +353,9 @@ def render_glassbox_card(engine_id: str):
             
             # Status Footer
             st.markdown(f"<div style='margin-top:5px; font-size:11px; font-weight:500; color:#666;'>STATUS: <span style='color:#0D7CB1'>{status.upper()}</span></div>", unsafe_allow_html=True)
+
+        # Iter 23: Bottom Marker for CSS Height (Min Height)
+        st.markdown('<div class="glassbox-height-marker" style="display:none;"></div>', unsafe_allow_html=True)
 
 
 def _get_readout_content(engine: str, node: Optional[str]) -> str:
