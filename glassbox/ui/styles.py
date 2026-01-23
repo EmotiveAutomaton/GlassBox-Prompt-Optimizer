@@ -393,12 +393,13 @@ def inject_custom_css():
             /* POSITIONING relative to the Absolute Wrapper (Top-Left of Column) */
             position: absolute !important;
             
-            /* Move RIGHT (Dialed in Iter 15: 120px - 15px = 105px) */
-            left: 105px !important; 
-            
-            /* Vertical: (Dialed in Iter 15: -10px + 22px = 12px) */
-            /* Lowered by half-height of button */
+            /* Position: Right-Anchored (Fix for Zoom/Resize Adhesion) */
+            right: 5px !important;
+            left: auto !important;
+
+            /* Vertical: Center optically (approx 12px from top) */
             top: 12px !important; 
+
             
             z-index: 1000001 !important; /* Higher than wrapper */
             pointer-events: auto !important;

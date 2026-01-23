@@ -83,6 +83,24 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 else:
                     df_sorted = df
 
+                # CSS to force column widths (Zone C Fix)
+                st.markdown("""
+                    <style>
+                    /* Force narrow numeric columns in Item 2 (Iter) and Item 1 (Score) */
+                    /* Note: Streamlit tables are complex; this targets standard table cells if rendered as such */
+                    div[data-testid="stDataFrame"] div[role="grid"] div[role="row"] div[role="gridcell"]:nth-child(1),
+                    div[data-testid="stDataFrame"] div[role="grid"] div[role="row"] div[role="gridcell"]:nth-child(2) {
+                        max-width: 60px !important;
+                        overflow: hidden !important;
+                    }
+                    /* Headers too */
+                    div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(1),
+                    div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(2) {
+                        max-width: 60px !important;
+                    }
+                    </style>
+                """, unsafe_allow_html=True)
+
                 st.dataframe(
                     df_sorted,
                     column_config=column_config,
