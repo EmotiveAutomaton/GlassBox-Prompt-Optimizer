@@ -680,35 +680,48 @@ def inject_custom_css():
 
 
 
-        /* ITER 25: GHOST BUTTONS for Zone C Data Rows */
-        /* Targets buttons inside the marked container only */
-        div[data-testid="stVerticalBlock"]:has(.zone-c-ghost-marker) button {
+
+        /* ITER 26: ISOLATED GHOST BUTTONS (Column-Level Targeting) */
+        /* Targets buttons ONLY inside columns that have the hidden marker */
+        div[data-testid="stColumn"]:has(.ghost-col-marker) button {
             background-color: transparent !important;
             border: none !important;
-            border-bottom: 1px solid #444 !important; /* Separator Look */
+            border-bottom: 1px solid #E0E0E0 !important; /* Light Grey Separator */
             border-radius: 0 !important;
-            color: #E0E0E0 !important; /* Off-white text */
+            
+            /* Text Color Fix: Ensure Dark Text for Legibility */
+            color: #31333F !important; 
+            font-weight: 400 !important;
+            
             text-align: left !important;
-            justify-content: flex-start !important; /* Force text left alignment */
+            justify-content: flex-start !important;
             padding-left: 8px !important;
             transition: background-color 0.1s ease !important;
         }
 
-        /* Hover Effect for Ghost Buttons */
-        div[data-testid="stVerticalBlock"]:has(.zone-c-ghost-marker) button:hover {
-            background-color: rgba(255, 255, 255, 0.05) !important;
-            color: #FFFFFF !important;
-            border-bottom-color: #444 !important;
+        /* Hover Effect */
+        div[data-testid="stColumn"]:has(.ghost-col-marker) button:hover {
+            background-color: #F0F2F6 !important; /* Light Hover Grey */
+            color: #000000 !important;
+            border-bottom-color: #CCC !important;
         }
 
-        /* Active/Focus State (Remove outline) */
-        div[data-testid="stVerticalBlock"]:has(.zone-c-ghost-marker) button:active,
-        div[data-testid="stVerticalBlock"]:has(.zone-c-ghost-marker) button:focus {
-            background-color: rgba(255, 255, 255, 0.1) !important;
+        /* Active/Focus */
+        div[data-testid="stColumn"]:has(.ghost-col-marker) button:active,
+        div[data-testid="stColumn"]:has(.ghost-col-marker) button:focus {
+            background-color: #E8E8E8 !important;
             box-shadow: none !important;
             border: none !important;
-            border-bottom: 1px solid #444 !important;
+            border-bottom: 1px solid #CCC !important;
         }
-
+        
+        /* Disabled Buttons (Score/Iter) - Keep distinct? */
+        div[data-testid="stColumn"]:has(.ghost-col-marker) button:disabled {
+             background-color: transparent !important;
+             color: #31333F !important;
+             border-bottom: 1px solid #E0E0E0 !important;
+             opacity: 1 !important; /* Force visibility */
+        }
+        
         </style>
     """, unsafe_allow_html=True)

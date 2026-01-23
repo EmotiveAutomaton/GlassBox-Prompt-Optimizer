@@ -140,10 +140,8 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 # No Divider - Removed for less whitespace
 
                 # 3. Data Rows (Loop)
-                # Wrap in container for CSS targeting (Ghost Buttons)
+                # Wrap in container (Logical grouping, marker removed for column-level isolation)
                 with st.container():
-                    # Marker for CSS targeting (See styles.py)
-                    st.markdown('<div class="zone-c-ghost-marker" style="display:none;"></div>', unsafe_allow_html=True)
                     
                     if not df_sorted.empty:
                         for i, row in df_sorted.iterrows():
@@ -156,16 +154,26 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                             # Shorten for display using approx char width
                             snippet = (full_prompt[:90] + "...") if len(full_prompt) > 90 else full_prompt
                             
-                            # --- RENDER CELLS ---
+                            # --- RENDER CELLS [GHOST BUTTONS] ---
+                            # Inject marker into EACH column to isolate styling to these columns only
+                            # This prevents the style from bleeding up to the parent container
+                            GHOST_MARKER = '<div class="ghost-col-marker" style="display:none;"></div>'
+
                             # Score
-                            c_score.button(f"{score_val}", key=f"score_{i}", disabled=True, use_container_width=True)
+                            with c_score:
+                                st.markdown(GHOST_MARKER, unsafe_allow_html=True)
+                                st.button(f"{score_val}", key=f"score_{i}", disabled=True, use_container_width=True)
                             
                             # Iteration
-                            c_iter.button(f"{iter_val}", key=f"iter_{i}", disabled=True, use_container_width=True)
+                            with c_iter:
+                                st.markdown(GHOST_MARKER, unsafe_allow_html=True)
+                                st.button(f"{iter_val}", key=f"iter_{i}", disabled=True, use_container_width=True)
                             
                             # Prompt
-                            if c_prompt.button(snippet, key=f"prompt_{i}", help=full_prompt, use_container_width=True):
-                                st.session_state["selected_candidate_id"] = i
+                            with c_prompt:
+                                st.markdown(GHOST_MARKER, unsafe_allow_html=True)
+                                if st.button(snippet, key=f"prompt_{i}", help=full_prompt, use_container_width=True):
+                                    st.session_state["selected_candidate_id"] = i
 
                         st.caption("Hover prompt to expand. Click headers to sort.")
                     
