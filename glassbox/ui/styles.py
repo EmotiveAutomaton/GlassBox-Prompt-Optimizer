@@ -679,23 +679,6 @@ def inject_custom_css():
         }
 
 
-        /* ITER 24: CUSTOM TOOLTIP STYLING (Blue/White) */
-        /* Targets the Streamlit/Baseweb tooltip container */
-        div[data-baseweb="tooltip"],
-        div[class*="stTooltip"] {
-            background-color: var(--boeing-blue) !important;
-            color: #FFFFFF !important;
-            border-radius: 4px !important;
-            font-size: 14px !important;
-            padding: 8px 12px !important;
-            border: 1px solid #FFFFFF !important;
-            max-width: 400px !important;
-        }
-
-        /* Tooltip Arrow (Optional, usually handled by popover logic but we can try to color it) */
-        div[data-baseweb="tooltip"] arrow {
-            background-color: var(--boeing-blue) !important;
-        }
         
         </style>
     """, unsafe_allow_html=True)
