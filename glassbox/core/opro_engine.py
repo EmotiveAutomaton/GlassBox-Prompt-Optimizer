@@ -117,8 +117,18 @@ class OProEngine(AbstractOptimizer):
                  break
 
             candidate.meta["generation_reasoning"] = reasoning  # Store generation reasoning
-            step_candidates.append(candidate)
-            self.session.candidates.append(candidate)
+            # Check if identical candidate (Prompt + Step) already exists to prevent duplication artifacts
+            # User reported "Two separate entries listed as iteration one".
+            is_duplicate = any(
+                c.full_content == candidate.full_content and c.generation_index == candidate.generation_index
+                for c in self.session.candidates
+            )
+            
+            if not is_duplicate:
+                step_candidates.append(candidate)
+                self.session.candidates.append(candidate)
+            else:
+                logger.warning(f"Skipping duplicate candidate at step {step_num}: {candidate.display_text[:30]}...")
 
         # Phase 3: Select best (greedy)
         best = max(step_candidates, key=lambda c: c.score_aggregate) if step_candidates else None

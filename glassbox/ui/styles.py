@@ -683,28 +683,38 @@ def inject_custom_css():
 
 
 
-        /* ITER 28: MUTED GHOST SELECTION & HEADER FIX */
-        
-        /* 
-           HEADER FIX: Headers in Zone C use standard st.button. 
-           Since they DO NOT have .ghost-col-marker injected (only data rows do),
-           they should remain solid rectangles by default Streamlit styling.
-           We ensure our selectors below require .ghost-col-marker (or primary/secondary variants).
-        */
 
-        /* Base Ghost Style for Data Rows */
+        /* ITER 29: EXPLICIT HEADER FIX & MUTED SELECTION */
+        
+        /* HEADER OVERRIDE: Explicitly target Zone C Headers */
+        /* Must have higher specificity/correct scope to win over generic defaults */
+        div[data-testid="stColumn"]:has(.zone-c-header) button {
+             background-color: #31333F !important; /* Standard Dark Button BG */
+             color: white !important;
+             border: 1px solid rgba(250, 250, 250, 0.2) !important;
+             border-radius: 4px !important; /* Rectangle, slight radius */
+             text-align: center !important;
+             box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+        }
+        div[data-testid="stColumn"]:has(.zone-c-header) button:hover {
+             border-color: #FF4B4B !important; /* Streamlit Primary Hover */
+             color: #FF4B4B !important;
+        }
+
+        /* DATA ROWS: Base Ghost Style */
+        /* Note: We exclude .zone-c-header to be safe, though usage in python handles it */
         div[data-testid="stColumn"]:has(.ghost-col-marker) button,
         div[data-testid="stColumn"]:has(.ghost-marker-primary) button,
         div[data-testid="stColumn"]:has(.ghost-marker-secondary) button {
             border: none !important;
-            border-bottom: 2px solid #555 !important; /* Darker Separator */
+            border-bottom: 2px solid #555 !important;
             border-radius: 0 !important;
             font-weight: 400 !important;
             text-align: left !important;
             justify-content: flex-start !important;
             padding-left: 8px !important;
             transition: all 0.15s ease !important;
-            box-shadow: none !important; /* Remove button shadow */
+            box-shadow: none !important;
         }
 
         /* 1. DEFAULT STATE (Transparent) */
@@ -713,17 +723,14 @@ def inject_custom_css():
             color: #31333F !important;
         }
         div[data-testid="stColumn"]:has(.ghost-col-marker) button:hover {
-            background-color: rgba(0,0,0,0.05) !important; /* Very subtle hover */
+            background-color: rgba(0,0,0,0.05) !important;
             color: #000 !important;
         }
 
         /* 2. PRIMARY SELECTION (Muted Blue-Grey) */
-        /* User: "Color of the headers with a hint of blue but also more muted" */
-        /* Headers are standard Streamlit (often white/grey in light mode, or blue in dark). 
-           Assuming 'hint of blue' means a very light tint. */
         div[data-testid="stColumn"]:has(.ghost-marker-primary) button {
-            background-color: rgba(96, 125, 139, 0.15) !important; /* Muted Blue-Grey Tint */
-            color: #31333F !important; /* Keep dark text for readability */
+            background-color: rgba(96, 125, 139, 0.15) !important;
+            color: #31333F !important;
             border-bottom-color: #78909C !important;
         }
         div[data-testid="stColumn"]:has(.ghost-marker-primary) button:hover {
@@ -732,7 +739,7 @@ def inject_custom_css():
 
         /* 3. SECONDARY SELECTION (Off-White/Grey Tint) */
         div[data-testid="stColumn"]:has(.ghost-marker-secondary) button {
-            background-color: rgba(0, 0, 0, 0.05) !important; /* Subtle Grey */
+            background-color: rgba(0, 0, 0, 0.05) !important;
             color: #31333F !important;
             border-bottom-color: #CCC !important;
         }
