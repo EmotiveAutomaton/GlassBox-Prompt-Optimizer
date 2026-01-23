@@ -333,12 +333,25 @@ def render_glassbox_card(engine_id: str):
             
             # Check for idle state override
             status = st.session_state.get("optimizer_status", "idle")
-            if status == "idle":
+            cycle_count = st.session_state.get("cycle_count", 0)
+
+            # --- MOCK CYCLE LOGIC FOR ALPHA DEMO ---
+            if status == "running":
+                # Auto-increment cycle for demo purposes if not handled by backend
+                import time
+                # Simple throttle to prevent rapid spinning
+                cycle_count = st.session_state.get("cycle_count", 0)
+                if cycle_count == 0:
+                     st.session_state["cycle_count"] = 1
+                     st.rerun() # Force refresh to show change immediately
+            elif status == "idle":
                 active_node = None 
+                cycle_count = 0 # Force 0 if idle/stopped
+            # ---------------------------------------
 
             # Generate DOT
             try:
-                dot_source = visualizer.get_engine_chart(engine_id, active_node)
+                dot_source = visualizer.get_engine_chart(engine_id, active_node, cycle_count)
                 st.graphviz_chart(dot_source, use_container_width=True)
             except Exception as e:
                 st.error(f"Viz Error: {e}")
