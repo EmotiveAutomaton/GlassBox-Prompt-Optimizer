@@ -42,14 +42,14 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 # Prepare data for DataFrame
                 data = []
                 for i, c in enumerate(candidates):
-                    # Fallback for step/iteration if not available
-                    step = getattr(c, 'step', 0) 
+                    # Use guaranteed attributes from UnifiedCandidate
+                    step = c.generation_index
                     score = c.score_aggregate
                     
                     data.append({
-                        "id": str(c.id), # Hidden ID for selection?
+                        "id": str(c.id), 
                         "Score": score,
-                        "Iteration": step,
+                        "Iter": step, # Shortened name
                         "Prompt": c.display_text
                     })
                 
@@ -62,36 +62,34 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         "Score",
                         help="Aggregate Score (0-100)",
                         format="%d",
-                        width="small"
+                        width=80 # Fixed pixel width (tight)
                     ),
-                    "Iteration": st.column_config.NumberColumn(
+                    "Iter": st.column_config.NumberColumn(
                         "Iter",
                         help="Generation Step",
                         format="%d",
-                        width="small"
+                        width=60 # Fixed pixel width (very tight)
                     ),
                     "Prompt": st.column_config.TextColumn(
                         "Prompt Snippet",
                         help="Full prompt text (hover to expand)",
-                        max_chars=80, # Truncate visuals
-                        width="large"
+                        width="medium" # Let it fill remaining space
                     )
                 }
 
-                # Render Dataframe
-                # on_select="ignore" for now until we decide how to handle selection sync
-                # usage st.dataframe(..., hide_index=True)
-                
-                # Pre-sort by Score Descending as default view
-                df_sorted = df.sort_values(by="Score", ascending=False)
-                
+                # Pre-sort by Score Descending
+                if not df.empty:
+                    df_sorted = df.sort_values(by="Score", ascending=False)
+                else:
+                    df_sorted = df
+
                 st.dataframe(
                     df_sorted,
                     column_config=column_config,
                     hide_index=True,
                     use_container_width=True,
-                    height=450, # Increased height for full visibility
-                    column_order=["Score", "Iteration", "Prompt"]
+                    height=450, 
+                    column_order=["Score", "Iter", "Prompt"]
                 )
 
     
