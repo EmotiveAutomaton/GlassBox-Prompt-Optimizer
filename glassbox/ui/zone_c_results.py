@@ -78,45 +78,77 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 }
 
                 # === CUSTOM GRID LAYOUT (HTML PIVOT) ===
-                # Implementing Sort & Selection Controls explicitly
+                # Implementing Sort via Header Buttons
                 
-                # 1. Sorting Controls
-                col_sort, col_spacer = st.columns([0.3, 0.7])
-                with col_sort:
-                    sort_metric = st.selectbox("Sort by:", ["Score", "Iteration"], key="zc_sort_metric")
-                
-                # Apply Sorting
-                if not df.empty:
-                    if sort_metric == "Score":
-                        df_sorted = df.sort_values(by="Score", ascending=False)
+                # State for sorting (Defaults)
+                if "zc_sort_col" not in st.session_state:
+                    st.session_state["zc_sort_col"] = "Score"
+                if "zc_sort_asc" not in st.session_state:
+                    st.session_state["zc_sort_asc"] = False # Descending default
+
+                # Callbacks for Headers
+                def _sort_score():
+                    if st.session_state["zc_sort_col"] == "Score":
+                        st.session_state["zc_sort_asc"] = not st.session_state["zc_sort_asc"]
                     else:
-                        df_sorted = df.sort_values(by="Iter", ascending=False)
+                        st.session_state["zc_sort_col"] = "Score"
+                        st.session_state["zc_sort_asc"] = False # Default desc for score
+
+                def _sort_iter():
+                    if st.session_state["zc_sort_col"] == "Iter":
+                        st.session_state["zc_sort_asc"] = not st.session_state["zc_sort_asc"]
+                    else:
+                        st.session_state["zc_sort_col"] = "Iter"
+                        st.session_state["zc_sort_asc"] = False
+
+                def _sort_prompt():
+                    if st.session_state["zc_sort_col"] == "Prompt":
+                        st.session_state["zc_sort_asc"] = not st.session_state["zc_sort_asc"]
+                    else:
+                        st.session_state["zc_sort_col"] = "Prompt"
+                        st.session_state["zc_sort_asc"] = True # Default asc for text
+                
+                # Apply Sorting to DF
+                col = st.session_state["zc_sort_col"]
+                asc = st.session_state["zc_sort_asc"]
+                if not df.empty:
+                    df_sorted = df.sort_values(by=col, ascending=asc)
                 else:
                     df_sorted = df
 
-                # 2. Header Row (Strict Ratios: 1:1:8)
-                # Using 0.08 for Score/Iter (approx 50-60px on 700px width)
-                h_score, h_iter, h_prompt = st.columns([0.1, 0.1, 0.7], gap="small")
-                with h_score:
-                    st.markdown("**Score**")
-                with h_iter:
-                    st.markdown("**Iter**")
-                with h_prompt:
-                    st.markdown("**Prompt Candidate**")
+                # 2. Header Row (Super Tight Ratios: 0.05:0.05:0.9)
+                # User Req: "Half the width" of previous. Previous was 0.1 (approx 70px). Now 0.05 (approx 35px).
+                grid_ratios = [0.05, 0.05, 0.9]
+                h_score, h_iter, h_prompt = st.columns(grid_ratios, gap="small")
                 
-                # Divider
-                st.divider()
+                # RENDER CLICKABLE HEADERS
+                # We use buttons with transparent/minimal styling if pos, or just standard buttons acting as headers
+                # Indicator logic
+                def _arrow(c):
+                    if st.session_state["zc_sort_col"] == c:
+                        return " ▲" if st.session_state["zc_sort_asc"] else " ▼"
+                    return ""
+
+                with h_score:
+                    st.button(f"Score{_arrow('Score')}", key="h_btn_score", on_click=_sort_score, use_container_width=True)
+                with h_iter:
+                    st.button(f"Iter{_arrow('Iter')}", key="h_btn_iter", on_click=_sort_iter, use_container_width=True)
+                with h_prompt:
+                    st.button(f"Prompt Candidate{_arrow('Prompt')}", key="h_btn_prompt", on_click=_sort_prompt, use_container_width=True)
+                
+                # No Divider - Removed for less whitespace
 
                 # 3. Data Rows (Loop)
                 if not df_sorted.empty:
                     for i, row in df_sorted.iterrows():
-                        c_score, c_iter, c_prompt = st.columns([0.1, 0.1, 0.7], gap="small")
+                        c_score, c_iter, c_prompt = st.columns(grid_ratios, gap="small")
                         
                         # Data Extraction
                         score_val = int(row.get("Score", 0))
                         iter_val = int(row.get("Iter", 0))
                         full_prompt = row.get("Prompt", "")
-                        snippet = (full_prompt[:75] + "...") if len(full_prompt) > 75 else full_prompt
+                        # Shorten for display using approx char width
+                        snippet = (full_prompt[:90] + "...") if len(full_prompt) > 90 else full_prompt
                         
                         # --- RENDER CELLS ---
                         # Score
@@ -125,17 +157,11 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         # Iteration
                         c_iter.button(f"{iter_val}", key=f"iter_{i}", disabled=True, use_container_width=True)
                         
-                        # Prompt (Clickable for Selection + Native Hover)
+                        # Prompt
                         if c_prompt.button(snippet, key=f"prompt_{i}", help=full_prompt, use_container_width=True):
-                            # Handle Selection
-                            # We can't easily highlight the row without state reload, but we can set the 'selected' state
-                            # For now, just logging or relying on the 'View Details' card (not implemented yet)
-                            # Or we can write to a session state var:
                             st.session_state["selected_candidate_id"] = i
-                            # Optional: Rerun to show selection UI elsewhere?
-                            # st.rerun()
 
-                    st.caption("Hover over prompt text to view full content. Click to select.")
+                    st.caption("Hover prompt to expand. Click headers to sort.")
                 
                 else:
                     st.info("No variations generated yet.")
