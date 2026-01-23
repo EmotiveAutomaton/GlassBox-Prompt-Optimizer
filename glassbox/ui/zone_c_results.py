@@ -37,24 +37,63 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
             if not candidates:
                 st.info("No candidates yet. Start optimization to generate prompt variations.")
             else:
-                sorted_candidates = sorted(candidates, key=lambda c: c.score_aggregate, reverse=True)
+                import pandas as pd
                 
-                for i, candidate in enumerate(sorted_candidates[:12]):
-                    score = candidate.score_aggregate
-                    color = "#22c55e" if score >= 80 else "#eab308" if score >= 50 else "#ef4444"
-                    preview = candidate.display_text[:80] + "..." if len(candidate.display_text) > 80 else candidate.display_text
+                # Prepare data for DataFrame
+                data = []
+                for i, c in enumerate(candidates):
+                    # Fallback for step/iteration if not available
+                    step = getattr(c, 'step', 0) 
+                    score = c.score_aggregate
                     
-                    col_rank, col_score, col_preview = st.columns([0.2, 0.3, 3])
-                    with col_rank:
-                        st.markdown(f"**{i+1}**")
-                    with col_score:
-                        st.markdown(f"<span style='color:{color};font-weight:bold;'>{score:.0f}</span>", unsafe_allow_html=True)
-                    with col_preview:
-                        if st.button(preview[:60] + "...", key=f"select_{candidate.id}", use_container_width=True):
-                            st.session_state["selected_candidate"] = str(candidate.id)
-                    
-                    if i < min(len(sorted_candidates), 12) - 1:
-                        st.markdown("<hr style='margin:2px 0;border-color:#E0E0E0;'>", unsafe_allow_html=True)
+                    data.append({
+                        "id": str(c.id), # Hidden ID for selection?
+                        "Score": score,
+                        "Iteration": step,
+                        "Prompt": c.display_text
+                    })
+                
+                df = pd.DataFrame(data)
+                
+                # Configure Columns
+                column_config = {
+                    "id": None, # Hide ID
+                    "Score": st.column_config.NumberColumn(
+                        "Score",
+                        help="Aggregate Score (0-100)",
+                        format="%d",
+                        width="small"
+                    ),
+                    "Iteration": st.column_config.NumberColumn(
+                        "Iter",
+                        help="Generation Step",
+                        format="%d",
+                        width="small"
+                    ),
+                    "Prompt": st.column_config.TextColumn(
+                        "Prompt Snippet",
+                        help="Full prompt text (hover to expand)",
+                        max_chars=80, # Truncate visuals
+                        width="large"
+                    )
+                }
+
+                # Render Dataframe
+                # on_select="ignore" for now until we decide how to handle selection sync
+                # usage st.dataframe(..., hide_index=True)
+                
+                # Pre-sort by Score Descending as default view
+                df_sorted = df.sort_values(by="Score", ascending=False)
+                
+                st.dataframe(
+                    df_sorted,
+                    column_config=column_config,
+                    hide_index=True,
+                    use_container_width=True,
+                    height=450, # Increased height for full visibility
+                    column_order=["Score", "Iteration", "Prompt"]
+                )
+
     
     # === RIGHT COLUMN: RATINGS + FINAL OUTPUT ===
     with col_right:
