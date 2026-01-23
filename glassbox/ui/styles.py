@@ -679,6 +679,36 @@ def inject_custom_css():
         }
 
 
-        
+
+        /* ITER 25: GHOST BUTTONS for Zone C Data Rows */
+        /* Targets buttons inside the marked container only */
+        div[data-testid="stVerticalBlock"]:has(.zone-c-ghost-marker) button {
+            background-color: transparent !important;
+            border: none !important;
+            border-bottom: 1px solid #444 !important; /* Separator Look */
+            border-radius: 0 !important;
+            color: #E0E0E0 !important; /* Off-white text */
+            text-align: left !important;
+            justify-content: flex-start !important; /* Force text left alignment */
+            padding-left: 8px !important;
+            transition: background-color 0.1s ease !important;
+        }
+
+        /* Hover Effect for Ghost Buttons */
+        div[data-testid="stVerticalBlock"]:has(.zone-c-ghost-marker) button:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            color: #FFFFFF !important;
+            border-bottom-color: #444 !important;
+        }
+
+        /* Active/Focus State (Remove outline) */
+        div[data-testid="stVerticalBlock"]:has(.zone-c-ghost-marker) button:active,
+        div[data-testid="stVerticalBlock"]:has(.zone-c-ghost-marker) button:focus {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-bottom: 1px solid #444 !important;
+        }
+
         </style>
     """, unsafe_allow_html=True)

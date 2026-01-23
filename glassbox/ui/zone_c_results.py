@@ -140,32 +140,37 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 # No Divider - Removed for less whitespace
 
                 # 3. Data Rows (Loop)
-                if not df_sorted.empty:
-                    for i, row in df_sorted.iterrows():
-                        c_score, c_iter, c_prompt = st.columns(grid_ratios, gap="small")
-                        
-                        # Data Extraction
-                        score_val = int(row.get("Score", 0))
-                        iter_val = int(row.get("Iter", 0))
-                        full_prompt = row.get("Prompt", "")
-                        # Shorten for display using approx char width
-                        snippet = (full_prompt[:90] + "...") if len(full_prompt) > 90 else full_prompt
-                        
-                        # --- RENDER CELLS ---
-                        # Score
-                        c_score.button(f"{score_val}", key=f"score_{i}", disabled=True, use_container_width=True)
-                        
-                        # Iteration
-                        c_iter.button(f"{iter_val}", key=f"iter_{i}", disabled=True, use_container_width=True)
-                        
-                        # Prompt
-                        if c_prompt.button(snippet, key=f"prompt_{i}", help=full_prompt, use_container_width=True):
-                            st.session_state["selected_candidate_id"] = i
+                # Wrap in container for CSS targeting (Ghost Buttons)
+                with st.container():
+                    # Marker for CSS targeting (See styles.py)
+                    st.markdown('<div class="zone-c-ghost-marker" style="display:none;"></div>', unsafe_allow_html=True)
+                    
+                    if not df_sorted.empty:
+                        for i, row in df_sorted.iterrows():
+                            c_score, c_iter, c_prompt = st.columns(grid_ratios, gap="small")
+                            
+                            # Data Extraction
+                            score_val = int(row.get("Score", 0))
+                            iter_val = int(row.get("Iter", 0))
+                            full_prompt = row.get("Prompt", "")
+                            # Shorten for display using approx char width
+                            snippet = (full_prompt[:90] + "...") if len(full_prompt) > 90 else full_prompt
+                            
+                            # --- RENDER CELLS ---
+                            # Score
+                            c_score.button(f"{score_val}", key=f"score_{i}", disabled=True, use_container_width=True)
+                            
+                            # Iteration
+                            c_iter.button(f"{iter_val}", key=f"iter_{i}", disabled=True, use_container_width=True)
+                            
+                            # Prompt
+                            if c_prompt.button(snippet, key=f"prompt_{i}", help=full_prompt, use_container_width=True):
+                                st.session_state["selected_candidate_id"] = i
 
-                    st.caption("Hover prompt to expand. Click headers to sort.")
-                
-                else:
-                    st.info("No variations generated yet.")
+                        st.caption("Hover prompt to expand. Click headers to sort.")
+                    
+                    else:
+                        st.info("No variations generated yet.")
 
     
     # === RIGHT COLUMN: RATINGS + FINAL OUTPUT ===
