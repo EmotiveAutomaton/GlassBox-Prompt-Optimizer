@@ -682,9 +682,17 @@ def inject_custom_css():
 
 
 
-        /* ITER 27: MULTI-STATE GHOST SELECTION */
+
+        /* ITER 28: MUTED GHOST SELECTION & HEADER FIX */
         
-        /* Shared Base Styling for ALL Ghost Types */
+        /* 
+           HEADER FIX: Headers in Zone C use standard st.button. 
+           Since they DO NOT have .ghost-col-marker injected (only data rows do),
+           they should remain solid rectangles by default Streamlit styling.
+           We ensure our selectors below require .ghost-col-marker (or primary/secondary variants).
+        */
+
+        /* Base Ghost Style for Data Rows */
         div[data-testid="stColumn"]:has(.ghost-col-marker) button,
         div[data-testid="stColumn"]:has(.ghost-marker-primary) button,
         div[data-testid="stColumn"]:has(.ghost-marker-secondary) button {
@@ -696,36 +704,40 @@ def inject_custom_css():
             justify-content: flex-start !important;
             padding-left: 8px !important;
             transition: all 0.15s ease !important;
+            box-shadow: none !important; /* Remove button shadow */
         }
 
         /* 1. DEFAULT STATE (Transparent) */
         div[data-testid="stColumn"]:has(.ghost-col-marker) button {
             background-color: transparent !important;
-            color: #31333F !important; /* Default Text */
+            color: #31333F !important;
         }
         div[data-testid="stColumn"]:has(.ghost-col-marker) button:hover {
-            background-color: #E8E8E8 !important; /* Light Hover */
+            background-color: rgba(0,0,0,0.05) !important; /* Very subtle hover */
             color: #000 !important;
         }
 
-        /* 2. PRIMARY SELECTION (Most Recent -> Blue-Grey) */
+        /* 2. PRIMARY SELECTION (Muted Blue-Grey) */
+        /* User: "Color of the headers with a hint of blue but also more muted" */
+        /* Headers are standard Streamlit (often white/grey in light mode, or blue in dark). 
+           Assuming 'hint of blue' means a very light tint. */
         div[data-testid="stColumn"]:has(.ghost-marker-primary) button {
-            background-color: #607D8B !important; /* Blue Grey */
-            color: #FFFFFF !important; /* White Text */
-            border-bottom-color: #607D8B !important; /* Integrate border */
+            background-color: rgba(96, 125, 139, 0.15) !important; /* Muted Blue-Grey Tint */
+            color: #31333F !important; /* Keep dark text for readability */
+            border-bottom-color: #78909C !important;
         }
         div[data-testid="stColumn"]:has(.ghost-marker-primary) button:hover {
-             background-color: #546E7A !important; /* Slightly Darker */
+             background-color: rgba(96, 125, 139, 0.25) !important;
         }
 
-        /* 3. SECONDARY SELECTION (2nd Most Recent -> Off-White) */
+        /* 3. SECONDARY SELECTION (Off-White/Grey Tint) */
         div[data-testid="stColumn"]:has(.ghost-marker-secondary) button {
-            background-color: #F5F5F5 !important; /* Off-White/Light Grey */
-            color: #000000 !important; /* Black Text */
+            background-color: rgba(0, 0, 0, 0.05) !important; /* Subtle Grey */
+            color: #31333F !important;
             border-bottom-color: #CCC !important;
         }
         div[data-testid="stColumn"]:has(.ghost-marker-secondary) button:hover {
-             background-color: #E0E0E0 !important;
+             background-color: rgba(0, 0, 0, 0.08) !important;
         }
         
         </style>

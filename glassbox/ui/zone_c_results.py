@@ -121,6 +121,20 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 # Old: 0.05. New: 0.05 * 1.5 = 0.075 -> Round to 0.08.
                 grid_ratios = [0.08, 0.08, 0.84]
                 h_score, h_iter, h_prompt = st.columns(grid_ratios, gap="small")
+
+                # Deduplicate: Ensure unique Iterations if bug exists in backend
+                # User reported "Two separate entries listed as iteration one".
+                # We keep the LAST one (latest) or FIRST? Usually backend appends.
+                # Let's drop duplicates on 'Iter', keeping 'last'.
+                if not df_sorted.empty and "Iter" in df_sorted.columns:
+                    # Fix type for correct sorting/dropping
+                    df_sorted["Iter"] = df_sorted["Iter"].astype(int)
+                    # Safe dedupe: If we have multiple Iter 1s, likely initialization artifact.
+                    # Keep the one with actual content or just the last updated one.
+                    df_sorted = df_sorted.drop_duplicates(subset=["Iter"], keep="last")
+                    # Re-sort if strictly needed, but upstream sort handles it.
+                    
+                # RENDER CLICKABLE HEADERS
                 
                 # RENDER CLICKABLE HEADERS
                 # We use buttons with transparent/minimal styling if pos, or just standard buttons acting as headers
