@@ -87,12 +87,23 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
             # --- ACTION BUTTONS ---
             st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True) # Spacer
             col_start, col_stop = st.columns(2)
+            
+            # Use Callbacks to ensure state is set BEFORE the main app loop runs
+            def _cb_start():
+                print("DEBUG: Start Callback Triggered")
+                st.session_state["start_optimization"] = True
+            
+            def _cb_stop():
+                print("DEBUG: Stop Callback Triggered")
+                st.session_state["stop_optimization"] = True
+
             with col_start:
-                if st.button("START OPTIMIZATION", type="primary", use_container_width=True, key="start_opt_btn"):
-                    st.session_state["start_optimization"] = True
+                st.button("START OPTIMIZATION", type="primary", use_container_width=True, 
+                         key="start_opt_btn", on_click=_cb_start)
+            
             with col_stop:
-                if st.button("STOP OPTIMIZATION", use_container_width=True, key="stop_opt_btn"):
-                    st.session_state["stop_optimization"] = True
+                st.button("STOP OPTIMIZATION", use_container_width=True, 
+                         key="stop_opt_btn", on_click=_cb_stop)
 
             # Iter 23: Marker for CSS Overflow Fix
             st.markdown('<div class="zone-a-left-marker" style="display:none;"></div>', unsafe_allow_html=True)

@@ -77,38 +77,68 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                     )
                 }
 
-                # Pre-sort by Score Descending
+                # === CUSTOM GRID LAYOUT (HTML PIVOT) ===
+                # Implementing Sort & Selection Controls explicitly
+                
+                # 1. Sorting Controls
+                col_sort, col_spacer = st.columns([0.3, 0.7])
+                with col_sort:
+                    sort_metric = st.selectbox("Sort by:", ["Score", "Iteration"], key="zc_sort_metric")
+                
+                # Apply Sorting
                 if not df.empty:
-                    df_sorted = df.sort_values(by="Score", ascending=False)
+                    if sort_metric == "Score":
+                        df_sorted = df.sort_values(by="Score", ascending=False)
+                    else:
+                        df_sorted = df.sort_values(by="Iter", ascending=False)
                 else:
                     df_sorted = df
 
-                # CSS to force column widths (Zone C Fix)
-                st.markdown("""
-                    <style>
-                    /* Force narrow numeric columns in Item 2 (Iter) and Item 1 (Score) */
-                    /* Note: Streamlit tables are complex; this targets standard table cells if rendered as such */
-                    div[data-testid="stDataFrame"] div[role="grid"] div[role="row"] div[role="gridcell"]:nth-child(1),
-                    div[data-testid="stDataFrame"] div[role="grid"] div[role="row"] div[role="gridcell"]:nth-child(2) {
-                        max-width: 60px !important;
-                        overflow: hidden !important;
-                    }
-                    /* Headers too */
-                    div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(1),
-                    div[data-testid="stDataFrame"] div[role="columnheader"]:nth-child(2) {
-                        max-width: 60px !important;
-                    }
-                    </style>
-                """, unsafe_allow_html=True)
+                # 2. Header Row (Strict Ratios: 1:1:8)
+                # Using 0.08 for Score/Iter (approx 50-60px on 700px width)
+                h_score, h_iter, h_prompt = st.columns([0.1, 0.1, 0.7], gap="small")
+                with h_score:
+                    st.markdown("**Score**")
+                with h_iter:
+                    st.markdown("**Iter**")
+                with h_prompt:
+                    st.markdown("**Prompt Candidate**")
+                
+                # Divider
+                st.divider()
 
-                st.dataframe(
-                    df_sorted,
-                    column_config=column_config,
-                    hide_index=True,
-                    use_container_width=True,
-                    height=450, 
-                    column_order=["Score", "Iter", "Prompt"]
-                )
+                # 3. Data Rows (Loop)
+                if not df_sorted.empty:
+                    for i, row in df_sorted.iterrows():
+                        c_score, c_iter, c_prompt = st.columns([0.1, 0.1, 0.7], gap="small")
+                        
+                        # Data Extraction
+                        score_val = int(row.get("Score", 0))
+                        iter_val = int(row.get("Iter", 0))
+                        full_prompt = row.get("Prompt", "")
+                        snippet = (full_prompt[:75] + "...") if len(full_prompt) > 75 else full_prompt
+                        
+                        # --- RENDER CELLS ---
+                        # Score
+                        c_score.button(f"{score_val}", key=f"score_{i}", disabled=True, use_container_width=True)
+                        
+                        # Iteration
+                        c_iter.button(f"{iter_val}", key=f"iter_{i}", disabled=True, use_container_width=True)
+                        
+                        # Prompt (Clickable for Selection + Native Hover)
+                        if c_prompt.button(snippet, key=f"prompt_{i}", help=full_prompt, use_container_width=True):
+                            # Handle Selection
+                            # We can't easily highlight the row without state reload, but we can set the 'selected' state
+                            # For now, just logging or relying on the 'View Details' card (not implemented yet)
+                            # Or we can write to a session state var:
+                            st.session_state["selected_candidate_id"] = i
+                            # Optional: Rerun to show selection UI elsewhere?
+                            # st.rerun()
+
+                    st.caption("Hover over prompt text to view full content. Click to select.")
+                
+                else:
+                    st.info("No variations generated yet.")
 
     
     # === RIGHT COLUMN: RATINGS + FINAL OUTPUT ===
