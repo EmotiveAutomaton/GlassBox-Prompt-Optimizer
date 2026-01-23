@@ -746,6 +746,35 @@ def inject_custom_css():
         div[data-testid="stColumn"]:has(.ghost-marker-secondary) button:hover {
              background-color: rgba(0, 0, 0, 0.08) !important;
         }
+
+        /* ========================================
+           11. ZONE C - LINKED ROW HOVER (BUG-025 FIX REFINED)
+           ======================================== */
+        /* 
+           Selector Strategy:
+           1. Target stHorizontalBlock that contains our markers (.ghost-col-marker, etc.).
+           2. CRITICAL: Exclude any HorizontalBlock that CONTAINS another HorizontalBlock.
+              This prevents the Outer Layout (Zone C Split) from matching, as it contains the Row blocks.
+           3. Apply hover style to buttons inside.
+        */
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stHorizontalBlock"])):has(.ghost-col-marker):hover button,
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stHorizontalBlock"])):has(.ghost-marker-primary):hover button,
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stHorizontalBlock"])):has(.ghost-marker-secondary):hover button {
+             background-color: var(--boeing-blue) !important;
+             color: white !important;
+             opacity: 1 !important;
+             border-bottom-color: #000000 !important;
+        }
+
+        /* Force reset on individual button hover within that strictly scoped row */
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stHorizontalBlock"])):has(.ghost-col-marker) button:hover,
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stHorizontalBlock"])):has(.ghost-marker-primary) button:hover,
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stHorizontalBlock"])):has(.ghost-marker-secondary) button:hover {
+             background-color: var(--boeing-blue) !important;
+             color: white !important;
+             border-bottom-color: #000000 !important;
+        }
+
         
         </style>
     """, unsafe_allow_html=True)

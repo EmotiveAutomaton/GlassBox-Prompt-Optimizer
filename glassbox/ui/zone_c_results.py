@@ -165,6 +165,8 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
 
                 # Wrap in container
                 with st.container():
+                    # BUG-025: Scope marker to isolate row hover logic from parent container
+                    st.markdown('<div class="zone-c-row-scope" style="display:none;"></div>', unsafe_allow_html=True)
                     
                     if not df_sorted.empty:
                         q = st.session_state["zc_selection_queue"]
