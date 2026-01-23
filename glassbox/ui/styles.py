@@ -727,24 +727,31 @@ def inject_custom_css():
             color: #000 !important;
         }
 
-        /* 2. PRIMARY SELECTION (Muted Blue-Grey) */
-        div[data-testid="stColumn"]:has(.ghost-marker-primary) button {
-            background-color: rgba(96, 125, 139, 0.15) !important;
-            color: #31333F !important;
-            border-bottom-color: #78909C !important;
+        /* 2. PRIMARY SELECTION (Boeing Blue - matches Hover) */
+        /* BUG-026 FIX: Add exact same exclusion logic as hover to prevent parent matching */
+        div[data-testid="stColumn"]:not(:has(div[data-testid="stColumn"])):has(.ghost-marker-primary) button {
+            background-color: var(--boeing-blue) !important;
+            color: white !important;
+            border-bottom-color: #000000 !important;
+            opacity: 1 !important;
         }
-        div[data-testid="stColumn"]:has(.ghost-marker-primary) button:hover {
-             background-color: rgba(96, 125, 139, 0.25) !important;
+        div[data-testid="stColumn"]:not(:has(div[data-testid="stColumn"])):has(.ghost-marker-primary) button:hover {
+             /* Maintain state on hover */
+             background-color: var(--boeing-blue) !important;
+             color: white !important;
         }
 
-        /* 3. SECONDARY SELECTION (Off-White/Grey Tint) */
-        div[data-testid="stColumn"]:has(.ghost-marker-secondary) button {
-            background-color: rgba(0, 0, 0, 0.05) !important;
-            color: #31333F !important;
-            border-bottom-color: #CCC !important;
+        /* 3. SECONDARY SELECTION (Lighter Blue - Previous Selection) */
+        /* BUG-026 FIX: applied here too */
+        div[data-testid="stColumn"]:not(:has(div[data-testid="stColumn"])):has(.ghost-marker-secondary) button {
+            background-color: rgba(26, 64, 159, 0.4) !important; /* Lighter Boeing Blue */
+            color: white !important; /* Keep text white for readability */
+            border-bottom-color: #000000 !important;
+            opacity: 1 !important;
         }
-        div[data-testid="stColumn"]:has(.ghost-marker-secondary) button:hover {
-             background-color: rgba(0, 0, 0, 0.08) !important;
+        div[data-testid="stColumn"]:not(:has(div[data-testid="stColumn"])):has(.ghost-marker-secondary) button:hover {
+             /* On hover, bump to full Boeing Blue to show interactivity */
+             background-color: var(--boeing-blue) !important;
         }
 
         /* ========================================
