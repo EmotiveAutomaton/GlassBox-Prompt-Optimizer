@@ -62,18 +62,18 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         "Score",
                         help="Aggregate Score (0-100)",
                         format="%d",
-                        width=40 # Extremely tight
+                        width=80 # Fixed pixel width (tight)
                     ),
                     "Iter": st.column_config.NumberColumn(
                         "Iter",
                         help="Generation Step",
                         format="%d",
-                        width=30 # Extremely tight
+                        width=60 # Fixed pixel width (very tight)
                     ),
                     "Prompt": st.column_config.TextColumn(
                         "Prompt Snippet",
-                        help="Hover cell to view full prompt text",
-                        width="medium" 
+                        help="Full prompt text (hover to expand)",
+                        width="medium" # Let it fill remaining space
                     )
                 }
 

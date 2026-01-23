@@ -181,6 +181,8 @@ def create_optimizer(engine_name: str):
 def start_optimization():
     """Start the optimization loop."""
     engine_name = st.session_state.get("selected_engine", "OPro (Iterative)")
+    # Reset session to ensure fresh start (Fixes duplicate rows issue)
+    st.session_state["session"] = None
     optimizer = create_optimizer(engine_name)
     
     st.session_state["is_running"] = True

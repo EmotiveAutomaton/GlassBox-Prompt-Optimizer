@@ -55,7 +55,7 @@ class SessionConfig:
     """Runtime configuration for optimization session."""
     model: str = "gpt-4o-mini"
     temperature: float = 0.7
-    generations_per_step: int = 3
+    generations_per_step: int = 1
     stop_score_threshold: float = 95.0
     noise_level: float = 0.0  # RAG noise injection (0-1)
     top_k: int = 5  # RAG retrieval count

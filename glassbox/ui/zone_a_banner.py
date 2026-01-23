@@ -214,59 +214,72 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     # [Button (~0.4)] [Badge (~0.01)] [Spacer (~0.6)]
     # This reduces the visual width of the buttons as requested.
     
-    # --- DYNAMIC COLUMN GENERATION ---
-    # Simplified structure to avoid layout glitches on deletion
+    # Updated Ratios: One column per dataset (0.05) + Plus button (0.1)
+    # This removes "dead space" caused by extra badge columns.
+    col_ratios = []
     
-    # We will use a simple horizontal iterator
-    # Layout: Button | Badge | ...
+    for d_name in datasets:
+        # Fixed relative weight (approx 15% of screen) per button.
+        # This keeps size constant as N increases (until overflow).
+        col_ratios.append(0.15) 
     
-    # Render logic
-    # To fix the "flicker/mini-button" issue, we need to ensure the columns are allocated PRECISELY
-    # and that we stop rendering if we modify the list (e.g. delete).
+    col_ratios.append(0.08) # Plus Button
     
-    # Calculate Ratios: 
-    # Dataset Buttons: ~15% each. Plus: 8%. Spacer: Rest.
-    col_ratios = [0.15] * len(datasets) + [0.08] + [max(0.01, 1.0 - (0.15 * len(datasets) + 0.08))]
-    
+    # Calculate remaining space for Spacer
+    current_sum = sum(col_ratios)
+    spacer = max(0.01, 1.0 - current_sum)
+    col_ratios.append(spacer)
+
+    # Vertical alignment 'center' ensures the "+" button aligns with the text pills
     cols = st.columns(col_ratios, gap="small", vertical_alignment="center")
+    col_idx = 0
     
-    # Use index to match columns to datasets
-    for i, d_name in enumerate(datasets):
-        with cols[i]:
-            # CSS Marker
+    # --- RENDER CONTROLS ---
+    for d_name in datasets:
+        with cols[col_idx]:
+            # 0. Marker for CSS Targeting (Iter 12)
             st.markdown('<div data-type="dataset-column-marker" style="display:none;"></div>', unsafe_allow_html=True)
-            
-            # 1. Main Selection Button
+
+            # 1. Main Dataset Button
             is_active = (d_name == active_tab)
             btn_type = "primary" if is_active else "secondary"
             tooltip = f"Select {d_name}" if d_name != "Dataset 1" else "Permanent Dataset"
+            
+            # Helper for CSS hook
+            # If we render two buttons in one column, we rely on nth-child CSS
             
             if st.button(d_name, key=f"sel_{state_prefix}_{d_name}", type=btn_type, help=tooltip, use_container_width=True):
                  st.session_state[tab_key] = d_name
                  st.rerun()
             
-            # 2. X Button (Floating via CSS or inline)
-            # Logic: If we click X, we perform delete logic and STOP rendering to avoid index shifting in UI
+            # 2. Render Badge (Re-enabled for Iter 9 "Floating Icon")
             if d_name != "Dataset 1":
+                # Use standard secondary button, but CSS will transform it into a floating icon
                 if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"):
                     # Check for data existence
                     suffix = d_name.split(" ")[1]
                     d_key = f"{state_prefix}_data_{suffix}"
+                    # Simple check - if data exists in memory
                     if st.session_state.get(d_key, ""):
                          st.session_state[f"confirm_del_{state_prefix}"] = d_name
                     else:
                          _delete_dataset(state_prefix, d_name)
+                         # If we deleted the active tab, switch to D1
                          if active_tab == d_name:
                              st.session_state[tab_key] = "Dataset 1"
-                    st.rerun()
+                         st.rerun()
+
+        col_idx += 1
             
-    # Add Button (Last allocated column before spacer)
-    with cols[len(datasets)]:
+    # 3. Add Button (Last Column)
+    with cols[col_idx]:
          if st.button("＋", key=f"add_{state_prefix}", help="Add new dataset"):
              new_idx = len(datasets) + 1
+             # Find next available index
              while f"Dataset {new_idx}" in datasets:
                  new_idx += 1
              datasets.append(f"Dataset {new_idx}")
+             # Auto-select new
              st.session_state[tab_key] = f"Dataset {new_idx}"
              st.rerun()
 
