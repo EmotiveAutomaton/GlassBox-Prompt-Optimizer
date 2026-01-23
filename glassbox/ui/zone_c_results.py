@@ -116,9 +116,10 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 else:
                     df_sorted = df
 
-                # 2. Header Row (Super Tight Ratios: 0.05:0.05:0.9)
-                # User Req: "Half the width" of previous. Previous was 0.1 (approx 70px). Now 0.05 (approx 35px).
-                grid_ratios = [0.05, 0.05, 0.9]
+                # 2. Header Row
+                # User Req: "Increase width... 1.5x current size". 
+                # Old: 0.05. New: 0.05 * 1.5 = 0.075 -> Round to 0.08.
+                grid_ratios = [0.08, 0.08, 0.84]
                 h_score, h_iter, h_prompt = st.columns(grid_ratios, gap="small")
                 
                 # RENDER CLICKABLE HEADERS
