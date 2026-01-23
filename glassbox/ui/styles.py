@@ -681,46 +681,51 @@ def inject_custom_css():
 
 
 
-        /* ITER 26: ISOLATED GHOST BUTTONS (Column-Level Targeting) */
-        /* Targets buttons ONLY inside columns that have the hidden marker */
-        div[data-testid="stColumn"]:has(.ghost-col-marker) button {
-            background-color: transparent !important;
+
+        /* ITER 27: MULTI-STATE GHOST SELECTION */
+        
+        /* Shared Base Styling for ALL Ghost Types */
+        div[data-testid="stColumn"]:has(.ghost-col-marker) button,
+        div[data-testid="stColumn"]:has(.ghost-marker-primary) button,
+        div[data-testid="stColumn"]:has(.ghost-marker-secondary) button {
             border: none !important;
-            border-bottom: 1px solid #E0E0E0 !important; /* Light Grey Separator */
+            border-bottom: 2px solid #555 !important; /* Darker Separator */
             border-radius: 0 !important;
-            
-            /* Text Color Fix: Ensure Dark Text for Legibility */
-            color: #31333F !important; 
             font-weight: 400 !important;
-            
             text-align: left !important;
             justify-content: flex-start !important;
             padding-left: 8px !important;
-            transition: background-color 0.1s ease !important;
+            transition: all 0.15s ease !important;
         }
 
-        /* Hover Effect */
+        /* 1. DEFAULT STATE (Transparent) */
+        div[data-testid="stColumn"]:has(.ghost-col-marker) button {
+            background-color: transparent !important;
+            color: #31333F !important; /* Default Text */
+        }
         div[data-testid="stColumn"]:has(.ghost-col-marker) button:hover {
-            background-color: #F0F2F6 !important; /* Light Hover Grey */
-            color: #000000 !important;
+            background-color: #E8E8E8 !important; /* Light Hover */
+            color: #000 !important;
+        }
+
+        /* 2. PRIMARY SELECTION (Most Recent -> Blue-Grey) */
+        div[data-testid="stColumn"]:has(.ghost-marker-primary) button {
+            background-color: #607D8B !important; /* Blue Grey */
+            color: #FFFFFF !important; /* White Text */
+            border-bottom-color: #607D8B !important; /* Integrate border */
+        }
+        div[data-testid="stColumn"]:has(.ghost-marker-primary) button:hover {
+             background-color: #546E7A !important; /* Slightly Darker */
+        }
+
+        /* 3. SECONDARY SELECTION (2nd Most Recent -> Off-White) */
+        div[data-testid="stColumn"]:has(.ghost-marker-secondary) button {
+            background-color: #F5F5F5 !important; /* Off-White/Light Grey */
+            color: #000000 !important; /* Black Text */
             border-bottom-color: #CCC !important;
         }
-
-        /* Active/Focus */
-        div[data-testid="stColumn"]:has(.ghost-col-marker) button:active,
-        div[data-testid="stColumn"]:has(.ghost-col-marker) button:focus {
-            background-color: #E8E8E8 !important;
-            box-shadow: none !important;
-            border: none !important;
-            border-bottom: 1px solid #CCC !important;
-        }
-        
-        /* Disabled Buttons (Score/Iter) - Keep distinct? */
-        div[data-testid="stColumn"]:has(.ghost-col-marker) button:disabled {
-             background-color: transparent !important;
-             color: #31333F !important;
-             border-bottom: 1px solid #E0E0E0 !important;
-             opacity: 1 !important; /* Force visibility */
+        div[data-testid="stColumn"]:has(.ghost-marker-secondary) button:hover {
+             background-color: #E0E0E0 !important;
         }
         
         </style>

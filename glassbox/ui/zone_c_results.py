@@ -140,42 +140,84 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 # No Divider - Removed for less whitespace
 
                 # 3. Data Rows (Loop)
-                # Wrap in container (Logical grouping, marker removed for column-level isolation)
+                # 3. Data Rows (Loop)
+                # Selection State Management (Queue of max 2 items)
+                if "zc_selection_queue" not in st.session_state:
+                    st.session_state["zc_selection_queue"] = [] # [newest_id, second_newest_id]
+                
+                def _handle_selection(row_id):
+                    q = st.session_state["zc_selection_queue"]
+                    # If already selected, maybe move to front? Or just ignore?
+                    # User: "When I click one... it gets Blue-Grey... When I click a second... that second row gets a blue-grey... the first row transitions to off-white"
+                    # This implies clicking a new item impacts the queue.
+                    if row_id in q:
+                        # If already in queue, move to front (become Primary)
+                        q.remove(row_id)
+                        q.insert(0, row_id)
+                    else:
+                        # Add to front, truncate to 2
+                        q.insert(0, row_id)
+                        if len(q) > 2:
+                            q.pop() # Remove oldest
+                    
+                    st.session_state["zc_selection_queue"] = q
+                    st.session_state["selected_candidate_id"] = row_id # Keep legacy pointer just in case
+
+                # Wrap in container
                 with st.container():
                     
                     if not df_sorted.empty:
+                        q = st.session_state["zc_selection_queue"]
+                        
                         for i, row in df_sorted.iterrows():
                             c_score, c_iter, c_prompt = st.columns(grid_ratios, gap="small")
+                            
+                            # Determine Selection State & Marker
+                            marker_class = "ghost-col-marker" # Default (Transparent)
+                            if len(q) > 0 and q[0] == i:
+                                marker_class = "ghost-marker-primary" # 0: Primary (Blue-Grey)
+                            elif len(q) > 1 and q[1] == i:
+                                marker_class = "ghost-marker-secondary" # 1: Secondary (Off-White)
+                            
+                            marker_html = f'<div class="{marker_class}" style="display:none;"></div>'
                             
                             # Data Extraction
                             score_val = int(row.get("Score", 0))
                             iter_val = int(row.get("Iter", 0))
                             full_prompt = row.get("Prompt", "")
-                            # Shorten for display using approx char width
                             snippet = (full_prompt[:90] + "...") if len(full_prompt) > 90 else full_prompt
                             
-                            # --- RENDER CELLS [GHOST BUTTONS] ---
-                            # Inject marker into EACH column to isolate styling to these columns only
-                            # This prevents the style from bleeding up to the parent container
-                            GHOST_MARKER = '<div class="ghost-col-marker" style="display:none;"></div>'
+                            # Helper to render cell with specific marker
+                            def _render_cell(col, content, key_suffix, clickable=True, help_text=None):
+                                with col:
+                                    st.markdown(marker_html, unsafe_allow_html=True)
+                                    if clickable:
+                                        # Use on_click for proper state update
+                                        if st.button(content, key=f"{key_suffix}_{i}", help=help_text, on_click=_handle_selection, args=(i,), use_container_width=True):
+                                            pass
+                                    else:
+                                        st.button(content, key=f"{key_suffix}_{i}", disabled=True, use_container_width=True)
 
-                            # Score
-                            with c_score:
-                                st.markdown(GHOST_MARKER, unsafe_allow_html=True)
-                                st.button(f"{score_val}", key=f"score_{i}", disabled=True, use_container_width=True)
+                            # --- RENDER CELLS [ISOLATED GHOST] ---
+                            # Note: To make the *row* selectable by clicking Score/Iter, we could make them clickable too.
+                            # User said "When I select...". Usually implies row selection. 
+                            # Currently Score/Iter are disabled. I will keep them disabled as requested previously unless user asked otherwise.
+                            # Actually user said "Select up to two different rows... when I click one of the rows". 
+                            # Implies clicking ANYWHERE. I'll make Score/Iter clickable triggers too if simple.
+                            # But standard pattern is left-to-right. I'll stick to Prompt being the trigger for now to avoid complexity, 
+                            # or just make them all trigger `_handle_selection`. 
+                            # "Make all rows... clickable". I'll make Score/Iter trigger selection too!
                             
-                            # Iteration
-                            with c_iter:
-                                st.markdown(GHOST_MARKER, unsafe_allow_html=True)
-                                st.button(f"{iter_val}", key=f"iter_{i}", disabled=True, use_container_width=True)
+                            # Score (Trigger Select)
+                            _render_cell(c_score, f"{score_val}", "score", clickable=True)
                             
-                            # Prompt
-                            with c_prompt:
-                                st.markdown(GHOST_MARKER, unsafe_allow_html=True)
-                                if st.button(snippet, key=f"prompt_{i}", help=full_prompt, use_container_width=True):
-                                    st.session_state["selected_candidate_id"] = i
+                            # Iteration (Trigger Select)
+                            _render_cell(c_iter, f"{iter_val}", "iter", clickable=True)
+                            
+                            # Prompt (Trigger Select)
+                            _render_cell(c_prompt, snippet, "prompt", clickable=True, help_text=full_prompt)
 
-                        st.caption("Hover prompt to expand. Click headers to sort.")
+                        st.caption("Click any cell to select. Max 2 selections (Blue-Grey = Newest, Off-White = Previous).")
                     
                     else:
                         st.info("No variations generated yet.")
