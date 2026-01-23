@@ -192,7 +192,7 @@ class OProEngine(AbstractOptimizer):
             logger.error(f"Variation generation failed: {response.error_message}")
             return []
 
-        return self._parse_variations(response.content)
+        return self._parse_variations(response.content)[:num_variations]
 
     def _parse_variations(self, response_text: str) -> List[tuple]:
         """Parse LLM response to extract variations and their reasoning."""
