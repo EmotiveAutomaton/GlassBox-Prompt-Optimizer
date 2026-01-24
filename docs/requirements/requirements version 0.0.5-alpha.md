@@ -20,21 +20,27 @@ Enable the GlassBox Prompt Optimizer to validate prompt candidates against multi
 -   **Performance**: Should handle N datasets (sequential or parallel, TBD based on API limits).
 
 ### 3. Results Visualization (Zone C)
--   **Dynamic Table Layout**:
-    -   **Single Dataset Mode**: Columns: `[Score] [Iter] [Prompt Candidate] [Result]`
-    -   **Multi-Dataset Mode**: Columns: `[Avg Score] [Iter] [Prompt Candidate] | [Result 1] [Score 1] | [Result 2] [Score 2] ...`
--   **Data Consistency**: Ensure row counts match optimization steps (no duplicates).
--   **Sorting**: Sorting by "Avg Score" should sort the rows globally.
+-   **Conditional Table Layout**:
+    -   **Single Dataset Mode**: Columns: `[Score] [Iter] [Prompt Candidate] [Result]` (Classic View).
+    -   **Multi-Dataset Mode**: Columns: `[Avg Score (Wide)] [Iter] [Prompt Candidate] [Score 1] [Score 2] ... [Score N]`.
+        -   *Note:* Result text is hidden in the table to conserve space; viewed in Zone E.
+-   **Interaction**:
+    -   **Row Selection**: Clicking a row highlights it (Dark Blue).
+    -   **Multi-Select**: Users can select up to 2 rows.
+    -   **Focus Toggle**: Clicking the currently active (Dark Blue) row clears the secondary selection, isolating the active row.
 
-### 4. Graph Visualization (Glass Box)
--   **Metric**: The graph must plot the **Aggregate/Average Score**.
--   **Tooltips**: Hovering a node should show the prompt and the Avg Score (and optionally breakdown if space permits).
-
-### 5. Interaction
--   **Delete Safety**: Deleting a dataset must prompt for confirmation (Modal) and not shift layout.
--   **State Sync**: Deleting a dataset implies recalculating "Avg Score" for *future* runs (past runs remain historical).
-
-## Failure Modes to Avoid (Lessons Learned)
--   **Score 100 Glitch**: Ensuring the loop doesn't prematurely exit or mock perfect scores.
--   **Iteration Count Desync**: Generating 1 result but logging it as multiple iterations.
--   **Layout Shift**: Dynamic columns pushing UI elements out of bounds.
+### 4. Detail Inspection & Diff (Zone E)
+*Replaces "Test Bench Inputs" (now in Zone A).*
+-   **Mode 1: Single Selection (Detail View)**
+    -   **Layout**: split 25/75.
+    -   **Left Pane**: List of Datasets (selectable).
+    -   **Right Pane**:
+        -   Header: Iteration #, Aggregate Score.
+        -   Content: Full **Prompt Text** and **Result Text** for the dataset selected in Left Pane.
+-   **Mode 2: Dual Selection (Diff View)**
+    -   **Trigger**: When two rows are selected in Zone C.
+    -   **Content**: Visual Text Diff of the **Prompt Candidates**.
+    -   **Styling**:
+        -   **Additions**: Muted Green background.
+        -   **Deletions**: Muted Red background (strikethrough).
+    -   **Goal**: Highlight exactly what changed between the two iterations.
