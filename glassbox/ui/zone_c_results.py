@@ -346,7 +346,9 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
         # Force Label Text Color to be visible
         textfont=dict(size=12, color="black", family="Arial Black"), 
         hovertemplate="%{hovertext}<extra></extra>",
-        hovertext=hover_texts
+        hovertext=hover_texts,
+        # Iter 37: Embed ID for click handler
+        customdata=[d["id"] for d in data_points] 
     ))
 
     # 2. Selection Sync Highlighting (Dual State)
@@ -428,4 +430,47 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
         )
     )
     
-    st.plotly_chart(fig, use_container_width=True, key="ratings_graph_v3")
+    # Render with Click Handling (Iter 37)
+    # Using on_select="rerun" to capture clicks
+    event = st.plotly_chart(fig, use_container_width=True, key="ratings_graph_v3", on_select="rerun", selection_mode="points")
+    
+    # Event Handling Logic
+    if event and "selection" in event and "points" in event["selection"]:
+        points = event["selection"]["points"]
+        if points:
+            # We only care about the first point clicked
+            pt = points[0]
+            curve_idx = pt.get("curve_number", 0)
+            point_idx = pt.get("point_index", 0)
+            
+            clicked_id = None
+            
+            # Map Curve+Index to ID
+            if curve_idx == 0:
+                # Main Trace
+                if point_idx < len(data_points):
+                    clicked_id = str(data_points[point_idx]["id"])
+            elif curve_idx == 1:
+                # Primary Highlight (Already selected)
+                if q: clicked_id = q[0]
+            elif curve_idx == 2:
+                # Secondary Highlight
+                if len(q) > 1: clicked_id = q[1]
+            
+            # Update Queue if Valid & Different
+            if clicked_id:
+                current_q = list(st.session_state.get("zc_selection_queue", []))
+                
+                # Only update if it's NOT already the primary selection
+                # (Avoid infinite rerun loop if user keeps clicking same point)
+                if not current_q or current_q[0] != clicked_id:
+                    if clicked_id in current_q:
+                        current_q.remove(clicked_id)
+                        current_q.insert(0, clicked_id)
+                    else:
+                        current_q.insert(0, clicked_id)
+                        if len(current_q) > 2:
+                            current_q.pop()
+                    
+                    st.session_state["zc_selection_queue"] = current_q
+                    st.rerun()
