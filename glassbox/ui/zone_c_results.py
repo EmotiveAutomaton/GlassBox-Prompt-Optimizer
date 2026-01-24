@@ -119,8 +119,9 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 # 2. Header Row
                 # User Req: "Increase width... 1.5x current size". 
                 # Old: 0.05. New: 0.05 * 1.5 = 0.075 -> Round to 0.08.
-                grid_ratios = [0.08, 0.08, 0.84]
-                h_score, h_iter, h_prompt = st.columns(grid_ratios, gap="small")
+                # Iter 35: Split Prompt (0.84) into Prompt (0.42) + Result (0.42)
+                grid_ratios = [0.08, 0.08, 0.42, 0.42]
+                h_score, h_iter, h_prompt, h_result = st.columns(grid_ratios, gap="small")
 
                 # RENDER CLICKABLE HEADERS
                 # Inject a marker to explicitly PROTECT these as "Headers" (Solid Button Style)
@@ -142,6 +143,10 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 with h_prompt:
                     st.markdown(HEADER_MARKER, unsafe_allow_html=True)
                     st.button(f"Prompt Candidate{_arrow('Prompt')}", key="h_btn_prompt", on_click=_sort_prompt, use_container_width=True)
+                with h_result:
+                    # No Sort for result yet, or alias to prompt sort? Just static for now.
+                    st.markdown(HEADER_MARKER, unsafe_allow_html=True)
+                    st.button("Result", key="h_btn_result", disabled=True, use_container_width=True)
                 
                 # 3. Data Rows (Loop)
                 # Selection State Management (Queue of max 2 items, storing UUIDs now)
@@ -172,7 +177,7 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         q = st.session_state["zc_selection_queue"]
                         
                         for i, row in df_sorted.iterrows():
-                            c_score, c_iter, c_prompt = st.columns(grid_ratios, gap="small")
+                            c_score, c_iter, c_prompt, c_result = st.columns(grid_ratios, gap="small")
                             
                             # ID for logic (row 'id' from c.id)
                             c_id = str(row.get("id", ""))
@@ -190,7 +195,15 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                             score_val = int(row.get("Score", 0))
                             iter_val = int(row.get("Iter", 0))
                             full_prompt = row.get("Prompt", "")
-                            snippet = (full_prompt[:90] + "...") if len(full_prompt) > 90 else full_prompt
+                            # Find original candidate to get Output (Dataframe didn't have it)
+                            # Efficient-ish lookup since N is small (<50)
+                            # Actually, we should have added it to 'df' data dict. 
+                            # Hotfix: Look up in 'candidates'.
+                            cand_obj = next((c for c in candidates if str(c.id) == c_id), None)
+                            full_output = getattr(cand_obj, "output", "") if cand_obj else ""
+
+                            snippet_p = (full_prompt[:40] + "...") if len(full_prompt) > 40 else full_prompt
+                            snippet_r = (full_output[:40] + "...") if len(full_output) > 40 else full_output
                             
                             # Helper to render cell with specific marker
                             def _render_cell(col, content, key_suffix, clickable=True, help_text=None):
@@ -206,7 +219,8 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                             # Render Cells
                             _render_cell(c_score, f"{score_val}", "score", clickable=True)
                             _render_cell(c_iter, f"{iter_val}", "iter", clickable=True)
-                            _render_cell(c_prompt, snippet, "prompt", clickable=True, help_text=full_prompt)
+                            _render_cell(c_prompt, snippet_p, "prompt", clickable=True, help_text=full_prompt)
+                            _render_cell(c_result, snippet_r, "result", clickable=True, help_text=full_output)
 
                         st.caption("Click any cell to select. Max 2 selections.")
                     
@@ -249,94 +263,169 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
 
 
 def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandidate]):
-    """Render the optimization progress graph inside PROMPT RATINGS card. Now larger."""
+    """
+    Render detailed optimization graph.
+    Refinements (Iter 36):
+    - Color: Boeing Blue #0033A1.
+    - Grid: Darker visible lines.
+    - Labels: Larger.
+    - Tooltip: Iter, Score (1 dec), Prompt: snippet, Result: snippet.
+    - Selection: Dual states (Primary vs Secondary).
+    """
     
-    if not trajectory and not candidates:
-        # Placeholder when no data
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(
-            x=[0, 1, 2, 3],
-            y=[0, 0, 0, 0],
-            mode='lines',
-            line=dict(color='#CCC', width=1, dash='dot'),
-            showlegend=False
-        ))
-        fig.update_layout(
-            height=250,  # Larger height
-            margin=dict(l=30, r=10, t=10, b=30),
-            plot_bgcolor='#FDFDFE',
-            paper_bgcolor='#FDFDFE',
-            xaxis_title='Step',
-            yaxis_title='Score',
-            yaxis=dict(range=[0, 105]),
-            font=dict(size=10),
-            annotations=[
-                dict(
-                    text="Waiting for data...",
-                    xref="paper", yref="paper",
-                    x=0.5, y=0.5,
-                    showarrow=False,
-                    font=dict(size=12, color="#999")
-                )
-            ]
-        )
-        st.plotly_chart(fig, use_container_width=True, key="ratings_graph_placeholder")
-        return
+    # Data Prep
+    data_points = []
     
-    # Build data from trajectory or candidates
+    def _extract_res(c_id, c_list):
+        # Helper to find result text
+        return next((getattr(c, "output", "") for c in c_list if str(c.id) == str(c_id)), "")
+
     if trajectory:
-        steps = [entry.step if hasattr(entry, 'step') else i for i, entry in enumerate(trajectory)]
-        scores = [entry.score if hasattr(entry, 'score') else 0 for entry in trajectory]
+        for entry in trajectory:
+            s_val = entry.score if hasattr(entry, 'score') else 0
+            i_val = entry.step if hasattr(entry, 'step') else 0
+            p_text = entry.prompt if hasattr(entry, 'prompt') else ""
+            c_id = entry.candidate_id if hasattr(entry, 'candidate_id') else ""
+            r_text = _extract_res(c_id, candidates) # Attempt to fallback align
+            data_points.append({"step": i_val, "score": s_val, "prompt": p_text, "result": r_text, "id": c_id})
     else:
-        # Use candidate scores as fallback
-        sorted_candidates = sorted(candidates, key=lambda c: c.score_aggregate, reverse=True)[:10]
-        steps = list(range(len(sorted_candidates)))
-        scores = [c.score_aggregate for c in sorted_candidates]
+        # Fallback to candidates
+        sorted_candidates = sorted(candidates, key=lambda c: getattr(c, 'generation_index', 0))
+        for c in sorted_candidates:
+            s_val = getattr(c, 'score_aggregate', 0)
+            i_val = getattr(c, 'generation_index', 0)
+            p_text = getattr(c, 'display_text', "")
+            r_text = getattr(c, 'output', "")
+            c_id = str(c.id)
+            data_points.append({"step": i_val, "score": s_val, "prompt": p_text, "result": r_text, "id": c_id})
+
+    if not data_points:
+        st.info("No data for graph.")
+        return
+
+    # Unpack for plotting
+    x_vals = [d["step"] for d in data_points]
+    y_vals = [d["score"] for d in data_points]
     
-    # Calculate running average
-    avg_scores = []
-    for i, score in enumerate(scores):
-        avg_scores.append(sum(scores[:i+1]) / (i+1))
+    # Tooltip Formatting
+    hover_texts = []
+    for d in data_points:
+        p_snip = (d['prompt'][:60] + "...") if len(d['prompt']) > 60 else d['prompt']
+        r_snip = (d['result'][:60] + "...") if len(d['result']) > 60 else d['result']
+        
+        # Format: Iter 2 -> Score: 95.0 -> Prompt: ... -> Result: ...
+        txt = (
+            f"<b>Iter: {d['step']}</b><br>"
+            f"Score: {d['score']:.1f}<br>"
+            f"<i>Prompt: {p_snip}</i><br>"
+            f"<i>Result: {r_snip}</i>"
+        )
+        hover_texts.append(txt)
     
+    # Dynamic Range
+    min_score = min(y_vals)
+    max_score = max(y_vals)
+    y_range = [max(0, min_score - 5), min(105, max_score + 5)]
+
     fig = go.Figure()
-    
-    # Average score line
+
+    # 1. Main Trace (Line + Dots)
     fig.add_trace(go.Scatter(
-        x=steps,
-        y=avg_scores,
-        mode='lines+markers',
-        name='Avg Score',
-        line=dict(color='#0D7CB1', width=2),
-        marker=dict(size=5)
+        x=x_vals,
+        y=y_vals,
+        mode='lines+markers+text',
+        name='Score',
+        line=dict(color='#0033A1', width=3), # Official Boeing Blue
+        marker=dict(
+            size=12, 
+            color='white',
+            line=dict(color='#0033A1', width=2)
+        ),
+        text=[str(x) for x in x_vals], 
+        textposition="top center",
+        # Force Label Text Color to be visible
+        textfont=dict(size=12, color="black", family="Arial Black"), 
+        hovertemplate="%{hovertext}<extra></extra>",
+        hovertext=hover_texts
     ))
+
+    # 2. Selection Sync Highlighting (Dual State)
+    q = st.session_state.get("zc_selection_queue", [])
     
-    # Max score line
-    max_scores = []
-    running_max = 0
-    for score in scores:
-        running_max = max(running_max, score)
-        max_scores.append(running_max)
-    
-    fig.add_trace(go.Scatter(
-        x=steps,
-        y=max_scores,
-        mode='lines',
-        name='Max Score',
-        line=dict(color='#22c55e', width=2, dash='dash')
-    ))
-    
+    if q:
+        # Primary (Newest - Index 0)
+        prim_id = q[0]
+        prim_pt = next((d for d in data_points if str(d["id"]) == prim_id), None)
+        
+        if prim_pt:
+            fig.add_trace(go.Scatter(
+                x=[prim_pt["step"]],
+                y=[prim_pt["score"]],
+                mode='markers',
+                name='Selected (Primary)',
+                marker=dict(
+                    size=18,
+                    color='rgba(0,0,0,0)', 
+                    # Refinement Iter 36: Thick Boeing Blue Halo
+                    line=dict(color='#0033A1', width=4) 
+                ),
+                hoverinfo='skip'
+            ))
+
+        # Secondary (Older - Index 1)
+        if len(q) > 1:
+            sec_id = q[1]
+            sec_pt = next((d for d in data_points if str(d["id"]) == sec_id), None)
+            
+            if sec_pt:
+                fig.add_trace(go.Scatter(
+                    x=[sec_pt["step"]],
+                    y=[sec_pt["score"]],
+                    mode='markers',
+                    name='Selected (Secondary)',
+                    marker=dict(
+                        size=18,
+                        color='rgba(255, 255, 255, 0.5)', # Half-transparent white
+                        # Refinement Iter 36: Thicker Halo
+                        line=dict(color='#89CFF0', width=4) 
+                    ),
+                    hoverinfo='skip'
+                ))
+
+    # Layout Updates
     fig.update_layout(
-        height=250,  # Larger height
-        margin=dict(l=30, r=10, t=10, b=30),
+        height=300,
+        margin=dict(l=40, r=20, t=20, b=40),
         plot_bgcolor='#FDFDFE',
         paper_bgcolor='#FDFDFE',
-        xaxis_title='Step',
+        # Global Font Color Force -> Black
+        font=dict(color="black", size=11),
+        xaxis_title='Iteration',
         yaxis_title='Score',
-        yaxis=dict(range=[0, 105], showgrid=True, gridcolor='#E8E8E8'),
-        xaxis=dict(showgrid=False),
-        font=dict(size=10),
-        legend=dict(orientation='h', yanchor='bottom', y=1, xanchor='right', x=1, font=dict(size=9)),
-        showlegend=True
+        yaxis=dict(
+            range=y_range, 
+            showgrid=True, 
+            gridcolor='#BBBBBB', # Darker grid
+            zeroline=False,
+            # Explicit Black Axis Labels
+            tickfont=dict(color="black"),
+            title_font=dict(color="black")
+        ),
+        xaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            # Explicit Black Axis Labels
+            tickfont=dict(color="black"),
+            title_font=dict(color="black")
+        ),
+        showlegend=False,
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=12,
+            font_family="sans-serif",
+            # Explicit Black Tooltip Text
+            font=dict(color="black") 
+        )
     )
     
-    st.plotly_chart(fig, use_container_width=True, key="ratings_graph")
+    st.plotly_chart(fig, use_container_width=True, key="ratings_graph_v3")
