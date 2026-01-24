@@ -106,6 +106,17 @@ def init_session_state():
         "stop_threshold": 95.0,
         "start_optimization": False,
         "stop_optimization": False,
+        # Iter 41 (Re-apply): Test Bed Dummy Data
+        "opro_seed_prompt": "Summarize the following text efficiently.",
+        "opro_test_dataset_list": ["Dataset 1", "Dataset 2"],
+        "opro_test_data_1": "Boeing's Starliner is a next-generation spacecraft designed for safe, reliable crew transport to the ISS.",
+        "opro_test_data_2": "The 777X is the world's largest and most efficient twin-engine jet, featuring folding wingtips.",
+        "opro_test_file_list_1": [
+            {"name": "starliner_overview.txt", "size": 1024, "content": "Boeing's Starliner is a next-generation spacecraft designed for safe, reliable crew transport to the ISS."}
+        ],
+        "opro_test_file_list_2": [
+            {"name": "777x_specs.txt", "size": 2048, "content": "The 777X is the world's largest and most efficient twin-engine jet, featuring folding wingtips."}
+        ],
     }
     
     for key, value in defaults.items():
@@ -237,6 +248,12 @@ def main():
     # === ZONE B: Sidebar (Flush Navigation Only) ===
     render_zone_b()
     
+    # Iter 41 (Re-apply): Debug Footer
+    st.sidebar.markdown("---")
+    status = st.session_state.get("optimizer_status", "idle")
+    step = st.session_state.get("session").current_step if st.session_state.get("session") else 0
+    st.sidebar.caption(f"🔧 **DEBUG**: Status={status.upper()} | Step={step}")
+
     # === Main Content Area ===
     
     # === TOP ROW: INPUT + GLASS BOX Cards ===

@@ -569,9 +569,10 @@ def inject_custom_css():
         }
 
         /* 3. Items inside the list */
-        div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stText"] {
+        div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stText"],
+        div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stMarkdown"] p {
              font-size: 13px !important;
-             color: #333 !important;
+             color: #333333 !important; /* Force Dark Gray */
              padding: 4px 0px !important;
              white-space: nowrap !important;
              overflow: hidden !important;

@@ -272,7 +272,7 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
                     d_key = f"{state_prefix}_data_{suffix}"
                     # Simple check - if data exists in memory
                     if st.session_state.get(d_key, ""):
-                         st.session_state[f"confirm_del_{state_prefix}"] = d_name
+                         confirm_delete_dialog(state_prefix, d_name, tab_key)
                     else:
                          _delete_dataset(state_prefix, d_name)
                          # If we deleted the active tab, switch to D1
@@ -294,18 +294,21 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
              st.session_state[tab_key] = f"Dataset {new_idx}"
              st.rerun()
 
-    # --- CONFIRMATION DIALOG ---
-    pending_del = st.session_state.get(f"confirm_del_{state_prefix}", None)
-    if pending_del:
-        st.warning(f"'{pending_del}' contains data. Delete anyway?")
-        col_yes, col_no = st.columns([0.2, 0.8])
-        if col_yes.button("Yes, Drop it", key=f"yes_del_{state_prefix}"):
-            _delete_dataset(state_prefix, pending_del)
-            st.session_state[f"confirm_del_{state_prefix}"] = None
-            st.rerun()
-        if col_no.button("Cancel", key=f"no_del_{state_prefix}"):
-            st.session_state[f"confirm_del_{state_prefix}"] = None
-            st.rerun()
+@st.dialog("Confirm Deletion")
+def confirm_delete_dialog(state_prefix: str, d_name: str, tab_key: str):
+    st.warning(f"Are you sure you want to delete '{d_name}'?")
+    st.caption("This action cannot be undone and will remove all associated test data.")
+    
+    col_yes, col_no = st.columns([1, 1])
+    if col_yes.button("Delete", type="primary", use_container_width=True):
+        _delete_dataset(state_prefix, d_name)
+        # Handle tab switch if we deleted the active one
+        if st.session_state.get(tab_key) == d_name:
+             st.session_state[tab_key] = "Dataset 1"
+        st.rerun()
+        
+    if col_no.button("Cancel", use_container_width=True):
+        st.rerun()
 
 def _delete_dataset(state_prefix, tab_name):
     """Helper to remove dataset from list and clear its data."""
