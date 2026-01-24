@@ -23,6 +23,7 @@ class UnifiedCandidate(BaseModel):
     # Content
     display_text: str = Field(..., description="Short text for List View (e.g. Prompt Snippet)")
     full_content: str = Field(..., description="Complete content for Detail View")
+    output: Optional[str] = Field(default="", description="Primary output content for Result View")
     
     # Metrics
     score_aggregate: float = Field(..., description="Mean score from Test Bench (0-100)")

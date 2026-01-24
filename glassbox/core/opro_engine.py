@@ -276,15 +276,19 @@ class OProEngine(AbstractOptimizer):
                 responses[key] = ""
                 reasoning[key] = f"Error: {str(e)}"
 
-        # Calculate aggregate (mean of active inputs)
+        # Calculate aggregate
         valid_scores = [v for v in scores.values()]
         aggregate = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
+
+        # Iter 39 Fix: Extract primary output (Input A) for UI display
+        primary_output = responses.get("input_a", "")
 
         return UnifiedCandidate(
             engine_type=self.engine_type_enum,
             generation_index=generation,
             display_text=prompt_text,
             full_content=prompt_text,
+            output=primary_output, # Explicitly populate header
             score_aggregate=aggregate,
             test_results=scores,
             meta={
@@ -292,7 +296,7 @@ class OProEngine(AbstractOptimizer):
                     "responses": responses,
                     "reasoning": reasoning
                 },
-                "mutation_type": "rephrase" # Default for OPro
+                "mutation_type": "rephrase"
             }
         )
 
