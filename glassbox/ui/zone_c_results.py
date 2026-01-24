@@ -416,8 +416,8 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
         xaxis=dict(
             showgrid=False,
             zeroline=False,
-            # Explicit Black Axis Labels
-            tickfont=dict(color="black"),
+            # Explicit Black Axis Labels (Title only)
+            showticklabels=False, # Iter 38: Hide numeric labels
             title_font=dict(color="black")
         ),
         showlegend=False,
