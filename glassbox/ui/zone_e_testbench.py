@@ -157,33 +157,51 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
         val = outputs.get(active_ds_key, None)
         
         if val is None:
-            # Try looking in 'test_results' if it exists (standard location for multisample)
-            tr = getattr(primary_cand, "test_results", {})
-            val = tr.get(active_ds_key, None)
+            # v0.0.15: OPro Standard Location
+            details = getattr(primary_cand, "meta", {}).get("test_details", {})
+            val = details.get("responses", {}).get(active_ds_key, None)
+
+        if val is None:
+             # Discard broken fallbacks to test_results (scores)
+             pass
+             
+        # Fallback 1: Input A default
+        if val is None and active_ds_key == "input_a":
+            val = primary_cand.output
+        
+        # v0.0.15 Strict Type Check: If we got a number, discard it.
+        # User reported "95" showing up.
+        if isinstance(val, (int, float)):
+            val = ""
 
         if val is None: val = ""
         
-        # v0.0.11: Header Score Logic "RESULT • SCORE {X}"
-        # Need to find the score for the active dataset. 
-        # Typically in meta.dataset_scores (dict) or primary_cand.score (float)
+        # v0.0.15: Header Score Logic "RESULT • SCORE {Integer}"
+        # Priority: test_results (Explicit Scores) > dataset_scores
         score_val = None
-        ds_scores = getattr(primary_cand, "meta", {}).get("dataset_scores", {})
-        if active_ds_key in ds_scores:
-            score_val = ds_scores[active_ds_key]
-        elif active_ds_key == "input_a":
-            # Fallback for main dataset
-            # FIX: UnifiedCandidate uses 'score_aggregate', not 'score'
-            score_val = getattr(primary_cand, "score_aggregate", 0)
+        
+        tr = getattr(primary_cand, "test_results", {})
+        if active_ds_key in tr:
+            score_val = tr[active_ds_key]
             
+        if score_val is None:
+            ds_scores = getattr(primary_cand, "meta", {}).get("dataset_scores", {})
+            if active_ds_key in ds_scores:
+                score_val = ds_scores[active_ds_key]
+        
+        # Fallback for Input A to aggregate ONLY if it's single-shot (often same as aggregate)
+        # But user dislikes "Average". Let's try to be specific. 
+        if score_val is None and active_ds_key == "input_a":
+             score_val = getattr(primary_cand, "score_aggregate", 0)
+
         header_text = "RESULT"
         if score_val is not None:
-            # Format: 'RESULT • SCORE 95.0'
+            # Format: 'RESULT • SCORE 95' (Rounded to INT)
             try:
-                s_float = float(score_val)
-                # If int, show int? Or always 1 decimal? User said "score number".
-                # Standard is usually 2 decimals or 1. Let's do rounded logic if needed, or just str.
-                header_text = f"RESULT • SCORE {s_float}"
+                s_int = int(round(float(score_val)))
+                header_text = f"RESULT • SCORE {s_int}"
             except:
+                # If conversion fails, default to safe text
                 header_text = f"RESULT • SCORE {score_val}"
 
         st.caption(header_text)

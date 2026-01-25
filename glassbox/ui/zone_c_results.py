@@ -22,6 +22,14 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
     # Get trajectory from session state for the graph
     trajectory = st.session_state.get("trajectory", [])
     
+    # v0.0.15 Fix: NameError Hoist ds_keys (Must be defined before usage in loop)
+    ds_keys = []
+    if test_bench:
+        if getattr(test_bench, "input_a", ""): ds_keys.append("input_a")
+        if getattr(test_bench, "input_b", ""): ds_keys.append("input_b")
+        if getattr(test_bench, "input_c", ""): ds_keys.append("input_c")
+    if not ds_keys: ds_keys = ["input_a"] # Default
+
     # --- BOTTOM ROW: Full-Height Cards ---
     # Wrap in a container for CSS full-height styling
     # --- BOTTOM ROW: Full-Height Cards ---
@@ -51,9 +59,27 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         "Score": score,
                         "Iter": step, # Shortened name
                         "Prompt": c.display_text,
-                        "Result": c.output # Needed for sorting
+                        "Result": c.output # Legacy
                     })
-                
+                    
+                    # Populate Dynamic Result Columns for Sorting
+                    # We need to access the candidates matching this ID to get their meta data
+                    # Optimally we did this above loop, but we can just use index/lookup
+                    cand_obj = next((c for c in candidates if str(c.id) == str(c.id)), None)
+                    # Wait, 'c' is the obj.
+                    
+                    if ds_keys:
+                        for idx, k in enumerate(ds_keys):
+                            # Default to standard output if input_a, else outputs
+                            val = getattr(c, "meta", {}).get("dataset_outputs", {}).get(k, "")
+                            if not val and k == "input_a": 
+                                val = getattr(c, "output", "")
+                            # Also check test_details.responses
+                            if not val:
+                                val = getattr(c, "meta", {}).get("test_details", {}).get("responses", {}).get(k, "")
+                                
+                            data[-1][f"Result_{idx}"] = val
+
                 df = pd.DataFrame(data)
                 
                 # Configure Columns
@@ -63,18 +89,18 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         "Score",
                         help="Aggregate Score (0-100)",
                         format="%d",
-                        width=80 # Fixed pixel width (tight)
+                        width=80 
                     ),
                     "Iter": st.column_config.NumberColumn(
                         "Iter",
                         help="Generation Step",
                         format="%d",
-                        width=60 # Fixed pixel width (very tight)
+                        width=60 
                     ),
                     "Prompt": st.column_config.TextColumn(
                         "Prompt Snippet",
                         help="Full prompt text (hover to expand)",
-                        width="medium" # Let it fill remaining space
+                        width="medium" 
                     )
                 }
 
@@ -115,35 +141,44 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                     else:
                         st.session_state["zc_sort_col"] = "Result Output"
                         st.session_state["zc_sort_asc"] = True
+                        
+                # Dynamic Sort Handler Factory
+                def _make_sort_handler(col_key):
+                    def _handler():
+                        if st.session_state["zc_sort_col"] == col_key:
+                            st.session_state["zc_sort_asc"] = not st.session_state["zc_sort_asc"]
+                        else:
+                            st.session_state["zc_sort_col"] = col_key
+                            st.session_state["zc_sort_asc"] = True
+                    return _handler
 
                 # Apply Sorting to DF
                 col = st.session_state["zc_sort_col"]
                 asc = st.session_state["zc_sort_asc"]
                 
-                # Column mapping for DF keys (user friendly name -> df key)
+                # Column mapping
                 key_map = {
                     "Score": "Score",
                     "Iter": "Iter",
                     "Prompt": "Prompt",
-                    "Result Output": "Result" # Assuming I added 'Result' to df creation
+                    "Result Output": "Result"
                 }
-                
+                # Add dynamic keys
+                for i in range(10): # Support up to 10 datasets
+                     key_map[f"Result_{i}"] = f"Result_{i}"
+
                 if not df.empty and col in key_map:
                     df_sorted = df.sort_values(by=key_map[col], ascending=asc)
+                elif not df.empty and col in df.columns:
+                     # Direct match for dynamic columns
+                     df_sorted = df.sort_values(by=col, ascending=asc)
                 else:
                     df_sorted = df
 
                 # 2. Header Row & Grid Config
                 # v0.0.13: Dynamic Result Columns
                 
-                # Detect Datasets (Logic shared with Zone E)
-                ds_keys = []
-                if test_bench:
-                    if getattr(test_bench, "input_a", ""): ds_keys.append("input_a")
-                    if getattr(test_bench, "input_b", ""): ds_keys.append("input_b")
-                    if getattr(test_bench, "input_c", ""): ds_keys.append("input_c")
-                if not ds_keys: ds_keys = ["input_a"] # Default
-                
+                # ds_keys is now defined at top of function
                 num_ds = len(ds_keys)
                 
                 # Base Ratios
@@ -182,10 +217,9 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 for idx, (h_col, ds_key) in enumerate(zip(h_results, ds_keys)):
                     with h_col:
                         st.markdown(HEADER_MARKER, unsafe_allow_html=True)
-                        # Sorting by specific dataset? Complex. For now, disable sort on split columns or sort by generic 'Result' (Active)?
-                        # User didn't ask for multi-column sort. Keep it simple or use generic "Result 1".
-                        # Let's just Label them "Result 1", "Result 2".
-                        st.button(f"Result {idx+1}", key=f"h_btn_res_{idx}", disabled=True, use_container_width=True)
+                        # v0.0.15: Enable Sorting
+                        col_key = f"Result_{idx}"
+                        st.button(f"Result {idx+1}{_arrow(col_key)}", key=f"h_btn_res_{idx}", on_click=_make_sort_handler(col_key), use_container_width=True)
                 
                 # 3. Data Rows (Loop)
                 # Selection State Management (State Machine V2: Primary & Anchor)
