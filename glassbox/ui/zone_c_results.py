@@ -237,25 +237,12 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
             # Render the optimization progress graph (larger now)
             _render_optimization_graph(trajectory, candidates)
         
-        # === CARD: FINAL OUTPUT AND USER EVALUATION (Test Bench Only, Horizontal Inputs) ===
-        with st.container(border=True):
-            st.markdown('<div class="card-header">FINAL OUTPUT AND USER EVALUATION</div>', unsafe_allow_html=True)
-            
-            # Test Bench Only - No mode toggle, no Free Play
-            # Inputs A, B, C arranged horizontally
-            col_a, col_b, col_c = st.columns(3)
-            
-            with col_a:
-                st.markdown("**A** (Golden)")
-                st.text_area("A", value="", placeholder="Standard representative input scenario...", height=60, key="test_input_a", label_visibility="collapsed")
-            
-            with col_b:
-                st.markdown("**B** (Edge)")
-                st.text_area("B", value="", placeholder="Edge case or difficult input logic...", height=60, key="test_input_b", label_visibility="collapsed")
-            
-            with col_c:
-                st.markdown("**C** (Adversarial)")
-                st.text_area("C", value="", placeholder="Adversarial input or out-of-domain test...", height=60, key="test_input_c", label_visibility="collapsed")
+        # === CARD: DETAIL INSPECTOR & DIFF (Replaces Final Output) ===
+        # Iter 48: Integrated Zone E here for proper layout
+        from glassbox.ui.zone_e_testbench import render_zone_e
+        # Pass session.winner if exists
+        winner = st.session_state.get("session").winner if st.session_state.get("session") else None
+        render_zone_e(test_bench, winner)
     
     # Close full-height container
     # End Bottom Row

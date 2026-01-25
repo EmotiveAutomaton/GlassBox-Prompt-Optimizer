@@ -395,20 +395,12 @@ The "Optimization Score" is **not** derived from a single run. The system attemp
 
 ### 4.3 Manual "Checkride" (Validation)
 * **Status:** Post-Optimization Validation.
+* **Location:** Zone E (Detail Inspector).
 * **Functionality:**
-    * Once a "Winner" is locked, the user can inspect its performance on specific datasets manually.
-    * **Visual Diff:** Side-by-side comparison of "Original Seed" vs "Optimized Candidate" output.
-
-
-
-### 4.3 Manual "Checkride" (Final Eval)
-
-* **Location:** Zone E (Bottom Right) - Toggle Mode: "Test Bench" vs "Free Play".
-* **Functionality:**
-* Once a "Winner" is selected, the user switches to "Free Play."
-* The winning prompt is locked into the system.
-* The user can type *any* new input to verify the prompt generalizes to unseen data.
-* **Visual Diff:** The system displays the output side-by-side with the "Original Seed Prompt" output to demonstrate the qualitative lift.
+    * **Inspection:** Select the "Winner" (or high-scoring candidate) in Zone C.
+    * **Visual Check:** Zone E displays the full generated output for the active test bench input.
+    * **Comparison:** Select TWO candidates (e.g., Seed + Winner) to trigger the "Visual Diff" mode, showing exactly how the prompt evolved and improved.
+    * **Generalization Check:** Use the "Datasets" tabs in Zone A to switch inputs and verify the prompt holds up across different test cases.
 
 
 

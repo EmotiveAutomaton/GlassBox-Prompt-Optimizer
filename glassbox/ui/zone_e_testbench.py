@@ -1,168 +1,119 @@
 """
-Zone E: Test Bench - Bottom Right
+Zone E: Detail Inspector & Diff Viewer (Bottom Right).
 
-Contains:
-- Three distinct input areas (Golden Path, Edge Case, Adversarial)
-- Traffic light indicators
-- Free Play mode for winner testing
+Purpose:
+- Single Selection: View full prompt and response details.
+- Dual Selection: Visual diff between two prompt versions.
 """
 
 import streamlit as st
-from typing import Optional
-
+import difflib
+from typing import Optional, List
 from glassbox.models.session import TestBenchConfig
 from glassbox.models.candidate import UnifiedCandidate
 
-
 def render_zone_e(test_bench: TestBenchConfig, winner: Optional[UnifiedCandidate] = None):
-    """Render the test bench zone."""
+    """
+    Render the Inspection & Diff Zone.
+    Uses 'selected_candidates' object list populated by Zone C.
+    """
+    # Wrap in Card Container standard
+    with st.container(border=True):
+        st.markdown('<div class="card-header">DETAIL INSPECTOR & DIFF</div>', unsafe_allow_html=True)
     
-    # Mode toggle
-    mode = st.radio(
-        "Mode",
-        options=["🧪 Test Bench", "🎮 Free Play"],
-        horizontal=True,
-        key="testbench_mode"
-    )
-
-    if mode == "🧪 Test Bench":
-        _render_test_bench_mode(test_bench)
-    else:
-        _render_free_play_mode(winner)
-
-
-def _render_test_bench_mode(test_bench: TestBenchConfig):
-    """Render the tri-state test bench inputs."""
-    st.markdown("### 🧪 Test Bench")
-    st.caption("Define 3 test inputs to evaluate prompts against. Scores are averaged.")
-
-    # Input A: Golden Path
-    st.markdown("#### 🟢 Input A: Golden Path")
-    st.caption("Standard, representative input")
-    input_a = st.text_area(
-        "Golden Path Input",
-        value=test_bench.input_a or "Enter a standard test input...",
-        height=80,
-        key="test_input_a",
-        label_visibility="collapsed"
-    )
-    score_a = st.session_state.get("score_a", None)
-    if score_a is not None:
-        _render_traffic_light(score_a, "a")
-
-    # Input B: Edge Case
-    st.markdown("#### 🟡 Input B: Edge Case")
-    st.caption("Difficult or malformed input")
-    input_b = st.text_area(
-        "Edge Case Input",
-        value=test_bench.input_b or "Enter an edge case...",
-        height=80,
-        key="test_input_b",
-        label_visibility="collapsed"
-    )
-    score_b = st.session_state.get("score_b", None)
-    if score_b is not None:
-        _render_traffic_light(score_b, "b")
-
-    # Input C: Adversarial
-    st.markdown("#### 🔴 Input C: Adversarial/OOD")
-    st.caption("Out-of-distribution or adversarial input")
-    input_c = st.text_area(
-        "Adversarial Input",
-        value=test_bench.input_c or "Enter an adversarial input...",
-        height=80,
-        key="test_input_c",
-        label_visibility="collapsed"
-    )
-    score_c = st.session_state.get("score_c", None)
-    if score_c is not None:
-        _render_traffic_light(score_c, "c")
-
-    # Update test bench config
-    test_bench.input_a = input_a
-    test_bench.input_b = input_b
-    test_bench.input_c = input_c
-
-    # Store in session
-    st.session_state["test_bench"] = test_bench
-
-
-def _render_free_play_mode(winner: Optional[UnifiedCandidate]):
-    """Render free play mode for testing the winning prompt."""
-    st.markdown("### 🎮 Free Play")
+        # 1. Get Selection
+        selection = st.session_state.get("selected_candidates", [])
+        
+        # Handle legacy 'winner' arg if passed (for compatibility), but rely on selection
+        if not selection and winner:
+            pass
     
-    if not winner:
-        st.warning("No winner selected yet. Complete optimization first.")
-        return
+        if not selection:
+            st.info("Select a candidate in 'Potential Prompts' to inspect details.")
+            return
+    
+        # 2. Render based on Count
+        if len(selection) == 1:
+            _render_single_view(selection[0])
+        elif len(selection) >= 2:
+            _render_diff_view(selection[0], selection[1])
 
-    st.markdown("**Winning Prompt:**")
-    st.code(winner.full_content, language="text")
-    st.metric("Final Score", f"{winner.score_aggregate:.1f}")
 
+def _render_single_view(candidate: UnifiedCandidate):
+    """View details for a single candidate."""
+    c = candidate
+    
+    # Header
+    col_h1, col_h2 = st.columns([1, 1])
+    with col_h1:
+        st.metric("Score", f"{c.score_aggregate:.1f}")
+    with col_h2:
+        st.metric("Iteration", f"{c.generation_index}")
+        
     st.markdown("---")
-    st.markdown("**Test with any input:**")
     
-    free_input = st.text_area(
-        "Custom Test Input",
-        value="",
-        height=100,
-        key="free_play_input",
-        placeholder="Enter any input to test the winning prompt..."
-    )
-
-    col1, col2 = st.columns([1, 3])
+    # Content
+    st.subheader("📝 Prompt Content")
+    st.code(c.full_content, language="text")
     
-    with col1:
-        run_test = st.button("▶️ Run Test", type="primary", key="run_free_play")
+    st.subheader("📤 Output / Response")
+    # Show primary output or expand to tabs if multi-dataset
+    outputs = getattr(c, "meta", {}).get("dataset_outputs", {})
     
-    with col2:
-        compare_original = st.checkbox("Compare with original", value=True, key="compare_original")
-
-    if run_test and free_input:
-        with st.spinner("Generating response..."):
-            # This would call the API - placeholder for now
-            st.session_state["free_play_result"] = {
-                "input": free_input,
-                "response": "[Response would appear here after API call]"
-            }
-
-    # Display results
-    result = st.session_state.get("free_play_result")
-    if result:
-        st.markdown("**Response:**")
-        st.success(result.get("response", ""))
-
-        if compare_original:
-            st.markdown("**Original Seed Response (for comparison):**")
-            st.info("[Original response would appear here]")
-
-            st.markdown("**Qualitative Lift:**")
-            st.caption("Compare the winning prompt's output against the original to see improvement.")
-
-
-def _render_traffic_light(score: float, label: str):
-    """Render a traffic light indicator for a test score."""
-    threshold = 50  # Configurable pass threshold
-    
-    if score >= threshold:
-        color = "#22c55e"
-        status = "✅ Pass"
+    if outputs:
+        # Create tabs for each dataset output
+        tabs = st.tabs(list(outputs.keys()))
+        for i, ds_key in enumerate(outputs.keys()):
+            with tabs[i]:
+                st.text_area(f"Response ({ds_key})", value=outputs[ds_key], height=200, disabled=True)
     else:
-        color = "#ef4444"
-        status = "❌ Fail"
+        # Fallback
+        st.text_area("Response", value=c.output, height=200, disabled=True)
 
-    st.markdown(f"""
-    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-        <div style="width: 12px; height: 12px; border-radius: 50%; background-color: {color};"></div>
-        <span style="color: {color}; font-size: 12px;">{status} ({score:.1f})</span>
-    </div>
-    """, unsafe_allow_html=True)
+
+def _render_diff_view(c_new: UnifiedCandidate, c_old: UnifiedCandidate):
+    """Render diff between two candidates."""
+    
+    st.caption(f"Comparing: **Iter {c_new.generation_index}** (New) vs **Iter {c_old.generation_index}** (Old)")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric(f"Iter {c_new.generation_index}", f"{c_new.score_aggregate:.1f}")
+    with col2:
+        st.metric(f"Iter {c_old.generation_index}", f"{c_old.score_aggregate:.1f}", 
+                 delta=f"{c_old.score_aggregate - c_new.score_aggregate:.1f}", delta_color="inverse")
+
+    st.markdown("#### 🔄 Prompt Mutation Diff")
+    
+    # Generate Diff
+    diff = difflib.ndiff(
+        c_old.full_content.splitlines(keepends=True),
+        c_new.full_content.splitlines(keepends=True)
+    )
+    
+    # Simple Color-Coded Markdown Logic
+    diff_text = []
+    for line in diff:
+        if line.startswith("+ "):
+            diff_text.append(f":green-background[{line.strip()}]")
+        elif line.startswith("- "):
+            diff_text.append(f":red-background[{line.strip()}]")
+        elif line.startswith("? "):
+            continue
+        else:
+            diff_text.append(line.strip())
+            
+    st.markdown("\n\n".join(diff_text))
 
 
 def get_test_bench_config() -> TestBenchConfig:
-    """Get current test bench configuration from session state."""
+    """
+    Get current test bench configuration from session state.
+    Note: Inputs are now rendered in Zone C (Test Bench Card), but accessed here for global session.
+    """
     return TestBenchConfig(
         input_a=st.session_state.get("test_input_a", ""),
         input_b=st.session_state.get("test_input_b", ""),
         input_c=st.session_state.get("test_input_c", "")
     )
+

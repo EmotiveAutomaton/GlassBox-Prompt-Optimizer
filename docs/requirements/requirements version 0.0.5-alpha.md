@@ -1,46 +1,220 @@
-# Multi-Dataset Optimization Requirements
+# Master Software Requirements Specification: Glassbox v0.0.5-alpha
 
-## Overview
-Enable the GlassBox Prompt Optimizer to validate prompt candidates against multiple distinct test datasets simultaneously, ensuring robust performance across diverse inputs.
+**Target Artifact:** Dockerized Python 3.11 Application (Streamlit + Graphviz + Plotly)
+**Theme:** "Dark Corporate Lab" (Glass Box Visualization)
 
-## Core Functional Requirements
+---
 
-### 1. Data Ingestion (Zone A)
--   **Multiple Datasets**: Users must be able to upload multiple distinct test files (tabbed interface).
--   **Persistence**: Datasets must persist in session state until explicitly deleted.
--   **Visibility**: File names and metadata must be visible in the "Test Data" card.
--   **Active Selection**: Users can switch tabs to view/edit specific datasets.
+## 1. Interface Architecture (The 5-Zone Layout)
 
-### 2. Optimization Engine (Backend)
--   **Execution Loop**: The `Evaluator` must run the candidate prompt against **ALL** active datasets in the current session.
--   **Scoring Logic**:
-    -   Individual Score: Calculate score for each dataset result.
-    -   Aggregate Score: Calculate the **Arithmetic Mean** (Average) of all individual scores.
--   **Stopping Condition**: Use the *Aggregate Score* for threshold checks.
--   **Performance**: Should handle N datasets (sequential or parallel, TBD based on API limits).
+### 1.1 Global Visual Standards
 
-### 3. Results Visualization (Zone C)
--   **Conditional Table Layout**:
-    -   **Single Dataset Mode**: Columns: `[Score] [Iter] [Prompt Candidate] [Result]` (Classic View).
-    -   **Multi-Dataset Mode**: Columns: `[Avg Score (Wide)] [Iter] [Prompt Candidate] [Score 1] [Score 2] ... [Score N]`.
-        -   *Note:* Result text is hidden in the table to conserve space; viewed in Zone E.
--   **Interaction**:
-    -   **Row Selection**: Clicking a row highlights it (Dark Blue).
-    -   **Multi-Select**: Users can select up to 2 rows.
-    -   **Focus Toggle**: Clicking the currently active (Dark Blue) row clears the secondary selection, isolating the active row.
+* **Framework:** Streamlit (Custom Component Architecture).
+* **Theme:** Dark Mode (`#0E1117` Base).
+* **Accent:** Boeing Blue (`#1A409F`) and Signal Green (`#20C20E`).
+* **Font:** Monospace for data; Sans-serif for headers.
 
-### 4. Detail Inspection & Diff (Zone E)
-*Replaces "Test Bench Inputs" (now in Zone A).*
--   **Mode 1: Single Selection (Detail View)**
-    -   **Layout**: split 25/75.
-    -   **Left Pane**: List of Datasets (selectable).
-    -   **Right Pane**:
-        -   Header: Iteration #, Aggregate Score.
-        -   Content: Full **Prompt Text** and **Result Text** for the dataset selected in Left Pane.
--   **Mode 2: Dual Selection (Diff View)**
-    -   **Trigger**: When two rows are selected in Zone C.
-    -   **Content**: Visual Text Diff of the **Prompt Candidates**.
-    -   **Styling**:
-        -   **Additions**: Muted Green background.
-        -   **Deletions**: Muted Red background (strikethrough).
-    -   **Goal**: Highlight exactly what changed between the two iterations.
+
+* **Layout Strategy:**
+* **Zone A (Top):** Full-width Banner (Inputs + Visualization).
+* **Zone B (Left Sidebar):** Controls & Config.
+* **Zone C (Bottom Left):** Candidate List (Custom Container implementation).
+* **Zone D (Top Right):** Telemetry Graph.
+* **Zone E (Bottom Right):** Detail & Diff Inspector.
+
+
+
+### 1.2 Zone A: The "Glass Box" Banner
+
+**Purpose:** Input management and live "Brain" visualization.
+
+* **Left (Inputs):**
+* **Task Description:** Multi-line text area.
+* **Test Data Manager:** Tabbed interface for managing multiple datasets (`D1`, `D2`...).
+
+
+* **Center (The Schematic):**
+* **Library:** Graphviz (`neato` engine).
+* **Topology:** Strict **Oval/Circle** layout (Clockwise flow).
+* **Animation Logic:**
+* **Cycle 0:** Blue dashed line connects Input UI  Start Node.
+* **Cycle 1+:** Blue line **disconnects**. Internal loop glows.
+* **Data Connection:** Persistent Yellow line from Data UI  Test Node.
+
+
+
+
+* **Right (Readout):**
+* **Panel:** Read-only text box displaying the *System Prompt* of the currently active node.
+* **Follow Mode:** Auto-updates with the active node unless manually paused.
+
+
+
+---
+
+## 2. Zone C: The Candidate List (Custom Implementation)
+
+**Constraint:** DO NOT use `st.dataframe`. Use a custom iteration of `st.container` rows to allow strict styling control.
+
+* **Row Layout:** `[Score Badge] | [Iter #] | [Prompt Preview Text]`.
+* **Visual State:**
+* **Idle:** Transparent background.
+* **Primary Selection (Focus):** Dark Blue Background (`#1A409F`).
+* **Secondary Selection (Anchor):** Faint Blue Outline/Halo (`#1A409F` opacity 0.5).
+
+
+* **Interaction Logic:**
+* **Click 1:** Sets **Primary Selection**. (Updates Zone E to Inspector Mode).
+* **Click 2 (Different Row):** Sets **Secondary Selection**. (Updates Zone E to Diff Mode).
+* **Click (Primary Row again):** Clears Secondary Selection (Returns to Inspector Mode).
+
+
+
+---
+
+## 3. Zone D: Telemetry Graph
+
+**Purpose:** Live visualization of optimization trajectory.
+
+* **Library:** Plotly Graph Objects.
+* **Data:** X-Axis (Step), Y-Axis (Score).
+* **Series:**
+* **Line:** Average Score (Blue).
+* **Ribbon:** Min/Max range (Light Blue fill).
+* **Markers:** Clickable points representing Candidates.
+
+
+* **Sync Logic:** Clicking a node in the graph triggers the **Primary Selection** state in Zone C and Zone E.
+
+---
+
+## 4. Zone E: The Detail & Diff Inspector
+
+**Purpose:** Deep dive inspection and visual comparison.
+
+### 4.1 Visual Connection (The "Drop Down")
+
+* **Requirement:** A visual line must conceptually connect the **Active Node** in Zone D (Graph) to the **Header** of Zone E.
+* **Implementation:** Use a CSS absolute-positioned element or an SVG overlay that draws a line from the top-right quadrant down to the Zone E container.
+
+### 4.2 Header Logic (The "Badge & Halo")
+
+* **State 1 (Single Selection):**
+* **Title:** "Candidate #[ID] (Gen [X])".
+* **Style:** Dark Blue Background.
+
+
+* **State 2 (Diff Mode):**
+* **Title:** "Candidate #[ID] (Gen [X])".
+* **Badge:** A small "pill" badge in the top-right of the header.
+* **Badge Text:** *"Difference from Candidate #[Anchor_ID]"*.
+* **Badge Style:** The badge must have a **Halo/Glow** matching the visual style of the Secondary Selection in Zone C.
+
+
+
+### 4.3 Layout & Content (The "Single Box" Interaction)
+
+**Constraint:** Do not use side-by-side text boxes. Use a single inspection window.
+
+* **Sidebar (Left Edge):**
+* **Component:** Vertical stack of small "Pills" (`D1`, `D2`, `D3`).
+* **Interaction:** Hover expands to full name (e.g., "Dataset 1: Safety Reports"). Click selects active dataset.
+
+
+* **Main Window (Right):**
+* **Mode A (Inspection):**
+* **Prompt Block:** Full text of the Primary Selection.
+* **Result Block:** Output generated by Primary Selection on the active Dataset (D1/D2...).
+
+
+* **Mode B (Inline Diff):**
+* **Prompt Block:** Single text block rendering **HTML Diff**.
+* *Content:* The Primary Selection's text.
+* *Highlighting:* Shows changes **relative to the Anchor Selection**.
+* *Style:* Additions in Green, Deletions in Red Strikethrough.
+
+
+* **Result Block:** (Optional) If output differs significantly, show inline diff of the output; otherwise show Primary Output.
+
+
+
+
+
+---
+
+## 5. Backend Engine Logic (The 4 Strategies)
+
+### 5.1 Engine A: OPro (Optimization by PROmpting)
+
+* **Goal:** Iterative Improvement.
+* **Loop:** `START`  `TEST`  `RATE`  `CHANGE`  `START`.
+* **Prompt Strategy:** "You are an optimizer. History: [Prompt|Score]. Generate a variation likely to score higher."
+* **Errata:** Ensure `TEST` runs against ALL active datasets (D1...Dn) and averages the score.
+
+### 5.2 Engine B: APE (Automatic Prompt Engineer)
+
+* **Goal:** Inverse Induction.
+* **Loop:** `INSTRUCT`  `TEST`  `RATE`  `RESAMPLE`  `INSTRUCT`.
+* **Input Handling:**
+* **Induction Data:** User Inputs + Ideal Outputs (Zone A).
+* **Validation Data:** Test Bench Datasets (D1...Dn).
+
+
+* **Prompt Strategy:** "I gave a user Inputs X and they wrote Outputs Y. Deduce the instruction."
+
+### 5.3 Engine C: PromptBreeder (Evolutionary)
+
+* **Goal:** Evolve the Mutator.
+* **Topology:** Figure-8 / Concentric Circles.
+* **Inner:** `POPULATION`  `TEST`.
+* **Outer:** `POPULATION`  `MUTATE`  `CROSS`  `POPULATION`.
+
+
+* **Unit:** `{ Task_Prompt, Mutation_Prompt }`.
+* **Prompt Strategy:** "Improve this Mutation Instruction to be more aggressive."
+
+### 5.4 Engine D: S2A (System 2 Attention)
+
+* **Goal:** Context Denoising.
+* **Loop:** `FILTER`  `TEST_BENCH`  `EVALUATE`  `OPTIMIZE`  `FILTER`.
+* **Prompt Strategy:** "Rewrite the context to remove sentences irrelevant to the query."
+* **Zone E Special Behavior:**
+* **Diff View:** Instead of Prompt Diff, show **Context Diff**.
+* *Left:* Raw Context (Red borders on noise).
+* *Right:* Cleaned Context (Strikethroughs on removed text).
+
+
+
+---
+
+## 6. The "Barista" Simulator (RAG Environment)
+
+### 6.1 Simulation Logic
+
+* **Storage:** Read-only `chromadb`.
+* **Parameters:** `Top_K`, `Temperature`.
+* **Noise Injection:**
+* **Slider:** 0% (Clean) to 100% (Noisy).
+* **Logic:** Replace  retrieved chunks with random "Distractor" chunks from a different cluster.
+
+
+
+### 6.2 Evaluation (The Test Bench)
+
+* **Execution:** Candidate is run against every Active Dataset (D1, D2, D3).
+* **Scoring:**
+* `Global_Score = Mean(Score_D1, Score_D2, Score_D3)`.
+* **Traffic Lights:** Zone C list must show distinct pass/fail dots for each dataset if space permits (or in hover tooltip).
+
+
+
+---
+
+## 7. Data Persistence
+
+* **Format:** `.opro` (JSON).
+* **Schema:** `UnifiedCandidate` model.
+* Must store `full_prompt`, `full_output`, `score_breakdown` (per dataset), and `parent_id` (for diff logic).
+
+
+* **Export:** Save full session state (Candidates + Datasets + Config) to single file for "Zip Drive" transfer.

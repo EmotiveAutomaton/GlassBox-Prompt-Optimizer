@@ -266,6 +266,8 @@ def main():
     
 
     
+
+    
     # === Auto-refresh during optimization ===
     if st.session_state.get("is_running", False):
         time.sleep(2)  # Poll every 2 seconds

@@ -255,7 +255,7 @@ class OProEngine(AbstractOptimizer):
             if not input_text.strip():
                 # IMPROVED MOCK BEHAVIOR (Iter 5.5): Randomize for visualization
                 import random
-                scores[key] = random.uniform(70.0, 95.0) 
+                scores[key] = random.uniform(50.0, 80.0) 
                 responses[key] = "[Mock Response]"
                 reasoning[key] = "Test input empty (Mocked Score)"
                 continue
