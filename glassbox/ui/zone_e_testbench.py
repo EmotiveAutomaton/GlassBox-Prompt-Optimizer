@@ -56,9 +56,9 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
             p_idx = primary_cand.generation_index
             a_idx = anchor_cand.generation_index
             
-            # v0.0.17 Badge Style: Whiter background for visibility
+            # v0.0.19 Badge Style: Blue-White Tint
             badge_style = (
-                "background-color: rgba(240, 248, 255, 0.95); "
+                "background-color: rgba(220, 240, 255, 0.95); "
                 "border: 1px solid rgba(255, 255, 255, 0.8); "
                 "color: #0033A1; border-radius: 12px; padding: 2px 10px; "
                 "font-size: 11px; font-weight: 600;"
@@ -226,12 +226,12 @@ def get_test_bench_config() -> TestBenchConfig:
     cfg = TestBenchConfig()
     
     # Map OPRO Data (Default for v0.0.5)
-    # In future this should switch based on engine type, but for now we look for known keys.
+    # v0.0.19 Fix: "Zombie Data" - explicitly default to empty string if key is missing/None
     if "opro_test_data_1" in st.session_state:
-        cfg.input_a = st.session_state["opro_test_data_1"]
+        cfg.input_a = st.session_state.get("opro_test_data_1", "") or ""
     if "opro_test_data_2" in st.session_state:
-        cfg.input_b = st.session_state["opro_test_data_2"]
+        cfg.input_b = st.session_state.get("opro_test_data_2", "") or ""
     if "opro_test_data_3" in st.session_state:
-        cfg.input_c = st.session_state["opro_test_data_3"]
+        cfg.input_c = st.session_state.get("opro_test_data_3", "") or ""
         
     return cfg

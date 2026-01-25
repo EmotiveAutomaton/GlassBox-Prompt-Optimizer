@@ -197,6 +197,10 @@ def start_optimization():
     # v0.0.17: Also clear trajectory to wipe Zone C graph
     st.session_state["trajectory"] = []
     
+    # v0.0.19: Generate Run ID to prevent ghost rows in Zone C
+    import time
+    st.session_state["run_id"] = str(int(time.time()))
+    
     optimizer = create_optimizer(engine_name)
     
     st.session_state["is_running"] = True

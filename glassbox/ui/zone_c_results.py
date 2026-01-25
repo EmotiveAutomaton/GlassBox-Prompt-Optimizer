@@ -252,6 +252,9 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         pid = st.session_state["zc_primary_id"]
                         aid = st.session_state["zc_anchor_id"]
                         
+                        # v0.0.19: Use current run_id to prevent ghosting
+                        run_id = st.session_state.get("run_id", "0")
+                        
                         for i, row in df_sorted.iterrows():
                             # ID for logic (row 'id' from c.id)
                             c_id = str(row.get("id", ""))
@@ -268,7 +271,8 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                             # Data Extraction
                             score_val = int(row.get("Score", 0))
                             iter_val = int(row.get("Iter", 0))
-                            full_prompt = row.get("Prompt", "")
+                            # v0.0.19: Flatten newlines for single-line enforcement
+                            full_prompt = row.get("Prompt", "").replace('\n', ' ').strip()
                             
                             # Retrieve Candidate Object for detailed Result extraction
                             cand_obj = next((c for c in candidates if str(c.id) == c_id), None)
@@ -280,7 +284,8 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                                 with col:
                                     st.markdown(marker_html, unsafe_allow_html=True)
                                     if clickable:
-                                        if st.button(content, key=f"{key_suffix}_{i}", help=help_text, on_click=_handle_selection_v2, args=(c_id,), use_container_width=True):
+                                        # v0.0.19: Run ID prefix for unique keys
+                                        if st.button(content, key=f"{key_suffix}_{run_id}_{i}", help=help_text, on_click=_handle_selection_v2, args=(c_id,), use_container_width=True):
                                             pass
                                     else:
                                         st.button(content, key=f"{key_suffix}_{i}", disabled=True, use_container_width=True)
@@ -322,10 +327,13 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                                     d_s_int = 0
 
                                 # Snippet & Tooltip
-                                snip_r = (ds_out[:30] + "...") if len(ds_out) > 30 else ds_out
+                                # v0.0.19: Flatten Result Newlines
+                                ds_out_clean = ds_out.replace('\n', ' ').strip()
+                                snip_r = (ds_out_clean[:30] + "...") if len(ds_out_clean) > 30 else ds_out_clean
                                 tooltip = f"Score: {d_s_int}\n\nText: {ds_out}"
                                 
-                                _render_cell(r_col, snip_r, f"res_{idx}", clickable=True, help_text=tooltip)
+                                # v0.0.19: Fix "Ghost Rows" via unique key prefix
+                                _render_cell(r_col, snip_r, f"res_{run_id}_{idx}", clickable=True, help_text=tooltip)
                         
                         st.caption("Click new row to select. Click Primary again to clear comparison.")
                     
