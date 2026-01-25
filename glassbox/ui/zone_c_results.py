@@ -260,13 +260,23 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                             # Iterate Rest of Cols
                             for idx, (r_col, ds_key) in enumerate(zip(row_cols[3:], ds_keys)):
                                 # Extract specific result for this dataset
-                                # Text
+                                # Text (Check both standard and OPro locations)
                                 ds_out = getattr(cand_obj, "meta", {}).get("dataset_outputs", {}).get(ds_key, "")
+                                if not ds_out:
+                                    ds_out = getattr(cand_obj, "meta", {}).get("test_details", {}).get("responses", {}).get(ds_key, "")
+                                
+                                # Fallback Input A
                                 if not ds_out and ds_key == "input_a": ds_out = getattr(cand_obj, "output", "")
                                 
                                 # Score
-                                ds_score = getattr(cand_obj, "meta", {}).get("dataset_scores", {}).get(ds_key, 0)
-                                if ds_key == "input_a" and ds_score == 0: ds_score = getattr(cand_obj, "score_aggregate", 0)
+                                # Check test_results FIRST (OPro standard)
+                                ds_score = getattr(cand_obj, "test_results", {}).get(ds_key, None)
+                                
+                                if ds_score is None:
+                                    ds_score = getattr(cand_obj, "meta", {}).get("dataset_scores", {}).get(ds_key, 0)
+                                    
+                                if ds_key == "input_a" and (ds_score is None or ds_score == 0): 
+                                    ds_score = getattr(cand_obj, "score_aggregate", 0)
                                 
                                 # Round Score
                                 try:
