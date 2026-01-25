@@ -45,7 +45,15 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
         with st.container(border=True):
             st.markdown('<div class="card-header">POTENTIAL PROMPTS</div>', unsafe_allow_html=True)
             
-            if not candidates:
+            # v0.0.6 Iter 2: Check for pending iteration (in-progress row)
+            pending_iter = st.session_state.get("pending_iteration", None)
+            initial_prompt = st.session_state.get("opro_seed_prompt", "").strip()
+            
+            # Determine if we have any content to show
+            has_pending = pending_iter is not None
+            has_candidates = bool(candidates)
+            
+            if not has_candidates and not has_pending:
                 st.info("No candidates yet. Start optimization to generate prompt variations.")
             else:
                 import pandas as pd
@@ -247,6 +255,36 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 with st.container():
                     # BUG-025: Scope marker to isolate row hover logic from parent container
                     st.markdown('<div class="zone-c-row-scope" style="display:none;"></div>', unsafe_allow_html=True)
+                    
+                    # v0.0.6 Iter 2: Render PENDING row first (in-progress iteration)
+                    if has_pending and pending_iter is not None:
+                        run_id = st.session_state.get("run_id", "0")
+                        pending_row_cols = st.columns(grid_ratios, gap="small")
+                        
+                        # Pending row marker (pulsing/highlight style)
+                        pending_marker = '<div class="ghost-marker-pending" style="display:none;"></div>'
+                        
+                        # Score: X (not yet generated)
+                        with pending_row_cols[0]:
+                            st.markdown(pending_marker, unsafe_allow_html=True)
+                            st.button("X", key=f"pend_score_{run_id}", help="Not yet generated", disabled=True, use_container_width=True)
+                        
+                        # Iter: Current pending iteration
+                        with pending_row_cols[1]:
+                            st.markdown(pending_marker, unsafe_allow_html=True)
+                            st.button(f"{pending_iter}", key=f"pend_iter_{run_id}", help="In progress...", disabled=True, use_container_width=True)
+                        
+                        # Prompt: Initial prompt (if available)
+                        with pending_row_cols[2]:
+                            st.markdown(pending_marker, unsafe_allow_html=True)
+                            prompt_snip = (initial_prompt[:40] + "...") if len(initial_prompt) > 40 else (initial_prompt or "Generating...")
+                            st.button(prompt_snip, key=f"pend_prompt_{run_id}", help=initial_prompt or "Generating initial prompt...", disabled=True, use_container_width=True)
+                        
+                        # Dynamic result columns: All X (not yet generated)
+                        for idx, r_col in enumerate(pending_row_cols[3:]):
+                            with r_col:
+                                st.markdown(pending_marker, unsafe_allow_html=True)
+                                st.button("X", key=f"pend_res_{run_id}_{idx}", help="Not yet generated", disabled=True, use_container_width=True)
                     
                     if not df_sorted.empty:
                         pid = st.session_state["zc_primary_id"]

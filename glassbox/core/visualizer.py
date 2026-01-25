@@ -36,7 +36,7 @@ class GraphVisualizer:
         return f"""
             layout=neato;
             bgcolor="{self.COLOR_BG}";
-            splines=ortho;
+            splines=curved;
             edge [color="{self.COLOR_EDGE}", penwidth=2, arrowsize=0.8];
             node [fontsize=11];
         """

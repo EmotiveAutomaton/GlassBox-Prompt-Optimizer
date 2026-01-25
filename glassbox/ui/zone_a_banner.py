@@ -393,24 +393,37 @@ def render_glassbox_card(engine_id: str):
             # Get content for both panels based on active node
             input_content, output_content = _get_split_readout_content(engine_id, active_node)
             
-            # --- TOP: System Logic / Input ---
+            # --- TOP: System Logic / Input (scrollable, black on white) ---
             st.markdown('''
-                <div style="border-left: 3px solid #1A409F; padding-left: 8px; margin-bottom: 10px;">
+                <div style="border-left: 3px solid #1A409F; padding-left: 8px; margin-bottom: 5px;">
                     <span style="color: #1A409F; font-size: 10px; font-weight: 600; text-transform: uppercase;">System Logic / Input</span>
                 </div>
             ''', unsafe_allow_html=True)
-            st.code(input_content, language="text", line_numbers=False)
+            st.markdown(f'''
+                <div style="background: #FFFFFF; color: #000000; font-family: 'Consolas', monospace; font-size: 12px; 
+                            padding: 10px; border-radius: 4px; border: 1px solid #e0e0e0;
+                            max-height: 100px; overflow-y: auto; white-space: pre-wrap;">
+{input_content}
+                </div>
+            ''', unsafe_allow_html=True)
             
-            # --- BOTTOM: Result / Output ---
+            # --- BOTTOM: Result / Output (scrollable, black on white) ---
             st.markdown('''
-                <div style="border-left: 3px solid #22c55e; padding-left: 8px; margin-bottom: 10px;">
+                <div style="border-left: 3px solid #22c55e; padding-left: 8px; margin-bottom: 5px; margin-top: 10px;">
                     <span style="color: #22c55e; font-size: 10px; font-weight: 600; text-transform: uppercase;">Result / Output</span>
                 </div>
             ''', unsafe_allow_html=True)
-            st.code(output_content, language="text", line_numbers=False)
+            st.markdown(f'''
+                <div style="background: #FFFFFF; color: #000000; font-family: 'Consolas', monospace; font-size: 12px; 
+                            padding: 10px; border-radius: 4px; border: 1px solid #e0e0e0;
+                            max-height: 100px; overflow-y: auto; white-space: pre-wrap;">
+{output_content}
+                </div>
+            ''', unsafe_allow_html=True)
             
-            # Status Footer
-            st.markdown(f"<div style='margin-top:5px; font-size:11px; font-weight:500; color:#666;'>STATUS: <span style='color:#0D7CB1'>{status.upper()}</span></div>", unsafe_allow_html=True)
+            # Status Footer - Dynamic color based on state
+            status_color = "#22c55e" if status == "running" else "#ef4444" if status == "stopped" else "#666666"
+            st.markdown(f"<div style='margin-top:10px; font-size:11px; font-weight:600;'>STATUS: <span style='color:{status_color}'>{status.upper()}</span></div>", unsafe_allow_html=True)
 
         # Iter 23: Bottom Marker for CSS Height (Min Height)
         st.markdown('<div class="glassbox-height-marker" style="display:none;"></div>', unsafe_allow_html=True)

@@ -790,6 +790,19 @@ def inject_custom_css():
              background-color: var(--boeing-blue) !important;
         }
 
+        /* 4. PENDING ROW (v0.0.6 Iter 2) - Pulsing animation for in-progress */
+        @keyframes pulse-pending {
+            0%, 100% { background-color: rgba(245, 166, 35, 0.15); }
+            50% { background-color: rgba(245, 166, 35, 0.35); }
+        }
+        div[data-testid="stColumn"]:not(:has(div[data-testid="stColumn"])):has(.ghost-marker-pending) button {
+            background-color: rgba(245, 166, 35, 0.2) !important;
+            color: #666 !important;
+            border: 1px dashed #F5A623 !important;
+            animation: pulse-pending 2s ease-in-out infinite;
+            opacity: 1 !important;
+        }
+
         /* ========================================
            11. ZONE C - LINKED ROW HOVER (BUG-025 FIX REFINED)
            ======================================== */
