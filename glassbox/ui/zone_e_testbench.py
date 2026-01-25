@@ -163,7 +163,11 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
         if val is None: val = ""
         
         st.caption(f"RESULT ({active_ds_key})")
-        st.text_area("Result", value=val, height=150, disabled=True, label_visibility="collapsed")
+        # v0.0.8: Match Prompt Inspector style (No text area box)
+        st.markdown(
+            f'<div style="white-space: pre-wrap; font-family: monospace; color: #333; padding: 5px;">{val}</div>', 
+            unsafe_allow_html=True
+        )
 
 
 def get_test_bench_config() -> TestBenchConfig:

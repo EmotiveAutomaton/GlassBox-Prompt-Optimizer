@@ -352,30 +352,57 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
         customdata=[d["id"] for d in data_points] 
     ))
 
+    # Determine Axis Ranges
+    steps = [d["step"] for d in data_points]
+    if len(steps) > 0:
+        min_step, max_step = min(steps), max(steps)
+        # v0.0.9: Reverted Left Rail padding (Back to standard tight layout)
+        x_range = [min_step - 0.5, max_step + 0.5] if min_step == max_step else [min_step - 0.5, max_step + 0.5]
+        
+        scores = [d["score"] for d in data_points]
+        min_score, max_score = min(scores), max(scores)
+        y_buffer = (max_score - min_score) * 0.2 if max_score != min_score else 1.0
+        y_range = [min_score - y_buffer, max_score + y_buffer]
+    else:
+        x_range = [-1, 5]
+        y_range = [0, 100]
+
     # Layout Updates
-    # Calculate drops for Tether
-    y_min = y_range[0] # Bottom of grap
-    
     # Shapes for Tether
     shapes = []
+
+    # 1. Selection Sync - Tether (Vertical Arrow Strategy)
+    pid = st.session_state.get("zc_primary_id")
+    aid = st.session_state.get("zc_anchor_id")
+    
     if pid:
          prim_pt = next((d for d in data_points if str(d["id"]) == pid), None)
          if prim_pt:
-             # Add Vertical Line (Tether)
-             # Fix: Use data coordinates for both points. y_min is the bottom of the axis.
-             y_min = y_range[0] 
+             # v0.0.9: Vertical Drop with Arrow
+             y_min = y_range[0]
              
+             # The Line
              shapes.append(dict(
                  type="line",
                  x0=prim_pt["step"], y0=prim_pt["score"],
                  x1=prim_pt["step"], y1=y_min,
-                 line=dict(
-                     color="#0033A1",
-                     width=2,
-                     dash="dot" 
-                 ),
+                 line=dict(color="#0033A1", width=2, dash="dot"),
                  layer="below"
              ))
+             
+             # The Arrow Head (at the bottom)
+             # Use an Annotation because Shapes don't support arrowheads well
+             fig.add_annotation(
+                x=prim_pt["step"],
+                y=y_min,
+                ax=0,
+                ay=-15, # Tail is 15px UP from the point (So arrow points DOWN)
+                showarrow=True,
+                arrowhead=2, # Crisp triangle
+                arrowsize=1.5,
+                arrowwidth=2,
+                arrowcolor="#0033A1"
+             )
 
     # Restore Layout Configuration (Accidentally deleted in v0.0.7)
     fig.update_layout(
