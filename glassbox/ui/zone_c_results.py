@@ -50,7 +50,8 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         "id": str(c.id), 
                         "Score": score,
                         "Iter": step, # Shortened name
-                        "Prompt": c.display_text
+                        "Prompt": c.display_text,
+                        "Result": c.output # Needed for sorting
                     })
                 
                 df = pd.DataFrame(data)
@@ -108,11 +109,27 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         st.session_state["zc_sort_col"] = "Prompt"
                         st.session_state["zc_sort_asc"] = True # Default asc for text
                 
+                def _sort_result():
+                    if st.session_state["zc_sort_col"] == "Result Output":
+                        st.session_state["zc_sort_asc"] = not st.session_state["zc_sort_asc"]
+                    else:
+                        st.session_state["zc_sort_col"] = "Result Output"
+                        st.session_state["zc_sort_asc"] = True
+
                 # Apply Sorting to DF
                 col = st.session_state["zc_sort_col"]
                 asc = st.session_state["zc_sort_asc"]
-                if not df.empty:
-                    df_sorted = df.sort_values(by=col, ascending=asc)
+                
+                # Column mapping for DF keys (user friendly name -> df key)
+                key_map = {
+                    "Score": "Score",
+                    "Iter": "Iter",
+                    "Prompt": "Prompt",
+                    "Result Output": "Result" # Assuming I added 'Result' to df creation
+                }
+                
+                if not df.empty and col in key_map:
+                    df_sorted = df.sort_values(by=key_map[col], ascending=asc)
                 else:
                     df_sorted = df
 
@@ -144,9 +161,9 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                     st.markdown(HEADER_MARKER, unsafe_allow_html=True)
                     st.button(f"Prompt Candidate{_arrow('Prompt')}", key="h_btn_prompt", on_click=_sort_prompt, use_container_width=True)
                 with h_result:
-                    # No Sort for result yet, or alias to prompt sort? Just static for now.
+                    # Enabled Sort for v0.0.12
                     st.markdown(HEADER_MARKER, unsafe_allow_html=True)
-                    st.button("Result", key="h_btn_result", disabled=True, use_container_width=True)
+                    st.button(f"Result{_arrow('Result Output')}", key="h_btn_result", on_click=_sort_result, use_container_width=True)
                 
                 # 3. Data Rows (Loop)
                 # Selection State Management (Queue of max 2 items, storing UUIDs now)
