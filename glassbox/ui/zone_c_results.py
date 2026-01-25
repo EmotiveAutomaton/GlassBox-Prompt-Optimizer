@@ -133,16 +133,33 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 else:
                     df_sorted = df
 
-                # 2. Header Row
-                # User Req: "Increase width... 1.5x current size". 
-                # Old: 0.05. New: 0.05 * 1.5 = 0.075 -> Round to 0.08.
-                # Iter 35: Split Prompt (0.84) into Prompt (0.42) + Result (0.42)
-                grid_ratios = [0.08, 0.08, 0.42, 0.42]
-                h_score, h_iter, h_prompt, h_result = st.columns(grid_ratios, gap="small")
+                # 2. Header Row & Grid Config
+                # v0.0.13: Dynamic Result Columns
+                
+                # Detect Datasets (Logic shared with Zone E)
+                ds_keys = []
+                if test_bench:
+                    if getattr(test_bench, "input_a", ""): ds_keys.append("input_a")
+                    if getattr(test_bench, "input_b", ""): ds_keys.append("input_b")
+                    if getattr(test_bench, "input_c", ""): ds_keys.append("input_c")
+                if not ds_keys: ds_keys = ["input_a"] # Default
+                
+                num_ds = len(ds_keys)
+                
+                # Base Ratios
+                # Score (8%), Iter (8%), Prompt (34%)
+                # Remaining 50% split among results
+                fixed_width = 0.08 + 0.08 + 0.34
+                res_width = (1.0 - fixed_width) / num_ds
+                
+                grid_ratios = [0.08, 0.08, 0.34] + [res_width] * num_ds
+                cols = st.columns(grid_ratios, gap="small")
+                
+                # Unpack fixed columns
+                h_score, h_iter, h_prompt = cols[0], cols[1], cols[2]
+                h_results = cols[3:]
 
                 # RENDER CLICKABLE HEADERS
-                # Inject a marker to explicitly PROTECT these as "Headers" (Solid Button Style)
-                # See styles.py: div[data-testid="stColumn"]:has(.zone-c-header) button
                 HEADER_MARKER = '<div class="zone-c-header" style="display:none;"></div>'
 
                 # Indicator logic
@@ -160,13 +177,16 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 with h_prompt:
                     st.markdown(HEADER_MARKER, unsafe_allow_html=True)
                     st.button(f"Prompt Candidate{_arrow('Prompt')}", key="h_btn_prompt", on_click=_sort_prompt, use_container_width=True)
-                with h_result:
-                    # Enabled Sort for v0.0.12
-                    st.markdown(HEADER_MARKER, unsafe_allow_html=True)
-                    st.button(f"Result{_arrow('Result Output')}", key="h_btn_result", on_click=_sort_result, use_container_width=True)
                 
-                # 3. Data Rows (Loop)
-                # Selection State Management (Queue of max 2 items, storing UUIDs now)
+                # Dynamic Result Headers
+                for idx, (h_col, ds_key) in enumerate(zip(h_results, ds_keys)):
+                    with h_col:
+                        st.markdown(HEADER_MARKER, unsafe_allow_html=True)
+                        # Sorting by specific dataset? Complex. For now, disable sort on split columns or sort by generic 'Result' (Active)?
+                        # User didn't ask for multi-column sort. Keep it simple or use generic "Result 1".
+                        # Let's just Label them "Result 1", "Result 2".
+                        st.button(f"Result {idx+1}", key=f"h_btn_res_{idx}", disabled=True, use_container_width=True)
+                
                 # 3. Data Rows (Loop)
                 # Selection State Management (State Machine V2: Primary & Anchor)
                 if "zc_primary_id" not in st.session_state:
@@ -185,12 +205,6 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         # Click on New -> Old Primary becomes Anchor, New becomes Primary
                         st.session_state["zc_anchor_id"] = pid
                         st.session_state["zc_primary_id"] = clicked_id
-                        
-                    # Sync to global 'selected_candidates' list for Zone E compatibility
-                    # We rebuild the list based on IDs
-                    # This is populated at the START of the next render cycle typically, 
-                    # but we can do it here if we want immediate reflected state if we weren't rerunning.
-                    # Streamlit rerun handles the UI update.
 
                 # Wrap in container
                 with st.container():
@@ -202,9 +216,6 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                         aid = st.session_state["zc_anchor_id"]
                         
                         for i, row in df_sorted.iterrows():
-                            # Create a specialized container for the row to hold the marker
-                            # We use cols inside to layout the text
-                            
                             # ID for logic (row 'id' from c.id)
                             c_id = str(row.get("id", ""))
                             
@@ -222,33 +233,52 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                             iter_val = int(row.get("Iter", 0))
                             full_prompt = row.get("Prompt", "")
                             
-                            # Retrieve Output
+                            # Retrieve Candidate Object for detailed Result extraction
                             cand_obj = next((c for c in candidates if str(c.id) == c_id), None)
-                            full_output = getattr(cand_obj, "output", "") if cand_obj else ""
-
-                            snippet_p = (full_prompt[:40] + "...") if len(full_prompt) > 40 else full_prompt
-                            snippet_r = (full_output[:40] + "...") if len(full_output) > 40 else full_output
                             
-                            # Helper to render cell with specific marker
-                            # We inject marker in EVERY col to ensure the parent 'stColumn' gets tagged
+                            snippet_p = (full_prompt[:40] + "...") if len(full_prompt) > 40 else full_prompt
+                            
+                            # Helper to render cell
                             def _render_cell(col, content, key_suffix, clickable=True, help_text=None):
                                 with col:
                                     st.markdown(marker_html, unsafe_allow_html=True)
                                     if clickable:
-                                        # Use on_click for proper state update with UUID
                                         if st.button(content, key=f"{key_suffix}_{i}", help=help_text, on_click=_handle_selection_v2, args=(c_id,), use_container_width=True):
                                             pass
                                     else:
                                         st.button(content, key=f"{key_suffix}_{i}", disabled=True, use_container_width=True)
 
-                            # Grid Layout
-                            c_score, c_iter, c_prompt, c_result = st.columns(grid_ratios, gap="small")
+                            # Grid Layout for Row
+                            row_cols = st.columns(grid_ratios, gap="small")
+                            
+                            # Render Fixed Cells
+                            _render_cell(row_cols[0], f"{score_val}", "score", clickable=True)
+                            _render_cell(row_cols[1], f"{iter_val}", "iter", clickable=True)
+                            _render_cell(row_cols[2], snippet_p, "prompt", clickable=True, help_text=full_prompt)
+                            
+                            # Render Dynamic Result Cells
+                            # Iterate Rest of Cols
+                            for idx, (r_col, ds_key) in enumerate(zip(row_cols[3:], ds_keys)):
+                                # Extract specific result for this dataset
+                                # Text
+                                ds_out = getattr(cand_obj, "meta", {}).get("dataset_outputs", {}).get(ds_key, "")
+                                if not ds_out and ds_key == "input_a": ds_out = getattr(cand_obj, "output", "")
+                                
+                                # Score
+                                ds_score = getattr(cand_obj, "meta", {}).get("dataset_scores", {}).get(ds_key, 0)
+                                if ds_key == "input_a" and ds_score == 0: ds_score = getattr(cand_obj, "score_aggregate", 0)
+                                
+                                # Round Score
+                                try:
+                                    d_s_int = int(round(float(ds_score)))
+                                except:
+                                    d_s_int = 0
 
-                            # Render Cells
-                            _render_cell(c_score, f"{score_val}", "score", clickable=True)
-                            _render_cell(c_iter, f"{iter_val}", "iter", clickable=True)
-                            _render_cell(c_prompt, snippet_p, "prompt", clickable=True, help_text=full_prompt)
-                            _render_cell(c_result, snippet_r, "result", clickable=True, help_text=full_output)
+                                # Snippet & Tooltip
+                                snip_r = (ds_out[:30] + "...") if len(ds_out) > 30 else ds_out
+                                tooltip = f"Score: {d_s_int}\n\nText: {ds_out}"
+                                
+                                _render_cell(r_col, snip_r, f"res_{idx}", clickable=True, help_text=tooltip)
                         
                         st.caption("Click new row to select. Click Primary again to clear comparison.")
                     
