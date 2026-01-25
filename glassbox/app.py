@@ -194,6 +194,9 @@ def start_optimization():
     engine_name = st.session_state.get("selected_engine", "OPro (Iterative)")
     # Reset session to ensure fresh start (Fixes duplicate rows issue)
     st.session_state["session"] = None
+    # v0.0.17: Also clear trajectory to wipe Zone C graph
+    st.session_state["trajectory"] = []
+    
     optimizer = create_optimizer(engine_name)
     
     st.session_state["is_running"] = True

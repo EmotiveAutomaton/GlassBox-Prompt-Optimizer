@@ -414,6 +414,15 @@ def inject_custom_css():
              transform: scale(1.1);
         }
         
+        /* v0.0.17: DISABLED STATE (Running) - Transparent Ghost */
+        div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"]:has([data-type="dataset-column-marker"]) > div:nth-of-type(3) button:disabled {
+             opacity: 0.2 !important;
+             border-color: #EEE !important;
+             color: #EEE !important;
+             background-color: transparent !important;
+             box-shadow: none !important;
+        }
+        
         /* ACTIVE/FOCUS STATE */
         div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"]:has([data-type="dataset-column-marker"]) > div:nth-of-type(3) button:focus:not(:active) {
             border-color: #E0E0E0 !important;
@@ -644,6 +653,15 @@ def inject_custom_css():
              color: white !important;
              border-color: var(--boeing-blue) !important;
              opacity: 1.0 !important;
+        }
+        
+        /* v0.0.17: Disabled State (Optimization Running) */
+        div[data-testid="stColumn"] div[class*="st-key-add_"] button:disabled {
+             opacity: 0.2 !important; /* Very nearly transparent as requested */
+             background-color: transparent !important;
+             border-color: #DDD !important;
+             color: #CCC !important;
+             pointer-events: none !important;
         }
         
         /* Specific fix to prevent horizontal scroll if shift pushes too far? */

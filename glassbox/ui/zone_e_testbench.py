@@ -56,13 +56,12 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
             p_idx = primary_cand.generation_index
             a_idx = anchor_cand.generation_index
             
-            # v0.0.6 Badge Style: White Text, Semi-Transparent Blue BG (Glassy look)
-            # Flattened CSS
+            # v0.0.17 Badge Style: Whiter background for visibility
             badge_style = (
-                "background-color: rgba(255, 255, 255, 0.2); "
-                "border: 1px solid rgba(255, 255, 255, 0.4); "
-                "color: white; border-radius: 12px; padding: 2px 10px; "
-                "font-size: 11px; font-weight: 500;"
+                "background-color: rgba(240, 248, 255, 0.95); "
+                "border: 1px solid rgba(255, 255, 255, 0.8); "
+                "color: #0033A1; border-radius: 12px; padding: 2px 10px; "
+                "font-size: 11px; font-weight: 600;"
             )
             badge_html = f'<span style="{badge_style}">Diff vs Iter {a_idx}</span>'
 
@@ -104,11 +103,10 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
             )
         else:
             # RAW MODE (Single Selection)
-            # User Req: "Normal white space, normal white box, or just no box... put it on white"
-            # We use a simple div with no heavy background, just basic text styling.
+            # v0.0.17: Scrollable Container (Max 8 lines ~ 12em)
             raw_text = primary_cand.full_content
             st.markdown(
-                f'<div style="white-space: pre-wrap; font-family: monospace; color: #333; padding: 5px;">{raw_text}</div>', 
+                f'<div style="white-space: pre-wrap; font-family: monospace; color: #333; padding: 5px; max-height: 12em; overflow-y: auto; border: 1px solid #eee; border-radius: 4px;">{raw_text}</div>', 
                 unsafe_allow_html=True
             )
         
@@ -213,9 +211,9 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
                 header_text = f"RESULT • SCORE {score_val}"
 
         st.caption(header_text)
-        # v0.0.8: Match Prompt Inspector style (No text area box)
+        # v0.0.17: Scrollable Container (Max 6 lines ~ 9em)
         st.markdown(
-            f'<div style="white-space: pre-wrap; font-family: monospace; color: #333; padding: 5px;">{val}</div>', 
+            f'<div style="white-space: pre-wrap; font-family: monospace; color: #333; padding: 5px; max-height: 9em; overflow-y: auto; border: 1px solid #eee; border-radius: 4px;">{val}</div>', 
             unsafe_allow_html=True
         )
 

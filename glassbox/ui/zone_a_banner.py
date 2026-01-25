@@ -245,6 +245,9 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
     cols = st.columns(col_ratios, gap="small", vertical_alignment="center")
     col_idx = 0
     
+    # v0.0.17: Lock Controls when Running
+    is_running = st.session_state.get("is_running", False)
+    
     # --- RENDER CONTROLS ---
     for d_name in datasets:
         with cols[col_idx]:
@@ -265,8 +268,8 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
             
             # 2. Render Badge (Re-enabled for Iter 9 "Floating Icon")
             if d_name != "Dataset 1":
-                # Use standard secondary button, but CSS will transform it into a floating icon
-                if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}"):
+                # v0.0.17: Disable X button if running
+                if st.button("✕", key=f"del_{state_prefix}_{d_name}", help=f"Remove {d_name}", disabled=is_running):
                     # Check for data existence
                     suffix = d_name.split(" ")[1]
                     d_key = f"{state_prefix}_data_{suffix}"
@@ -284,7 +287,8 @@ def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, place
             
     # 3. Add Button (Last Column)
     with cols[col_idx]:
-         if st.button("＋", key=f"add_{state_prefix}", help="Add new dataset"):
+         # v0.0.17: Disable Add button if running
+         if st.button("＋", key=f"add_{state_prefix}", help="Add new dataset", disabled=is_running):
              new_idx = len(datasets) + 1
              # Find next available index
              while f"Dataset {new_idx}" in datasets:
