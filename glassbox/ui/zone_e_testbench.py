@@ -84,78 +84,74 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
             st.info("Select a candidate in 'Potential Prompts' to inspect.")
             return
 
-        # 2. Main Layout: Rail vs Stage
-        # Update 2 Spec: Left Rail (Dataset Selector) + Main Stage
-        c_rail, c_main = st.columns([1, 4])
-        
-        # === LEFT RAIL (Datasets) ===
-        with c_rail:
-            # Active Dataset Pointer
-            if "ze_active_dataset_idx" not in st.session_state:
-                st.session_state["ze_active_dataset_idx"] = 0
-            
-            # Determine available datasets from TestBenchConfig
-            # We assume TestBenchConfig has keys input_a, input_b, input_c... 
-            # Actually, UnifiedCandidate stores 'test_results' dict keys.
-            # Robust fallback: Use keys from the candidate's output dict if available, 
-            # else standard D1/D2/D3 from config
-            
-            # For v0.0.5 we map input_a -> D1, input_b -> D2...
-            # We will generate a list of available keys
-            ds_keys = []
-            if getattr(test_bench, "input_a", ""): ds_keys.append("input_a")
-            if getattr(test_bench, "input_b", ""): ds_keys.append("input_b")
-            if getattr(test_bench, "input_c", ""): ds_keys.append("input_c")
-            
-            if not ds_keys: ds_keys = ["input_a"] # Default fallback
-            
-            # Render Buttons
-            for idx, k in enumerate(ds_keys):
-                label = f"D{idx+1}"
-                is_active = (st.session_state["ze_active_dataset_idx"] == idx)
-                
-                # Style class
-                btn_key = f"ze_ds_btn_{idx}"
-                custom_css_class = "zone-e-rail-btn-active" if is_active else "zone-e-rail-btn"
-                
-                # Injection to wrapper
-                st.markdown(f'<div class="{custom_css_class}"></div>', unsafe_allow_html=True)
-                
-                if st.button(label, key=btn_key, use_container_width=True, help=f"View result for {k}"):
-                    st.session_state["ze_active_dataset_idx"] = idx
-                    st.rerun()
+        if not primary_cand:
+            st.info("Select a candidate in 'Potential Prompts' to inspect.")
+            return
 
-        # === MAIN STAGE ===
-        with c_main:
-            # A. PROMPT BLOCK (Diff Engine)
-            st.caption("PROMPT INSPECTOR")
+        # 2. Main Layout (v0.0.7: Single Column, Horizontal Buttons)
+        # Removed c_rail/c_main split. Full width content.
+        
+        # A. PROMPT BLOCK (Diff Engine)
+        st.caption("PROMPT INSPECTOR")
+        
+        if anchor_cand:
+            # DIFF MODE
+            diff_html = primary_cand.get_diff(anchor_cand)
+            # Render inside a pre-styled block
+            st.markdown(
+                f'<div style="font-family: monospace; white-space: pre-wrap; background: #F8F9FA; padding: 10px; border-radius: 4px; border: 1px solid #EEE;">{diff_html}</div>', 
+                unsafe_allow_html=True
+            )
+        else:
+            # RAW MODE
+            st.code(primary_cand.full_content, language="text")
+        
+        st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True) # Spacer
+
+        # B. DATASET SELECTOR (Horizontal Strip)
+        # "Put these dataset 1 and dataset 2 buttons between the two text boxes... horizontal"
+        
+        # Active Pointer
+        if "ze_active_dataset_idx" not in st.session_state:
+            st.session_state["ze_active_dataset_idx"] = 0
             
-            if anchor_cand:
-                # DIFF MODE
-                # Use the backend method we added
-                diff_html = primary_cand.get_diff(anchor_cand)
-                
-                # Render inside a pre-styled block
-                st.markdown(
-                    f'<div style="font-family: monospace; white-space: pre-wrap; background: #F8F9FA; padding: 10px; border-radius: 4px; border: 1px solid #EEE;">{diff_html}</div>', 
-                    unsafe_allow_html=True
-                )
-            else:
-                # RAW MODE
-                st.code(primary_cand.full_content, language="text")
-            
-            st.divider()
-            
-            # B. RESULT CONTAINER
-            active_ds_key = ds_keys[st.session_state["ze_active_dataset_idx"]] if st.session_state["ze_active_dataset_idx"] < len(ds_keys) else ds_keys[0]
-            
-            # Get output for this dataset
-            # UnifiedCandidate.meta['dataset_outputs'] is where we likely store map
-            outputs = getattr(primary_cand, "meta", {}).get("dataset_outputs", {})
-            val = outputs.get(active_ds_key, primary_cand.output) # Fallback to main output
-            
-            st.caption(f"RESULT (Dataset {active_ds_key})")
-            st.text_area("Result", value=val, height=150, disabled=True, label_visibility="collapsed")
+        # Determine Datasets (Same logic as before)
+        ds_keys = []
+        if getattr(test_bench, "input_a", ""): ds_keys.append("input_a")
+        if getattr(test_bench, "input_b", ""): ds_keys.append("input_b")
+        if getattr(test_bench, "input_c", ""): ds_keys.append("input_c")
+        if not ds_keys: ds_keys = ["input_a"]
+
+        # Horizontal Layout: [D1] [D2] [D3]
+        cols = st.columns(len(ds_keys) + 4) # Add spacer columns to keep them left-ish or compact
+        
+        for idx, k in enumerate(ds_keys):
+            # Render Check
+            if idx < len(cols):
+                with cols[idx]:
+                    label = f"D{idx+1}"
+                    is_active = (st.session_state["ze_active_dataset_idx"] == idx)
+                    
+                    # Style: Using standard st.button, but we can reuse the "active" styling trick if needed.
+                    # User requested "same button styling... identical but without X".
+                    # Zone A uses Primary/Secondary styling.
+                    btn_type = "primary" if is_active else "secondary"
+                    
+                    if st.button(label, key=f"ze_ds_horiz_{idx}", type=btn_type, use_container_width=True):
+                        st.session_state["ze_active_dataset_idx"] = idx
+                        st.rerun()
+
+        st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True) # Spacer
+
+        # C. RESULT CONTAINER
+        active_ds_key = ds_keys[st.session_state["ze_active_dataset_idx"]] if st.session_state["ze_active_dataset_idx"] < len(ds_keys) else ds_keys[0]
+        
+        # Get output
+        outputs = getattr(primary_cand, "meta", {}).get("dataset_outputs", {})
+        val = outputs.get(active_ds_key, primary_cand.output) 
+        
+        st.caption(f"RESULT ({active_ds_key})")
+        st.text_area("Result", value=val, height=150, disabled=True, label_visibility="collapsed")
 
 
 def get_test_bench_config() -> TestBenchConfig:

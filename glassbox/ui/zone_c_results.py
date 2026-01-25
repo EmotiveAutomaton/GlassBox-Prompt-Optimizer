@@ -362,6 +362,9 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
          prim_pt = next((d for d in data_points if str(d["id"]) == pid), None)
          if prim_pt:
              # Add Vertical Line (Tether)
+             # Fix: Use data coordinates for both points. y_min is the bottom of the axis.
+             y_min = y_range[0] 
+             
              shapes.append(dict(
                  type="line",
                  x0=prim_pt["step"], y0=prim_pt["score"],
@@ -369,69 +372,45 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
                  line=dict(
                      color="#0033A1",
                      width=2,
-                     dash="dot" # Dashed tether
+                     dash="dot" 
                  ),
-                 layer="below" # Behind points
+                 layer="below"
              ))
-             
+
+    # Restore Layout Configuration (Accidentally deleted in v0.0.7)
     fig.update_layout(
         height=300,
         margin=dict(l=40, r=20, t=20, b=40),
-        plot_bgcolor='#FDFDFE',
+        plot_bgcolor='#FDFDFE', # Match App BG
         paper_bgcolor='#FDFDFE',
-        # Global Font Color Force -> Black
         font=dict(color="black", size=11),
         xaxis_title='Iteration',
         yaxis_title='Score',
         yaxis=dict(
             range=y_range, 
             showgrid=True, 
-            gridcolor='#BBBBBB', # Darker grid
+            gridcolor='#BBBBBB', 
             zeroline=False,
-            # Explicit Black Axis Labels
             tickfont=dict(color="black"),
             title_font=dict(color="black")
         ),
         xaxis=dict(
             showgrid=False,
             zeroline=False,
-            # Explicit Black Axis Labels (Title only)
             showticklabels=False, 
             title_font=dict(color="black")
         ),
         showlegend=False,
-        shapes=shapes, # Inject Tether
+        shapes=shapes, 
         hoverlabel=dict(
             bgcolor="white",
             font_size=12,
             font_family="sans-serif",
-            # Explicit Black Tooltip Text
             font=dict(color="black") 
         )
     )
 
-    # 2. Selection Sync Highlighting (Dual State) - V2 Logic
-    # (Variables retrieved at top of function)
-    
-    if pid:
-        # Primary (Newest)
-        prim_pt = next((d for d in data_points if str(d["id"]) == pid), None)
-        
-        if prim_pt:
-            fig.add_trace(go.Scatter(
-                x=[prim_pt["step"]],
-                y=[prim_pt["score"]],
-                mode='markers',
-                name='Selected (Primary)',
-                marker=dict(
-                    size=18,
-                    color='rgba(0,0,0,0)', 
-                    # Refinement Iter 36: Thick Boeing Blue Halo
-                    line=dict(color='#0033A1', width=4) 
-                ),
-                hoverinfo='skip'
-            ))
-
+    # Widen Secondary Halo (v0.0.7)
     if aid:
         # Secondary (Anchor)
         sec_pt = next((d for d in data_points if str(d["id"]) == aid), None)
@@ -444,9 +423,30 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
                 name='Selected (Secondary)',
                 marker=dict(
                     size=18,
-                    # v0.0.6: Solid Semi-Transparent Boeing Blue (Matches List & Diff)
+                    # v0.0.7: Solid Semi-Transparent Boeing Blue
                     color='rgba(26, 64, 159, 0.4)', 
-                    line=dict(width=0) # No border
+                    line=dict(width=0) 
+                ),
+                hoverinfo='skip'
+            ))
+            # Optional: Add a wider "halo" trace behind it if needed, or just resize?
+            # User said: "Make that a bit wider so that it matches how wide the halo of the other selection is."
+            # The 'Primary' halo is width=4 line. This one is width=0 solid.
+            # Interpreting request: The actual CLICK target/Visual blob should be bigger? 
+            # OR did they mean the ring?
+            # "The first selected, has a light blue halo... make that a bit wider... matches... halo"
+            # It seems they see the solid circle as a 'halo'.
+            # I will increase the size of the marker slightly to 20 to 'widen' it.
+            
+            fig.add_trace(go.Scatter(
+                x=[sec_pt["step"]],
+                y=[sec_pt["score"]],
+                mode='markers',
+                name='Selected (Secondary Halo)',
+                marker=dict(
+                    size=22, # Slightly larger than Primary 18
+                    color='rgba(26, 64, 159, 0.2)', # Softer outer ring
+                    line=dict(width=0)
                 ),
                 hoverinfo='skip'
             ))

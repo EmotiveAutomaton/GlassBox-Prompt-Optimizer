@@ -788,20 +788,20 @@ def inject_custom_css():
            12. ZONE E - DIFF & INSPECTOR STYLES
            ======================================== */
         
-        /* Diff Colors (Boeing Standard v0.0.6) */
+        /* Diff Colors (Boeing Standard v0.0.7) */
         .diff-add {
-            /* Semi-transparent Boeing Blue (Matches Secondary Selection) */
-            background-color: rgba(26, 64, 159, 0.4); 
+            /* New Text: White on Dark Blue Highlight */
+            background-color: #1A409F; 
+            color: #FFFFFF;
             border-radius: 2px;
-            color: #E6EEFF; /* Light text for readability on blue */
+            padding: 0 2px; /* Slight padding for the block effect */
         }
         
         .diff-del {
-            /* Faded Red */
-            background-color: rgba(217, 83, 79, 0.15); 
+            /* Deleted Text: Light Blue Text (No BG), Strikethrough */
+            background-color: transparent; 
             text-decoration: line-through;
-            border-radius: 2px;
-            color: rgba(189, 65, 71, 0.7); /* Faded text color */
+            color: #89CFF0; /* Light Sky Blue */
         }
         
         /* Zone E Left Rail Buttons */
