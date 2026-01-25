@@ -34,3 +34,32 @@ class UnifiedCandidate(BaseModel):
     
     # Engine-Specific Metadata (Glass Box internals)
     meta: Dict[str, Any] = Field(default_factory=dict)
+
+    def get_diff(self, anchor: 'UnifiedCandidate') -> str:
+        """
+        Generate HTML diff comparing this candidate (Primary) against an Anchor.
+        Uses difflib.SequenceMatcher for character/token level precision.
+        """
+        import difflib
+        
+        # We diff the full_content
+        a_text = anchor.full_content
+        b_text = self.full_content
+        
+        matcher = difflib.SequenceMatcher(None, a_text, b_text)
+        html_parts = []
+        
+        for opcode, a0, a1, b0, b1 in matcher.get_opcodes():
+            if opcode == 'equal':
+                html_parts.append(a_text[a0:a1])
+            elif opcode == 'insert':
+                # Green Background, 20% Opacity (#20C20E -> rgba(32, 194, 14, 0.2))
+                html_parts.append(f'<span class="diff-add">{b_text[b0:b1]}</span>')
+            elif opcode == 'delete':
+                # Red Background, 20% Opacity + Strikethrough (#D9534F -> rgba(217, 83, 79, 0.2))
+                html_parts.append(f'<span class="diff-del">{a_text[a0:a1]}</span>')
+            elif opcode == 'replace':
+                html_parts.append(f'<span class="diff-del">{a_text[a0:a1]}</span>')
+                html_parts.append(f'<span class="diff-add">{b_text[b0:b1]}</span>')
+                
+        return "".join(html_parts)

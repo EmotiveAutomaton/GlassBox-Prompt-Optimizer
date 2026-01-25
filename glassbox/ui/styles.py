@@ -784,5 +784,61 @@ def inject_custom_css():
         }
 
         
+        /* ========================================
+           12. ZONE E - DIFF & INSPECTOR STYLES
+           ======================================== */
+        
+        /* Diff Colors (Boeing Standard) */
+        .diff-add {
+            background-color: rgba(32, 194, 14, 0.2); /* Signal Green 20% */
+            border-radius: 2px;
+        }
+        
+        .diff-del {
+            background-color: rgba(217, 83, 79, 0.2); /* Alert Red 20% */
+            text-decoration: line-through;
+            border-radius: 2px;
+            color: #bd4147; /* Slightly darker red text for contrast */
+        }
+        
+        /* Zone E Left Rail Buttons */
+        .zone-e-rail-btn button {
+            text-align: left !important;
+            justify-content: flex-start !important;
+            border: none !important;
+            border-left: 2px solid transparent !important; /* Marker */
+            background: transparent !important;
+            border-radius: 0 !important;
+            color: #555 !important;
+        }
+        
+        .zone-e-rail-btn button:hover {
+            background-color: rgba(0,0,0,0.05) !important;
+            color: #000 !important;
+        }
+        /* Active Rail Button */
+        .zone-e-rail-btn-active button {
+            background-color: rgba(26, 64, 159, 0.1) !important;
+            color: var(--boeing-blue) !important;
+            border-left: 3px solid var(--boeing-blue) !important;
+            font-weight: 600 !important;
+        }
+
+        /* Logic for Zone C Row Styles is already set in Section 10/11 above. 
+           We rely on .ghost-marker-primary (Dark Blue) and .ghost-marker-secondary (Halo).
+           Ensuring .ghost-marker-secondary (Anchor) has a clean halo:
+        */
+        
+        div[data-testid="stColumn"]:not(:has(div[data-testid="stColumn"])):has(.ghost-marker-secondary) button {
+             /* Explicitly reset background to transparent for the Halo effect */
+             background-color: transparent !important; 
+             color: var(--boeing-blue) !important;
+             /* Solid 2px Border */
+             border: 2px solid var(--boeing-blue) !important; 
+             border-radius: 4px !important;
+             box-shadow: 0 0 6px rgba(26, 64, 159, 0.2) !important;
+             opacity: 1 !important;
+        }
+        
         </style>
     """, unsafe_allow_html=True)

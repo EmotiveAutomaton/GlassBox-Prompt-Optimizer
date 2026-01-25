@@ -150,23 +150,30 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                 
                 # 3. Data Rows (Loop)
                 # Selection State Management (Queue of max 2 items, storing UUIDs now)
-                if "zc_selection_queue" not in st.session_state:
-                    st.session_state["zc_selection_queue"] = [] # [id_newest, id_prev]
+                # 3. Data Rows (Loop)
+                # Selection State Management (State Machine V2: Primary & Anchor)
+                if "zc_primary_id" not in st.session_state:
+                    st.session_state["zc_primary_id"] = None
+                if "zc_anchor_id" not in st.session_state:
+                    st.session_state["zc_anchor_id"] = None
                 
-                def _handle_selection(candidate_id, row_idx_legacy):
-                    q = st.session_state["zc_selection_queue"]
-                    cid = str(candidate_id)
+                def _handle_selection_v2(clicked_id):
+                    pid = st.session_state["zc_primary_id"]
+                    aid = st.session_state["zc_anchor_id"]
                     
-                    if cid in q:
-                        q.remove(cid)
-                        q.insert(0, cid)
+                    if pid == clicked_id:
+                        # Click on Primary -> Clear Anchor (Single View)
+                        st.session_state["zc_anchor_id"] = None
                     else:
-                        q.insert(0, cid)
-                        if len(q) > 2:
-                            q.pop()
-                    
-                    st.session_state["zc_selection_queue"] = q
-                    st.session_state["selected_candidate_id"] = row_idx_legacy # Keep legacy pointer
+                        # Click on New -> Old Primary becomes Anchor, New becomes Primary
+                        st.session_state["zc_anchor_id"] = pid
+                        st.session_state["zc_primary_id"] = clicked_id
+                        
+                    # Sync to global 'selected_candidates' list for Zone E compatibility
+                    # We rebuild the list based on IDs
+                    # This is populated at the START of the next render cycle typically, 
+                    # but we can do it here if we want immediate reflected state if we weren't rerunning.
+                    # Streamlit rerun handles the UI update.
 
                 # Wrap in container
                 with st.container():
@@ -174,20 +181,22 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                     st.markdown('<div class="zone-c-row-scope" style="display:none;"></div>', unsafe_allow_html=True)
                     
                     if not df_sorted.empty:
-                        q = st.session_state["zc_selection_queue"]
+                        pid = st.session_state["zc_primary_id"]
+                        aid = st.session_state["zc_anchor_id"]
                         
                         for i, row in df_sorted.iterrows():
-                            c_score, c_iter, c_prompt, c_result = st.columns(grid_ratios, gap="small")
+                            # Create a specialized container for the row to hold the marker
+                            # We use cols inside to layout the text
                             
                             # ID for logic (row 'id' from c.id)
                             c_id = str(row.get("id", ""))
                             
                             # Determine Selection State & Marker
                             marker_class = "ghost-col-marker" # Default (Transparent)
-                            if len(q) > 0 and q[0] == c_id:
-                                marker_class = "ghost-marker-primary" # 0: Primary (Blue-Grey)
-                            elif len(q) > 1 and q[1] == c_id:
-                                marker_class = "ghost-marker-secondary" # 1: Secondary (Off-White)
+                            if c_id == pid:
+                                marker_class = "ghost-marker-primary" # Dark Blue BG
+                            elif c_id == aid:
+                                marker_class = "ghost-marker-secondary" # Blue Halo
                             
                             marker_html = f'<div class="{marker_class}" style="display:none;"></div>'
                             
@@ -195,10 +204,8 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                             score_val = int(row.get("Score", 0))
                             iter_val = int(row.get("Iter", 0))
                             full_prompt = row.get("Prompt", "")
-                            # Find original candidate to get Output (Dataframe didn't have it)
-                            # Efficient-ish lookup since N is small (<50)
-                            # Actually, we should have added it to 'df' data dict. 
-                            # Hotfix: Look up in 'candidates'.
+                            
+                            # Retrieve Output
                             cand_obj = next((c for c in candidates if str(c.id) == c_id), None)
                             full_output = getattr(cand_obj, "output", "") if cand_obj else ""
 
@@ -206,23 +213,27 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
                             snippet_r = (full_output[:40] + "...") if len(full_output) > 40 else full_output
                             
                             # Helper to render cell with specific marker
+                            # We inject marker in EVERY col to ensure the parent 'stColumn' gets tagged
                             def _render_cell(col, content, key_suffix, clickable=True, help_text=None):
                                 with col:
                                     st.markdown(marker_html, unsafe_allow_html=True)
                                     if clickable:
                                         # Use on_click for proper state update with UUID
-                                        if st.button(content, key=f"{key_suffix}_{i}", help=help_text, on_click=_handle_selection, args=(c_id, i), use_container_width=True):
+                                        if st.button(content, key=f"{key_suffix}_{i}", help=help_text, on_click=_handle_selection_v2, args=(c_id,), use_container_width=True):
                                             pass
                                     else:
                                         st.button(content, key=f"{key_suffix}_{i}", disabled=True, use_container_width=True)
+
+                            # Grid Layout
+                            c_score, c_iter, c_prompt, c_result = st.columns(grid_ratios, gap="small")
 
                             # Render Cells
                             _render_cell(c_score, f"{score_val}", "score", clickable=True)
                             _render_cell(c_iter, f"{iter_val}", "iter", clickable=True)
                             _render_cell(c_prompt, snippet_p, "prompt", clickable=True, help_text=full_prompt)
                             _render_cell(c_result, snippet_r, "result", clickable=True, help_text=full_output)
-
-                        st.caption("Click any cell to select. Max 2 selections.")
+                        
+                        st.caption("Click new row to select. Click Primary again to clear comparison.")
                     
                     else:
                         st.info("No variations generated yet.")
@@ -240,9 +251,8 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
         # === CARD: DETAIL INSPECTOR & DIFF (Replaces Final Output) ===
         # Iter 48: Integrated Zone E here for proper layout
         from glassbox.ui.zone_e_testbench import render_zone_e
-        # Pass session.winner if exists
-        winner = st.session_state.get("session").winner if st.session_state.get("session") else None
-        render_zone_e(test_bench, winner)
+        # Pass candidates so Zone E can resolve Primary/Anchor IDs
+        render_zone_e(test_bench, candidates)
     
     # Close full-height container
     # End Bottom Row
@@ -338,13 +348,13 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
         customdata=[d["id"] for d in data_points] 
     ))
 
-    # 2. Selection Sync Highlighting (Dual State)
-    q = st.session_state.get("zc_selection_queue", [])
+    # 2. Selection Sync Highlighting (Dual State) - V2 Logic
+    pid = st.session_state.get("zc_primary_id")
+    aid = st.session_state.get("zc_anchor_id")
     
-    if q:
-        # Primary (Newest - Index 0)
-        prim_id = q[0]
-        prim_pt = next((d for d in data_points if str(d["id"]) == prim_id), None)
+    if pid:
+        # Primary (Newest)
+        prim_pt = next((d for d in data_points if str(d["id"]) == pid), None)
         
         if prim_pt:
             fig.add_trace(go.Scatter(
@@ -361,25 +371,24 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
                 hoverinfo='skip'
             ))
 
-        # Secondary (Older - Index 1)
-        if len(q) > 1:
-            sec_id = q[1]
-            sec_pt = next((d for d in data_points if str(d["id"]) == sec_id), None)
-            
-            if sec_pt:
-                fig.add_trace(go.Scatter(
-                    x=[sec_pt["step"]],
-                    y=[sec_pt["score"]],
-                    mode='markers',
-                    name='Selected (Secondary)',
-                    marker=dict(
-                        size=18,
-                        color='rgba(255, 255, 255, 0.5)', # Half-transparent white
-                        # Refinement Iter 36: Thicker Halo
-                        line=dict(color='#89CFF0', width=4) 
-                    ),
-                    hoverinfo='skip'
-                ))
+    if aid:
+        # Secondary (Anchor)
+        sec_pt = next((d for d in data_points if str(d["id"]) == aid), None)
+        
+        if sec_pt:
+            fig.add_trace(go.Scatter(
+                x=[sec_pt["step"]],
+                y=[sec_pt["score"]],
+                mode='markers',
+                name='Selected (Secondary)',
+                marker=dict(
+                    size=18,
+                    color='rgba(255, 255, 255, 0.5)', # Half-transparent white
+                    # Refinement Iter 36: Thicker Halo
+                    line=dict(color='#89CFF0', width=4) 
+                ),
+                hoverinfo='skip'
+            ))
 
     # Layout Updates
     fig.update_layout(
@@ -433,31 +442,29 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
             clicked_id = None
             
             # Map Curve+Index to ID
+            # Logic: Trace 0 is ALWAYS the main data trace.
             if curve_idx == 0:
-                # Main Trace
                 if point_idx < len(data_points):
                     clicked_id = str(data_points[point_idx]["id"])
             elif curve_idx == 1:
-                # Primary Highlight (Already selected)
-                if q: clicked_id = q[0]
+                # Primary Highlight Trace - Clicked the Halo?
+                if pid: clicked_id = pid
             elif curve_idx == 2:
-                # Secondary Highlight
-                if len(q) > 1: clicked_id = q[1]
+                # Secondary Highlight Trace
+                if aid: clicked_id = aid
             
-            # Update Queue if Valid & Different
+            # Update State Machine if Valid & Different from current primary
             if clicked_id:
-                current_q = list(st.session_state.get("zc_selection_queue", []))
+                current_pid = st.session_state.get("zc_primary_id")
                 
-                # Only update if it's NOT already the primary selection
-                # (Avoid infinite rerun loop if user keeps clicking same point)
-                if not current_q or current_q[0] != clicked_id:
-                    if clicked_id in current_q:
-                        current_q.remove(clicked_id)
-                        current_q.insert(0, clicked_id)
-                    else:
-                        current_q.insert(0, clicked_id)
-                        if len(current_q) > 2:
-                            current_q.pop()
-                    
-                    st.session_state["zc_selection_queue"] = current_q
+                # De-bounce: if clicking the same point that is already primary, do nothing?
+                # Spec says: "Click (Existing Primary): Clears Secondary."
+                
+                if clicked_id == current_pid:
+                     st.session_state["zc_anchor_id"] = None # Clear anchor
+                     st.rerun()
+                else:
+                    # New Primary
+                    st.session_state["zc_anchor_id"] = current_pid
+                    st.session_state["zc_primary_id"] = clicked_id
                     st.rerun()

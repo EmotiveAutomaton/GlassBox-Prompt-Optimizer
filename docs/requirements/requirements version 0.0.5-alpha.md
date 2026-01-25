@@ -218,3 +218,125 @@
 
 
 * **Export:** Save full session state (Candidates + Datasets + Config) to single file for "Zip Drive" transfer.
+
+
+
+# Software Requirements Specification: Update 0.0.5-alpha
+
+**Focus:** Zone E Overhaul (The "Single Box" Diff) & List Interactions
+
+## 1. Zone C: Candidate List (Custom Implementation)
+
+*Replacing the `st.dataframe` requirement to enable specific "Halo" states.*
+
+### 1.1 Visual Container Logic
+
+* **Component:** Custom `st.container` iteration (Div-based).
+* **Row Layout:** Flexbox row containing:
+* `[Score Badge]` (Color coded: Red/Yellow/Green).
+* `[Iter #]` (Monospace, dimmed).
+* `[Prompt Preview]` (Truncated to 1 line).
+
+
+* **State Styling:**
+* **State 0 (Idle):** Transparent/Gray background. Hover effect enabled.
+* **State 1 (Primary/Focus):** **Dark Blue Background** (`#1A409F`). White Text.
+* **State 2 (Secondary/Anchor):** **Blue Halo Outline** (`2px solid #1A409F`). Transparent background.
+
+
+
+### 1.2 Interaction Logic (The "Two-Click" State Machine)
+
+* **Click 1 (New Row):**
+* Becomes **Primary Selection**.
+* Any existing Primary becomes **Secondary (Anchor)**.
+* *Result:* Zone E updates to show the Primary, diffed against the Secondary.
+
+
+* **Click (Existing Primary):**
+* Clears Secondary (Anchor).
+* *Result:* Zone E returns to standard "Inspection Mode" (No Diff).
+
+
+* **Queue Constraint:** Max 2 active selections. Clicking a 3rd row clears the oldest selection.
+
+---
+
+## 2. Zone E: Detail & Diff Inspector (The "Single Box" UI)
+
+*Replaces the Side-by-Side view with an inline, context-aware inspector.*
+
+### 2.1 Visual Connection (The "Teher")
+
+* **Graphic:** A visual line (SVG/CSS overlay) must conceptually connect the **Active Node** on the Telemetry Graph (Zone D) to the **Header** of Zone E.
+* **Behavior:** When a user clicks a graph node, the line "pulls" focus down to Zone E, and the header pulses once.
+
+### 2.2 Header Architecture (Badge & Halo)
+
+* **Base Title:** "Candidate #[ID] | Score: [X]"
+* **Mode A (Inspection):**
+* Background: Dark Blue (`#1A409F`).
+* No badges.
+
+
+* **Mode B (Diff):**
+* Background: Dark Blue.
+* **The Badge:** A "Pill" element aligned Right.
+* *Text:* "Difference from Iteration #[Anchor_ID]"
+* *Style:* Transparent background with a **Blue Halo Outline** matching the Zone C Anchor row.
+
+
+* *Goal:* Visually links the diff source to the anchor row in the list.
+
+
+
+### 2.3 Content Layout (Single Window)
+
+**Constraint:** Do not use columns for prompt comparison. Use a single text block.
+
+* **Left Rail (Dataset Selector):**
+* **Component:** Vertical stack of small, clickable "Pills" (`D1`, `D2`, `D3`).
+* **Interaction:** Clicking `D2` updates the **Result Block** to show outputs from Dataset 2.
+* **Hover:** Shows full filename (e.g., "Safety_Reports.pdf").
+
+
+* **Main Stage (Right):**
+* **Block 1: Prompt Inspector (The Diff Engine):**
+* *Logic:*
+* **If Inspection Mode:** Render raw prompt text.
+* **If Diff Mode:** Render **Inline HTML Diff**.
+
+
+* *Diff Style:* Display the **Primary Selection's text**.
+* **Deletions (from Anchor):** Red Strikethrough background.
+* **Additions (in Primary):** Green background.
+
+
+* *Context:* The user sees "The Current Prompt" marked up with "What changed to get here."
+
+
+* **Block 2: Result Inspector:**
+* Render the full output of the **Primary Selection** generated against the active Dataset (from Left Rail).
+* *Note:* No diffing for results; just raw output to verify semantic changes.
+
+
+
+
+
+---
+
+## 3. Backend Support (Metadata & Mutation)
+
+* **Mutation Metadata:** **REJECTED.** Do not inject mutation strategy text (e.g., "Strategy: Be concise") into the Zone E header. Keep it clean.
+* **Diff Logic:** The backend `UnifiedCandidate` object must support a `get_diff(anchor_candidate)` method that returns the pre-calculated HTML string for the frontend to render blindly.
+
+---
+
+## 4. Visual Styles (Theme Adjustments)
+
+* **Diff Colors:**
+* **Additions:** `#20C20E` (Boeing Signal Green) with 20% Opacity.
+* **Deletions:** `#D9534F` (Alert Red) with 20% Opacity.
+
+
+* **Text:** Monospace font for all Inspector content (`Consolas` or `Roboto Mono`).
