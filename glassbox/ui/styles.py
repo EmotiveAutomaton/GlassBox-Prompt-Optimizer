@@ -788,17 +788,20 @@ def inject_custom_css():
            12. ZONE E - DIFF & INSPECTOR STYLES
            ======================================== */
         
-        /* Diff Colors (Boeing Standard) */
+        /* Diff Colors (Boeing Standard v0.0.6) */
         .diff-add {
-            background-color: rgba(32, 194, 14, 0.2); /* Signal Green 20% */
+            /* Semi-transparent Boeing Blue (Matches Secondary Selection) */
+            background-color: rgba(26, 64, 159, 0.4); 
             border-radius: 2px;
+            color: #E6EEFF; /* Light text for readability on blue */
         }
         
         .diff-del {
-            background-color: rgba(217, 83, 79, 0.2); /* Alert Red 20% */
+            /* Faded Red */
+            background-color: rgba(217, 83, 79, 0.15); 
             text-decoration: line-through;
             border-radius: 2px;
-            color: #bd4147; /* Slightly darker red text for contrast */
+            color: rgba(189, 65, 71, 0.7); /* Faded text color */
         }
         
         /* Zone E Left Rail Buttons */
@@ -825,18 +828,18 @@ def inject_custom_css():
         }
 
         /* Logic for Zone C Row Styles is already set in Section 10/11 above. 
-           We rely on .ghost-marker-primary (Dark Blue) and .ghost-marker-secondary (Halo).
-           Ensuring .ghost-marker-secondary (Anchor) has a clean halo:
+           We rely on .ghost-marker-primary (Dark Blue) and .ghost-marker-secondary.
+           v0.0.6 Update: Secondary is now Solid Semi-Transparent Blue (No Halo Border).
         */
         
         div[data-testid="stColumn"]:not(:has(div[data-testid="stColumn"])):has(.ghost-marker-secondary) button {
-             /* Explicitly reset background to transparent for the Halo effect */
-             background-color: transparent !important; 
-             color: var(--boeing-blue) !important;
-             /* Solid 2px Border */
-             border: 2px solid var(--boeing-blue) !important; 
-             border-radius: 4px !important;
-             box-shadow: 0 0 6px rgba(26, 64, 159, 0.2) !important;
+             /* Solid Semi-Transparent Boeing Blue */
+             background-color: rgba(26, 64, 159, 0.4) !important; 
+             color: white !important; /* Keep white text */
+             border: none !important;
+             border-bottom: 2px solid #555 !important; /* Match default row border style */
+             border-radius: 0 !important;
+             box-shadow: none !important;
              opacity: 1 !important;
         }
         

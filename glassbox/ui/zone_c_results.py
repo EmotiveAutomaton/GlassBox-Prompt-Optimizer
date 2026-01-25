@@ -273,6 +273,10 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
     # Data Prep
     data_points = []
     
+    # 2. Selection Sync Highlighting (Dual State) - V2 Logic (MOVED UP FOR SCOPE)
+    pid = st.session_state.get("zc_primary_id")
+    aid = st.session_state.get("zc_anchor_id")
+    
     def _extract_res(c_id, c_list):
         # Helper to find result text
         return next((getattr(c, "output", "") for c in c_list if str(c.id) == str(c_id)), "")
@@ -348,9 +352,66 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
         customdata=[d["id"] for d in data_points] 
     ))
 
+    # Layout Updates
+    # Calculate drops for Tether
+    y_min = y_range[0] # Bottom of grap
+    
+    # Shapes for Tether
+    shapes = []
+    if pid:
+         prim_pt = next((d for d in data_points if str(d["id"]) == pid), None)
+         if prim_pt:
+             # Add Vertical Line (Tether)
+             shapes.append(dict(
+                 type="line",
+                 x0=prim_pt["step"], y0=prim_pt["score"],
+                 x1=prim_pt["step"], y1=y_min,
+                 line=dict(
+                     color="#0033A1",
+                     width=2,
+                     dash="dot" # Dashed tether
+                 ),
+                 layer="below" # Behind points
+             ))
+             
+    fig.update_layout(
+        height=300,
+        margin=dict(l=40, r=20, t=20, b=40),
+        plot_bgcolor='#FDFDFE',
+        paper_bgcolor='#FDFDFE',
+        # Global Font Color Force -> Black
+        font=dict(color="black", size=11),
+        xaxis_title='Iteration',
+        yaxis_title='Score',
+        yaxis=dict(
+            range=y_range, 
+            showgrid=True, 
+            gridcolor='#BBBBBB', # Darker grid
+            zeroline=False,
+            # Explicit Black Axis Labels
+            tickfont=dict(color="black"),
+            title_font=dict(color="black")
+        ),
+        xaxis=dict(
+            showgrid=False,
+            zeroline=False,
+            # Explicit Black Axis Labels (Title only)
+            showticklabels=False, 
+            title_font=dict(color="black")
+        ),
+        showlegend=False,
+        shapes=shapes, # Inject Tether
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=12,
+            font_family="sans-serif",
+            # Explicit Black Tooltip Text
+            font=dict(color="black") 
+        )
+    )
+
     # 2. Selection Sync Highlighting (Dual State) - V2 Logic
-    pid = st.session_state.get("zc_primary_id")
-    aid = st.session_state.get("zc_anchor_id")
+    # (Variables retrieved at top of function)
     
     if pid:
         # Primary (Newest)
@@ -383,48 +444,12 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
                 name='Selected (Secondary)',
                 marker=dict(
                     size=18,
-                    color='rgba(255, 255, 255, 0.5)', # Half-transparent white
-                    # Refinement Iter 36: Thicker Halo
-                    line=dict(color='#89CFF0', width=4) 
+                    # v0.0.6: Solid Semi-Transparent Boeing Blue (Matches List & Diff)
+                    color='rgba(26, 64, 159, 0.4)', 
+                    line=dict(width=0) # No border
                 ),
                 hoverinfo='skip'
             ))
-
-    # Layout Updates
-    fig.update_layout(
-        height=300,
-        margin=dict(l=40, r=20, t=20, b=40),
-        plot_bgcolor='#FDFDFE',
-        paper_bgcolor='#FDFDFE',
-        # Global Font Color Force -> Black
-        font=dict(color="black", size=11),
-        xaxis_title='Iteration',
-        yaxis_title='Score',
-        yaxis=dict(
-            range=y_range, 
-            showgrid=True, 
-            gridcolor='#BBBBBB', # Darker grid
-            zeroline=False,
-            # Explicit Black Axis Labels
-            tickfont=dict(color="black"),
-            title_font=dict(color="black")
-        ),
-        xaxis=dict(
-            showgrid=False,
-            zeroline=False,
-            # Explicit Black Axis Labels (Title only)
-            showticklabels=False, # Iter 38: Hide numeric labels
-            title_font=dict(color="black")
-        ),
-        showlegend=False,
-        hoverlabel=dict(
-            bgcolor="white",
-            font_size=12,
-            font_family="sans-serif",
-            # Explicit Black Tooltip Text
-            font=dict(color="black") 
-        )
-    )
     
     # Render with Click Handling (Iter 37)
     # Using on_select="rerun" to capture clicks

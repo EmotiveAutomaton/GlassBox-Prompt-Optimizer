@@ -31,30 +31,54 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
         anchor_cand = next((c for c in candidates if str(c.id) == aid), None) if aid else None
         
         # Header Logic
-        title_html = '<div class="card-header">DETAIL INSPECTOR</div>'
-        if primary_cand:
+        # v0.0.6: Boeing Blue Header Background + Right Aligned Badge
+        
+        # Base Style for Header Container (Flexbox for alignment)
+        # Header Logic
+        # v0.0.6: Boeing Blue Header Background + Right Aligned Badge
+        
+        # Base Style for Header Container (Flexbox for alignment)
+        # Flattened CSS and added Negative Margins to match .card-header
+        header_style = (
+            "display: flex; align-items: center; justify-content: space-between; "
+            "background-color: #0033A1; color: white; "
+            "padding: 10px 16px; "
+            "border-radius: 6px 6px 0 0; "
+            "font-weight: 600; font-size: 14px; letter-spacing: 1px; "
+            "margin-top: -1rem; margin-left: -1rem; margin-right: -1rem; margin-bottom: 1rem; "
+            "position: relative; z-index: 1;"
+        )
+        
+        title_text = f"DETAILS: CANDIDATE {primary_cand.generation_index}" if primary_cand else "DETAILS"
+        badge_html = ""
+        
+        if primary_cand and anchor_cand:
             p_idx = primary_cand.generation_index
-            if anchor_cand:
-                # Diff Mode Header with Halo Badge
-                a_idx = anchor_cand.generation_index
-                badge_html = f'''
-                    <span style="
-                        border: 2px solid #1A409F; 
-                        border-radius: 12px; 
-                        padding: 2px 8px; 
-                        font-size: 11px; 
-                        color: #1A409F; 
-                        background: transparent;
-                        margin-left: 10px;
-                    ">
-                        Diff vs Iter {a_idx}
-                    </span>
-                '''
-                title_html = f'<div class="card-header">DETAILS: CANDIDATE {p_idx} {badge_html}</div>'
-            else:
-                title_html = f'<div class="card-header">DETAILS: CANDIDATE {p_idx}</div>'
+            a_idx = anchor_cand.generation_index
+            
+            # v0.0.6 Badge Style: White Text, Semi-Transparent Blue BG (Glassy look)
+            # Flattened CSS
+            badge_style = (
+                "background-color: rgba(255, 255, 255, 0.2); "
+                "border: 1px solid rgba(255, 255, 255, 0.4); "
+                "color: white; border-radius: 12px; padding: 2px 10px; "
+                "font-size: 11px; font-weight: 500;"
+            )
+            badge_html = f'<span style="{badge_style}">Diff vs Iter {a_idx}</span>'
 
-        st.markdown(title_html, unsafe_allow_html=True)
+        # Compose Full Header
+        html = f"""
+            <div style="{header_style}">
+                <span>{title_text}</span>
+                {badge_html}
+            </div>
+        """
+        
+        # We replace the standard 'card-header' class usage with this custom block
+        # intended to sit inside the container. 
+        # Note: st.container(border=True) adds padding/margin we might fight against,
+        # but placing this div first works well enough as a "inner header".
+        st.markdown(html, unsafe_allow_html=True)
     
         if not primary_cand:
             st.info("Select a candidate in 'Potential Prompts' to inspect.")
