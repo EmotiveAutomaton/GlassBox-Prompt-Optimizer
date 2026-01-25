@@ -161,15 +161,32 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
             tr = getattr(primary_cand, "test_results", {})
             val = tr.get(active_ds_key, None)
 
-        # Fallback 1: If 'input_a' and no val, try 'primary_cand.output'
-        if val is None and active_ds_key == "input_a":
-            val = primary_cand.output
-            
-        # Fallback 2: Just show empty string
         if val is None: val = ""
         
-        # v0.0.10: Simple Title "RESULT"
-        st.caption("RESULT")
+        # v0.0.11: Header Score Logic "RESULT • SCORE {X}"
+        # Need to find the score for the active dataset. 
+        # Typically in meta.dataset_scores (dict) or primary_cand.score (float)
+        score_val = None
+        ds_scores = getattr(primary_cand, "meta", {}).get("dataset_scores", {})
+        if active_ds_key in ds_scores:
+            score_val = ds_scores[active_ds_key]
+        elif active_ds_key == "input_a":
+            # Fallback for main dataset
+            # FIX: UnifiedCandidate uses 'score_aggregate', not 'score'
+            score_val = getattr(primary_cand, "score_aggregate", 0)
+            
+        header_text = "RESULT"
+        if score_val is not None:
+            # Format: 'RESULT • SCORE 95.0'
+            try:
+                s_float = float(score_val)
+                # If int, show int? Or always 1 decimal? User said "score number".
+                # Standard is usually 2 decimals or 1. Let's do rounded logic if needed, or just str.
+                header_text = f"RESULT • SCORE {s_float}"
+            except:
+                header_text = f"RESULT • SCORE {score_val}"
+
+        st.caption(header_text)
         # v0.0.8: Match Prompt Inspector style (No text area box)
         st.markdown(
             f'<div style="white-space: pre-wrap; font-family: monospace; color: #333; padding: 5px;">{val}</div>', 

@@ -461,14 +461,19 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
         # Secondary (Anchor)
         sec_pt = next((d for d in data_points if str(d["id"]) == aid), None)
         
+    if aid:
+        # Secondary (Anchor)
+        sec_pt = next((d for d in data_points if str(d["id"]) == aid), None)
+        
         if sec_pt:
-            # v0.0.10: Text-Highlight Blue (White-Blue)
-            # Matching the "Selections" color in Zone C list
-            sec_color = "#E6F3FF" # Very light blue
+            # v0.0.11: Match Zone C Secondary Highlight EXACTLY
+            # Style from styles.py: background-color: rgba(26, 64, 159, 0.4);
+            sec_color = "rgba(26, 64, 159, 0.4)" 
+            sec_line_color = "rgba(26, 64, 159, 0.6)" # Slightly darker for line visibility
             
             # 2. Secondary Tether (Half-Drop)
             y_min = y_range[0]
-            # Halfway point between score and bottom
+            # Halfway point
             y_mid = (sec_pt["score"] + y_min) / 2
             
             # Tether Line (Halfway)
@@ -476,7 +481,7 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
                  type="line",
                  x0=sec_pt["step"], y0=sec_pt["score"],
                  x1=sec_pt["step"], y1=y_mid,
-                 line=dict(color=sec_color, width=2, dash="dot"),
+                 line=dict(color=sec_line_color, width=2, dash="dot"),
                  layer="below"
             )
             # Arrow Head (At Middle)
@@ -489,20 +494,22 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
                 arrowhead=2,
                 arrowsize=1.5,
                 arrowwidth=2,
-                arrowcolor=sec_color
+                arrowcolor=sec_line_color
              )
 
-            # v0.0.7: Secondary Halo - crisper, larger ring
+            # v0.0.11: Secondary Halo - Solid Fill matching Zone C
+            # User wants "light blue-white-blue mix... match shading... secondary selection in zone C"
+            # In Zone C it's a BG color of rgba(26, 64, 159, 0.4).
+            # So here we make the marker FILL that color, with maybe no border or thin border?
             fig.add_trace(go.Scatter(
                 x=[sec_pt["step"]],
                 y=[sec_pt["score"]],
                 mode='markers',
                 name='Selected (Secondary)',
                 marker=dict(
-                    size=22, # Even larger for visibility
-                    color='rgba(0,0,0,0)', # Hollow Ring
-                    # v0.0.10: Matching White-Blue Ring
-                    line=dict(color=sec_color, width=4) 
+                    size=22, 
+                    color=sec_color, # Fill with the semi-transparent blue
+                    line=dict(color=sec_line_color, width=0) # No border (or minimal)
                 ),
                 hoverinfo='skip'
             ))
