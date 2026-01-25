@@ -326,7 +326,14 @@ def _delete_dataset(state_prefix, tab_name):
     suffix = tab_name.split(" ")[1]
     data_key = f"{state_prefix}_data_{suffix}"
     if data_key in st.session_state:
-        del st.session_state[data_key]
+        st.session_state[data_key] = "" # v0.0.18: Explicitly clear content logic
+        del st.session_state[data_key]  # Then remove key
+        
+    # v0.0.18: Also clean up related file lists so they don't zombie back
+    files_key = f"{state_prefix}_file_list_{suffix}"
+    if files_key in st.session_state:
+        st.session_state[files_key] = []
+        del st.session_state[files_key]
     
     # Reset specific keys if needed
     # (Streamlit widgets might hold onto state if key matches, but we usually rely on binding)

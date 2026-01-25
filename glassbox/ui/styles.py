@@ -706,18 +706,20 @@ def inject_custom_css():
         /* ITER 29: EXPLICIT HEADER FIX & MUTED SELECTION */
         
         /* HEADER OVERRIDE: Explicitly target Zone C Headers */
-        /* Must have higher specificity/correct scope to win over generic defaults */
+        /* v0.0.18 Fix: Increased Specificity for White/Gray Headers */
         div[data-testid="stColumn"]:has(.zone-c-header) button {
              background-color: #31333F !important; /* Standard Dark Button BG */
-             color: white !important;
+             color: #FFFFFF !important;
              border: 1px solid rgba(250, 250, 250, 0.2) !important;
-             border-radius: 4px !important; /* Rectangle, slight radius */
+             border-radius: 4px !important;
              text-align: center !important;
              box-shadow: 0 1px 2px rgba(0,0,0,0.1) !important;
+             opacity: 1 !important; /* Ensure visibility */
         }
         div[data-testid="stColumn"]:has(.zone-c-header) button:hover {
-             border-color: #FF4B4B !important; /* Streamlit Primary Hover */
+             border-color: #FF4B4B !important; 
              color: #FF4B4B !important;
+             background-color: #31333F !important; /* Keep dark background on hover */
         }
 
         /* DATA ROWS: Base Ghost Style */
