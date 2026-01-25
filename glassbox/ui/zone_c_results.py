@@ -462,10 +462,37 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
         sec_pt = next((d for d in data_points if str(d["id"]) == aid), None)
         
         if sec_pt:
+            # v0.0.10: Text-Highlight Blue (White-Blue)
+            # Matching the "Selections" color in Zone C list
+            sec_color = "#E6F3FF" # Very light blue
+            
+            # 2. Secondary Tether (Half-Drop)
+            y_min = y_range[0]
+            # Halfway point between score and bottom
+            y_mid = (sec_pt["score"] + y_min) / 2
+            
+            # Tether Line (Halfway)
+            fig.add_shape(
+                 type="line",
+                 x0=sec_pt["step"], y0=sec_pt["score"],
+                 x1=sec_pt["step"], y1=y_mid,
+                 line=dict(color=sec_color, width=2, dash="dot"),
+                 layer="below"
+            )
+            # Arrow Head (At Middle)
+            fig.add_annotation(
+                x=sec_pt["step"],
+                y=y_mid,
+                ax=0,
+                ay=-15,
+                showarrow=True,
+                arrowhead=2,
+                arrowsize=1.5,
+                arrowwidth=2,
+                arrowcolor=sec_color
+             )
+
             # v0.0.7: Secondary Halo - crisper, larger ring
-            # User: "Secondary halo needs to be larger still... crisp... mirroring the look of the primary"
-            # Primary is Hollow Ring. So Secondary should be Hollow Ring too?
-            # "Mirroring the look of the primary halo... light blue"
             fig.add_trace(go.Scatter(
                 x=[sec_pt["step"]],
                 y=[sec_pt["score"]],
@@ -474,8 +501,8 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
                 marker=dict(
                     size=22, # Even larger for visibility
                     color='rgba(0,0,0,0)', # Hollow Ring
-                    # Light Blue Ring (Crisp)
-                    line=dict(color='#89CFF0', width=4) 
+                    # v0.0.10: Matching White-Blue Ring
+                    line=dict(color=sec_color, width=4) 
                 ),
                 hoverinfo='skip'
             ))

@@ -152,9 +152,15 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
         
         # Get output
         # Debugging: Ensure we catch the output if it exists under fallback keys or direct attribute
+        # v0.0.10: robust lookup including test_results attr
         outputs = getattr(primary_cand, "meta", {}).get("dataset_outputs", {})
         val = outputs.get(active_ds_key, None)
         
+        if val is None:
+            # Try looking in 'test_results' if it exists (standard location for multisample)
+            tr = getattr(primary_cand, "test_results", {})
+            val = tr.get(active_ds_key, None)
+
         # Fallback 1: If 'input_a' and no val, try 'primary_cand.output'
         if val is None and active_ds_key == "input_a":
             val = primary_cand.output
@@ -162,7 +168,8 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
         # Fallback 2: Just show empty string
         if val is None: val = ""
         
-        st.caption(f"RESULT ({active_ds_key})")
+        # v0.0.10: Simple Title "RESULT"
+        st.caption("RESULT")
         # v0.0.8: Match Prompt Inspector style (No text area box)
         st.markdown(
             f'<div style="white-space: pre-wrap; font-family: monospace; color: #333; padding: 5px;">{val}</div>', 
