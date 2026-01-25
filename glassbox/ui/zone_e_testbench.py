@@ -121,15 +121,23 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
         if "ze_active_dataset_idx" not in st.session_state:
             st.session_state["ze_active_dataset_idx"] = 0
             
-        # Determine Datasets (Same logic as before)
+        # Determine Active Datasets (v0.0.16 Strict Content Check)
         ds_keys = []
-        if getattr(test_bench, "input_a", ""): ds_keys.append("input_a")
-        if getattr(test_bench, "input_b", ""): ds_keys.append("input_b")
-        if getattr(test_bench, "input_c", ""): ds_keys.append("input_c")
+        if getattr(test_bench, "input_a", "").strip(): ds_keys.append("input_a")
+        if getattr(test_bench, "input_b", "").strip(): ds_keys.append("input_b")
+        if getattr(test_bench, "input_c", "").strip(): ds_keys.append("input_c")
         if not ds_keys: ds_keys = ["input_a"]
 
         # Horizontal Layout: [Dataset 1] [Dataset 2] [Dataset 3]
-        cols = st.columns(len(ds_keys) + 2) # Fewer spacers needed for wider buttons
+        # v0.0.16 Styling: "65% of their current width" -> Narrower buttons.
+        # We increase the spacer weight relative to the buttons.
+        # Ratios: [1] * N + [Spacer].
+        # If we use weight 1 for button and weight 3 for spacer, buttons are ~1/(N+3) width.
+        
+        num_ds = len(ds_keys)
+        # Use a large spacer to compress buttons to the left
+        ratio_list = [1] * num_ds + [3] 
+        cols = st.columns(ratio_list)
         
         for idx, k in enumerate(ds_keys):
             # Render Check

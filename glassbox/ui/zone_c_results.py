@@ -23,12 +23,15 @@ def render_zone_c(candidates: List[UnifiedCandidate], test_bench: Optional[TestB
     trajectory = st.session_state.get("trajectory", [])
     
     # v0.0.15 Fix: NameError Hoist ds_keys (Must be defined before usage in loop)
+    # v0.0.16 Fix: Dynamic Dataset Visibility based on CONTENT
+    # User: "If there's at least one file in them, count as full."
+    # We check if the input string has content (stripped).
     ds_keys = []
     if test_bench:
-        if getattr(test_bench, "input_a", ""): ds_keys.append("input_a")
-        if getattr(test_bench, "input_b", ""): ds_keys.append("input_b")
-        if getattr(test_bench, "input_c", ""): ds_keys.append("input_c")
-    if not ds_keys: ds_keys = ["input_a"] # Default
+        if getattr(test_bench, "input_a", "").strip(): ds_keys.append("input_a")
+        if getattr(test_bench, "input_b", "").strip(): ds_keys.append("input_b")
+        if getattr(test_bench, "input_c", "").strip(): ds_keys.append("input_c")
+    if not ds_keys: ds_keys = ["input_a"] # Default (Input A implies empty if nothing else)
 
     # --- BOTTOM ROW: Full-Height Cards ---
     # Wrap in a container for CSS full-height styling
