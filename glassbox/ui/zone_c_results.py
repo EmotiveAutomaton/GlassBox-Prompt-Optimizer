@@ -410,43 +410,45 @@ def _render_optimization_graph(trajectory: List, candidates: List[UnifiedCandida
         )
     )
 
-    # Widen Secondary Halo (v0.0.7)
+    if pid:
+        # Primary (Newest)
+        prim_pt = next((d for d in data_points if str(d["id"]) == pid), None)
+        
+        if prim_pt:
+            fig.add_trace(go.Scatter(
+                x=[prim_pt["step"]],
+                y=[prim_pt["score"]],
+                mode='markers',
+                name='Selected (Primary)',
+                marker=dict(
+                    size=20, # Slightly larger
+                    color='rgba(0,0,0,0)', # Transparent Fill (Ring)
+                    # Restored: Thick Boeing Blue Halo
+                    # User: "I have lost the primary halo... glowing blue donut"
+                    line=dict(color='#0033A1', width=4) 
+                ),
+                hoverinfo='skip'
+            ))
+
     if aid:
         # Secondary (Anchor)
         sec_pt = next((d for d in data_points if str(d["id"]) == aid), None)
         
         if sec_pt:
+            # v0.0.7: Secondary Halo - crisper, larger ring
+            # User: "Secondary halo needs to be larger still... crisp... mirroring the look of the primary"
+            # Primary is Hollow Ring. So Secondary should be Hollow Ring too?
+            # "Mirroring the look of the primary halo... light blue"
             fig.add_trace(go.Scatter(
                 x=[sec_pt["step"]],
                 y=[sec_pt["score"]],
                 mode='markers',
                 name='Selected (Secondary)',
                 marker=dict(
-                    size=18,
-                    # v0.0.7: Solid Semi-Transparent Boeing Blue
-                    color='rgba(26, 64, 159, 0.4)', 
-                    line=dict(width=0) 
-                ),
-                hoverinfo='skip'
-            ))
-            # Optional: Add a wider "halo" trace behind it if needed, or just resize?
-            # User said: "Make that a bit wider so that it matches how wide the halo of the other selection is."
-            # The 'Primary' halo is width=4 line. This one is width=0 solid.
-            # Interpreting request: The actual CLICK target/Visual blob should be bigger? 
-            # OR did they mean the ring?
-            # "The first selected, has a light blue halo... make that a bit wider... matches... halo"
-            # It seems they see the solid circle as a 'halo'.
-            # I will increase the size of the marker slightly to 20 to 'widen' it.
-            
-            fig.add_trace(go.Scatter(
-                x=[sec_pt["step"]],
-                y=[sec_pt["score"]],
-                mode='markers',
-                name='Selected (Secondary Halo)',
-                marker=dict(
-                    size=22, # Slightly larger than Primary 18
-                    color='rgba(26, 64, 159, 0.2)', # Softer outer ring
-                    line=dict(width=0)
+                    size=22, # Even larger for visibility
+                    color='rgba(0,0,0,0)', # Hollow Ring
+                    # Light Blue Ring (Crisp)
+                    line=dict(color='#89CFF0', width=4) 
                 ),
                 hoverinfo='skip'
             ))

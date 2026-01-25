@@ -103,13 +103,19 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
                 unsafe_allow_html=True
             )
         else:
-            # RAW MODE
-            st.code(primary_cand.full_content, language="text")
+            # RAW MODE (Single Selection)
+            # User Req: "Normal white space, normal white box, or just no box... put it on white"
+            # We use a simple div with no heavy background, just basic text styling.
+            raw_text = primary_cand.full_content
+            st.markdown(
+                f'<div style="white-space: pre-wrap; font-family: monospace; color: #333; padding: 5px;">{raw_text}</div>', 
+                unsafe_allow_html=True
+            )
         
         st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True) # Spacer
 
         # B. DATASET SELECTOR (Horizontal Strip)
-        # "Put these dataset 1 and dataset 2 buttons between the two text boxes... horizontal"
+        # "Buttons needs to read dataset 1, dataset 2"
         
         # Active Pointer
         if "ze_active_dataset_idx" not in st.session_state:
@@ -122,19 +128,17 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
         if getattr(test_bench, "input_c", ""): ds_keys.append("input_c")
         if not ds_keys: ds_keys = ["input_a"]
 
-        # Horizontal Layout: [D1] [D2] [D3]
-        cols = st.columns(len(ds_keys) + 4) # Add spacer columns to keep them left-ish or compact
+        # Horizontal Layout: [Dataset 1] [Dataset 2] [Dataset 3]
+        cols = st.columns(len(ds_keys) + 2) # Fewer spacers needed for wider buttons
         
         for idx, k in enumerate(ds_keys):
             # Render Check
             if idx < len(cols):
                 with cols[idx]:
-                    label = f"D{idx+1}"
+                    label = f"Dataset {idx+1}"
                     is_active = (st.session_state["ze_active_dataset_idx"] == idx)
                     
-                    # Style: Using standard st.button, but we can reuse the "active" styling trick if needed.
-                    # User requested "same button styling... identical but without X".
-                    # Zone A uses Primary/Secondary styling.
+                    # Style: Using standard st.button
                     btn_type = "primary" if is_active else "secondary"
                     
                     if st.button(label, key=f"ze_ds_horiz_{idx}", type=btn_type, use_container_width=True):
@@ -147,8 +151,16 @@ def render_zone_e(test_bench: TestBenchConfig, candidates: List[UnifiedCandidate
         active_ds_key = ds_keys[st.session_state["ze_active_dataset_idx"]] if st.session_state["ze_active_dataset_idx"] < len(ds_keys) else ds_keys[0]
         
         # Get output
+        # Debugging: Ensure we catch the output if it exists under fallback keys or direct attribute
         outputs = getattr(primary_cand, "meta", {}).get("dataset_outputs", {})
-        val = outputs.get(active_ds_key, primary_cand.output) 
+        val = outputs.get(active_ds_key, None)
+        
+        # Fallback 1: If 'input_a' and no val, try 'primary_cand.output'
+        if val is None and active_ds_key == "input_a":
+            val = primary_cand.output
+            
+        # Fallback 2: Just show empty string
+        if val is None: val = ""
         
         st.caption(f"RESULT ({active_ds_key})")
         st.text_area("Result", value=val, height=150, disabled=True, label_visibility="collapsed")
