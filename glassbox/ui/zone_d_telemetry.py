@@ -88,6 +88,23 @@ def render_zone_d(trajectory: List[TrajectoryEntry]):
         hovertemplate='🌟 New High!<br>Step %{x}<br>Score: %{y:.1f}<extra></extra>'
     ))
 
+    # v0.0.6: Instant Dot - Show pending iteration immediately
+    pending_iteration = st.session_state.get("pending_iteration", None)
+    if pending_iteration:
+        fig.add_trace(go.Scatter(
+            x=[pending_iteration],
+            y=[5],  # Small Y offset so it's visible at baseline
+            mode='markers',
+            name='In Progress...',
+            marker=dict(
+                symbol='circle-open',
+                size=14,
+                color='#888888',
+                line=dict(color='#888888', width=3)
+            ),
+            hovertemplate='⏳ Iteration %{x}<br>Scoring in progress...<extra></extra>'
+        ))
+
     # Layout
     fig.update_layout(
         xaxis_title='Step',

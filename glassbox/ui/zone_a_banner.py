@@ -13,7 +13,11 @@ from glassbox.core.visualizer import GraphVisualizer
 
 
 def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
-    """Render the top row with INPUT and GLASS BOX cards."""
+    """Render the top row with INPUT and GLASS BOX cards.
+    
+    v0.0.6: Unified Zone A with internal Blue/Yellow HTML wrapper boxes.
+    Uses explicit HTML divs with inline borders (CSS sibling selectors fail in Streamlit).
+    """
     
     # Defaults
     raw_selection = st.session_state.get("selected_engine", "OPro (Iterative)")
@@ -30,65 +34,64 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
     # --- ROW 1: Two Card Boxes Side by Side ---
     col_input, col_glassbox = st.columns([1, 1.8])
     
-    # === CARD 1: INITIAL PROMPT AND DATA (Dynamic based on Engine) ===
+    # === CARD 1: INITIAL PROMPT AND DATA (Unified Zone A) ===
     with col_input:
-        # Iter 23 Fix: Remove Spacer, usage CSS marker below
         with st.container(border=True):
-            st.markdown(f'<div class="card-header">INITIAL PROMPT AND DATA ({engine_id.upper()})</div>', unsafe_allow_html=True)
+            # Unified Header (no engine ID per v0.0.6 spec)
+            st.markdown('<div class="card-header">INITIAL PROMPT AND DATA</div>', unsafe_allow_html=True)
             
-            # --- DYNAMIC INPUTS ---
+            # --- BOX 1: Initial Prompt (Blue Border) - Using HTML wrapper ---
+            st.markdown('''
+                <div style="border: 2px solid #1A409F; border-radius: 6px; padding: 12px; margin-bottom: 12px; background: rgba(26, 64, 159, 0.03);">
+                    <span style="color: #1A409F; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Initial Prompt</span>
+                </div>
+            ''', unsafe_allow_html=True)
+            # Dynamic content based on engine (inside separate container due to Streamlit limitation)
             if engine_id == "opro":
-                # OPro: Prompt (Text Only) + Test Data (File/Tabbed)
                 st.text_area("Seed Prompt", height=80, key="opro_seed_prompt", 
                            placeholder="Initial prompt to be optimized...", label_visibility="collapsed")
-                
-                # Test Data with Tabs
+            elif engine_id == "ape":
+                st.text_area("Ideal Output", height=60, key="ape_output_target",
+                           placeholder="Ideal target output...", label_visibility="collapsed")
+            elif engine_id == "promptbreeder":
+                st.text_area("Seed Prompt", height=80, key="pb_seed_prompt",
+                           placeholder="Base prompt for evolutionary optimization...", label_visibility="collapsed")
+                st.slider("Population Size", 10, 100, 50, 10, key="pb_population")
+            elif engine_id == "s2a":
+                st.text_area("Starting Query", height=60, key="s2a_query",
+                           placeholder="User query to answer...", label_visibility="collapsed")
+            
+            # --- BOX 2: Data (Yellow Border) - Using HTML wrapper ---
+            st.markdown('''
+                <div style="border: 2px solid #F5A623; border-radius: 6px; padding: 12px; margin-bottom: 12px; background: rgba(245, 166, 35, 0.03);">
+                    <span style="color: #F5A623; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Data</span>
+                </div>
+            ''', unsafe_allow_html=True)
+            # Dynamic content based on engine
+            if engine_id == "opro":
                 _render_tabbed_input(
                     label="Test Data",
                     state_prefix="opro_test",
                     height=150,
                     placeholder="Enter or upload test cases (one per line)..."
                 )
-            
             elif engine_id == "ape":
-                # APE: Input Data (File/Tabbed) + Ideal Output (Text/File?) -> Spec said "Top box... Initial prompt and data area"
-                # User Request: "APE... same thing with the top box... these test cases... driven by outside data sources"
-                
-                # APE Input Data (Tabbed)
                 _render_tabbed_input(
                     label="Input Data (Examples)",
                     state_prefix="ape_input",
                     height=100,
                     placeholder="Upload or paste input examples for reverse engineering..."
                 )
-                
-                # Ideally APE also needs Output data, but requirements focused on "Top box". 
-                # We will keep Ideal Output as simple text for now to match strict instructions, 
-                # or applying to both if "Initial prompt and area" implies the full pair.
-                # Request says "replace the top box... initial prompt and data area". 
-                # I will leave the second box (Ideal Output) as text for now to avoid over-engineering unless specified.
-                st.text_area("Ideal Output [Target]", height=60, key="ape_output_target",
-                           placeholder="Ideal target output...", label_visibility="collapsed")
-
-            elif engine_id == "promptbreeder":
-                # PromptBreeder: Prompt + Population
-                st.text_area("Seed Prompt", height=80, key="pb_seed_prompt",
-                           placeholder="Base prompt for evolutionary optimization...", label_visibility="collapsed")
-                st.slider("Population Size", 10, 100, 50, 10, key="pb_population")
-                st.caption("Evolutionary params managed by backend.")
-
             elif engine_id == "s2a":
-                # S2A: Query + Raw Context
-                st.text_area("Starting Query", height=60, key="s2a_query",
-                           placeholder="User query to answer...", label_visibility="collapsed")
                 st.text_area("Raw Context", height=100, key="s2a_context",
                            placeholder="Retrieved context chunks...", label_visibility="collapsed")
+            else:
+                st.caption("Data management varies by engine.")
 
-            # --- ACTION BUTTONS ---
-            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True) # Spacer
+            # --- ACTION BUTTONS (Bottom of Zone A) ---
+            st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
             col_start, col_stop = st.columns(2)
             
-            # Use Callbacks to ensure state is set BEFORE the main app loop runs
             def _cb_start():
                 print("DEBUG: Start Callback Triggered")
                 st.session_state["start_optimization"] = True
@@ -108,11 +111,12 @@ def render_zone_a(optimizer: Optional[AbstractOptimizer] = None):
             # Iter 23: Marker for CSS Overflow Fix
             st.markdown('<div class="zone-a-left-marker" style="display:none;"></div>', unsafe_allow_html=True)
 
-
     
     # === CARD 2: GLASS BOX (Visualizer + Logic Readout) ===
     with col_glassbox:
         render_glassbox_card(engine_id)
+
+
 
 
 def _render_tabbed_input(label: str, state_prefix: str, height: int = 100, placeholder: str = ""):
@@ -373,21 +377,37 @@ def render_glassbox_card(engine_id: str):
                 active_node = None 
                 cycle_count = 0 # Force 0 if idle/stopped
             # ---------------------------------------
+            
+            # v0.0.6: Detect user input for animation trigger
+            has_user_input = bool(st.session_state.get("opro_seed_prompt", "").strip())
 
             # Generate DOT
             try:
-                dot_source = visualizer.get_engine_chart(engine_id, active_node, cycle_count)
+                dot_source = visualizer.get_engine_chart(engine_id, active_node, cycle_count, has_user_input)
                 st.graphviz_chart(dot_source, use_container_width=True)
             except Exception as e:
                 st.error(f"Viz Error: {e}")
 
-        # 2. READOUT PANEL (Logic Inspection)
+        # 2. READOUT PANEL - Split View (v0.0.6 spec 8.3)
         with col_log:
-            # Content depends on active node
-            node_content = _get_readout_content(engine_id, active_node)
+            # Get content for both panels based on active node
+            input_content, output_content = _get_split_readout_content(engine_id, active_node)
             
-            st.markdown("**System Logic / Prompt**")
-            st.code(node_content, language="text", line_numbers=False)
+            # --- TOP: System Logic / Input ---
+            st.markdown('''
+                <div style="border-left: 3px solid #1A409F; padding-left: 8px; margin-bottom: 10px;">
+                    <span style="color: #1A409F; font-size: 10px; font-weight: 600; text-transform: uppercase;">System Logic / Input</span>
+                </div>
+            ''', unsafe_allow_html=True)
+            st.code(input_content, language="text", line_numbers=False)
+            
+            # --- BOTTOM: Result / Output ---
+            st.markdown('''
+                <div style="border-left: 3px solid #22c55e; padding-left: 8px; margin-bottom: 10px;">
+                    <span style="color: #22c55e; font-size: 10px; font-weight: 600; text-transform: uppercase;">Result / Output</span>
+                </div>
+            ''', unsafe_allow_html=True)
+            st.code(output_content, language="text", line_numbers=False)
             
             # Status Footer
             st.markdown(f"<div style='margin-top:5px; font-size:11px; font-weight:500; color:#666;'>STATUS: <span style='color:#0D7CB1'>{status.upper()}</span></div>", unsafe_allow_html=True)
@@ -419,3 +439,61 @@ def _get_readout_content(engine: str, node: Optional[str]) -> str:
     # Fallback generic text
     engine_data = prompts.get(engine, {})
     return engine_data.get(node, f"Processing {node} state...\nExecuting internal logic.")
+
+
+def _get_split_readout_content(engine: str, node: Optional[str]) -> tuple:
+    """
+    v0.0.6: Returns (input_content, output_content) for split panel view.
+    Top panel shows system logic/input, bottom shows result/output.
+    """
+    if not node:
+        return (
+            "[System Idle]\nAwaiting optimization start...",
+            "[No Output Yet]\nResults will appear here."
+        )
+    
+    split_content = {
+        "opro": {
+            "START": (
+                "Meta-Prompt:\n\"Optimize the following prompt for clarity.\"",
+                "[Generating Variations...]\nCandidate 1: Pending"
+            ),
+            "TEST": (
+                "Test Cases:\n- Input: 'Boeing 777'\n- Expected: Summary",
+                "Running Evaluation...\nTest 1: PASS\nTest 2: PENDING"
+            ),
+            "RATE": (
+                "Scoring Criteria:\n- Clarity (40%)\n- Accuracy (60%)",
+                "Score: 87/100\nReasoning: Good precision, minor verbosity."
+            ),
+            "CHANGE": (
+                "Mutation Operator:\n\"Make response more concise.\"",
+                "New Candidate Generated:\n[Revised Prompt V2]"
+            )
+        },
+        "ape": {
+            "START": (
+                "Input Examples Loaded:\n3 Input/Output pairs",
+                "[Reverse Engineering...]\nAnalyzing patterns..."
+            ),
+            "TEST": (
+                "Validation Set: 5 samples",
+                "Match Rate: 80%"
+            ),
+            "RATE": (
+                "Evaluation Metrics: BLEU, Exact Match",
+                "BLEU: 0.72 | Exact: 4/5"
+            ),
+            "CHANGE": (
+                "Resampling Strategy: Top-K",
+                "New Instruction Candidate Generated"
+            )
+        }
+    }
+    
+    engine_data = split_content.get(engine, {})
+    return engine_data.get(node, (
+        f"Processing {node}...\nExecuting logic.",
+        f"[{node} Output]\nPending result..."
+    ))
+

@@ -242,6 +242,21 @@ def inject_custom_css():
         }
         
         /* ========================================
+           6.5 INTERNAL COLORED BOXES (v0.0.6)
+           ======================================== */
+        /* Blue Box (Initial Prompt) - Uses marker sibling */
+        .blue-box-marker + div[data-testid="stVerticalBlockBorderWrapper"]::after {
+            border-color: var(--boeing-blue) !important;
+            border-width: 2px !important;
+        }
+        
+        /* Yellow Box (Data) - Uses marker sibling */
+        .yellow-box-marker + div[data-testid="stVerticalBlockBorderWrapper"]::after {
+            border-color: #F5A623 !important; /* Boeing Warning Yellow */
+            border-width: 2px !important;
+        }
+        
+        /* ========================================
            6. BUTTONS
            ======================================== */
         /* Default Button (Secondary) - Gray */

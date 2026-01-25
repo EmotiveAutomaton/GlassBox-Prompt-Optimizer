@@ -206,14 +206,27 @@ def start_optimization():
     st.session_state["is_running"] = True
     st.session_state["optimizer_status"] = "running"
     
+    # v0.0.6: Instant Dot - Push pending iteration immediately
+    current_step = 1  # First iteration
+    st.session_state["pending_iteration"] = current_step
+    
     # Set up callbacks
     def on_step_complete(result):
         st.session_state["optimizer_status"] = "running"
+        # v0.0.6: Clear Instant Dot - iteration is now scored
+        st.session_state["pending_iteration"] = None
+        # Push next pending iteration if still running
+        if st.session_state.get("is_running", False):
+            session = st.session_state.get("session")
+            if session:
+                st.session_state["pending_iteration"] = session.current_step + 1
     
     def on_status_change(status):
         st.session_state["optimizer_status"] = status.value
         if status.value in ["completed", "failed", "stopped"]:
             st.session_state["is_running"] = False
+            # v0.0.6: Clear any pending dot on completion
+            st.session_state["pending_iteration"] = None
     
     optimizer.set_callbacks(on_step_complete, on_status_change)
     
